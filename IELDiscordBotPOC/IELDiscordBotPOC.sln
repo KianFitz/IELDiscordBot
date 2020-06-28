@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30204.135
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IELDiscordBotPOC", "IELDiscordBotPOC\IELDiscordBotPOC.csproj", "{406FBC3F-3112-4582-8470-6A93B7E76A82}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{406FBC3F-3112-4582-8470-6A93B7E76A82}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{406FBC3F-3112-4582-8470-6A93B7E76A82}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{406FBC3F-3112-4582-8470-6A93B7E76A82}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{406FBC3F-3112-4582-8470-6A93B7E76A82}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {1755F293-A87F-4610-BCDD-3D1B3F741988}
+	EndGlobalSection
+EndGlobal
