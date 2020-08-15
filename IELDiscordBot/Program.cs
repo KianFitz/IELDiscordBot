@@ -57,15 +57,6 @@ namespace IELDiscordBotPOC
             //}
             //.ConnectionString;
 
-            return new MySqlConnectionStringBuilder()
-            {
-                Server = "localhost",
-                Password = "ielbotdev123",
-                Database = "ielbot",
-                UserID = "ielbot",
-                Port = 3306
-            }
-            .ConnectionString;
         }
     }
 }
