@@ -1,4 +1,5 @@
-﻿using System;
+﻿using IELDiscordBotPOC.Classes.Models;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -8,6 +9,6 @@ namespace IELDiscordBotPOC.Classes.Utilities
     {
         public static string GetBasePath() => AppContext.BaseDirectory;
 
-
+        public static List<TeamRequest> OutstandingTeamRequests = new List<TeamRequest>();
     }
 }

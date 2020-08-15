@@ -1,22 +1,26 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp3.1</TargetFramework>
+    <AssemblyName>IELDiscordBot</AssemblyName>
+    <RootNamespace>IELDiscordBot</RootNamespace>
   </PropertyGroup>
-
-  <ItemGroup>
-    <Folder Include="Classes\Models\" />
-  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Discord.Net" Version="2.2.0" />
     <PackageReference Include="Discord.Net.Core" Version="2.2.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="3.1.1" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="3.1.1">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="3.1.5" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="3.1.5" />
     <PackageReference Include="Microsoft.Extensions.Configuration.FileExtensions" Version="3.1.5" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="3.1.5" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="3.1.5" />
+    <PackageReference Include="MySql.Data.EntityFrameworkCore" Version="8.0.21" />
   </ItemGroup>
 
 </Project>

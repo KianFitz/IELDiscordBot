@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
+using IELDiscordBotPOC.Classes.Models;
 using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
@@ -36,6 +37,9 @@ namespace IELDiscordBotPOC.Classes.Services
             _client.Log += Log;
 
             await _client.StartAsync();
+
+            //_commands.AddTypeReader(typeof(TeamRequest), new TeamRequestTypeReader());
+
             await _commands.AddModulesAsync(Assembly.GetEntryAssembly(), _provider);
         }
 

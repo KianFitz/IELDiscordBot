@@ -1,9 +1,13 @@
 ﻿using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
+using IELDiscordBotPOC.Classes.Database;
 using IELDiscordBotPOC.Classes.Services;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using MySql.Data.EntityFrameworkCore.Extensions;
+using MySql.Data.MySqlClient;
 using System;
 using System.Reflection;
 using System.Security.Authentication.ExtendedProtection;
@@ -29,7 +33,9 @@ namespace IELDiscordBotPOC
                 }))
                 .AddSingleton<StartupService>()
                 .AddSingleton<CommandHandler>()
-                .AddSingleton(_config);
+                .AddSingleton(_config)
+                .AddDbContext<IELContext>(options => options.UseMySQL(BuildConnectionString()));
+
 
             var provider = services.BuildServiceProvider();
 
@@ -37,6 +43,29 @@ namespace IELDiscordBotPOC
             provider.GetRequiredService<CommandHandler>();
 
             await Task.Delay(-1);
+        }
+
+        private string BuildConnectionString()
+        {
+            //return new MySqlConnectionStringBuilder()
+            //{
+            //    Server = _config["database:server"],
+            //    Password = _config["database:password"],
+            //    Database = _config["database:db"],
+            //    UserID = _config["database:user"],
+            //    Port = uint.Parse(_config["database:port"])
+            //}
+            //.ConnectionString;
+
+            return new MySqlConnectionStringBuilder()
+            {
+                Server = "localhost",
+                Password = "ielbotdev123",
+                Database = "ielbot",
+                UserID = "ielbot",
+                Port = 3306
+            }
+            .ConnectionString;
         }
     }
 }

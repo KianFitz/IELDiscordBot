@@ -2,10 +2,12 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace IELDiscordBotPOC.Classes.Modules
 {
-    class UserModule : ModuleBase<SocketCommandContext>
-    {
+    public class UserModule : ModuleBase<SocketCommandContext>
+    { 
+
     }
 }
