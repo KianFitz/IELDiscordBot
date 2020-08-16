@@ -47,16 +47,15 @@ namespace IELDiscordBotPOC
 
         private string BuildConnectionString()
         {
-            //return new MySqlConnectionStringBuilder()
-            //{
-            //    Server = _config["database:server"],
-            //    Password = _config["database:password"],
-            //    Database = _config["database:db"],
-            //    UserID = _config["database:user"],
-            //    Port = uint.Parse(_config["database:port"])
-            //}
-            //.ConnectionString;
-
+            return new MySqlConnectionStringBuilder()
+            {
+                Server = _config["database:server"],
+                Password = _config["database:password"],
+                Database = _config["database:db"],
+                UserID = _config["database:user"],
+                Port = uint.Parse(_config["database:port"])
+            }
+            .ConnectionString;
         }
     }
 }
