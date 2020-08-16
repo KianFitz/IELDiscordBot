@@ -1,0 +1,15 @@
+{
+    "prefix":"!",
+    "tokens":
+    {
+        "dev": "YOUR_DISCORD_BOT_TOKEN_HERE"
+    },
+	"database":
+	{
+		"server": "localhost",
+		"port": 3306,
+		"user": "ielbot",
+		"password":"ielbotdev123",
+		"db": "ielbot"
+	}
+}
