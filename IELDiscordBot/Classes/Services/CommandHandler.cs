@@ -1,10 +1,12 @@
 ﻿using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
+using IELDiscordBot.Classes.Models;
 using IELDiscordBotPOC.Classes.Database;
 using IELDiscordBotPOC.Classes.Models;
 using IELDiscordBotPOC.Classes.Modules;
 using IELDiscordBotPOC.Classes.Utilities;
+using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
@@ -136,10 +138,35 @@ namespace IELDiscordBotPOC.Classes.Services
 
                 if (!result.IsSuccess)
                 {
+                    if (CheckForCustomCommand(msg, argPos, out CustomCommand cmd))
+                    {
+                        //var result = await _customCommands.ExecuteAsync(context, argPos, _provider);
+                        await ExecuteCustomCommandAsync(context, cmd).ConfigureAwait(false);
+                        return;
+                    }
+
                     //_log.Error(result.ToString());
                     await msg.DeleteAsync().ConfigureAwait(false);
                 }
             }
+        }
+
+        private async Task ExecuteCustomCommandAsync(SocketCommandContext context, CustomCommand cmd)
+        {
+            await context.Channel.SendMessageAsync(cmd.ReturnValue).ConfigureAwait(false);
+        }
+
+        private bool CheckForCustomCommand(IMessage msg, int argPos, out CustomCommand cmd)
+        {
+            int indexOfFirstSpace = msg.Content.IndexOf(' ');
+            if (indexOfFirstSpace == -1)
+                indexOfFirstSpace = msg.Content.Length - 1;
+
+            string command = msg.Content.Substring(argPos, indexOfFirstSpace);
+
+            cmd = _db.CustomCommands.FirstOrDefault(comm => comm.Command == command);
+
+            return cmd != null;
         }
     }
 }
