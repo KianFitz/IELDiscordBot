@@ -1,11 +1,13 @@
 ﻿using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
+using IELDiscordBot.Classes.Models;
 using IELDiscordBotPOC.Classes.Database;
 using IELDiscordBotPOC.Classes.Models;
 using IELDiscordBotPOC.Classes.Modules;
 using IELDiscordBotPOC.Classes.Utilities;
 using Microsoft.Extensions.Configuration;
+using MySql.Data.MySqlClient.Memcached;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -35,7 +37,6 @@ namespace IELDiscordBotPOC.Classes.Services
             _client.MessageReceived += OnMessageReceieved;
             _client.GuildMemberUpdated += OnUserUpdated;
             _client.ReactionAdded += OnReactionAdded;
-
         }
 
         private async Task OnReactionAdded(Cacheable<IUserMessage, ulong> arg1, ISocketMessageChannel arg2, SocketReaction arg3)
@@ -128,6 +129,12 @@ namespace IELDiscordBotPOC.Classes.Services
             if (msg.Author == _client.CurrentUser)
                 return;
 
+            if (msg.Channel is IPrivateChannel)
+            {
+                await HandleCaptchaRequest(msg, context).ConfigureAwait(false);
+                return;
+            }
+
             int argPos = 0;
             if (msg.HasStringPrefix(_config["prefix"], ref argPos) || msg.HasMentionPrefix(_client.CurrentUser, ref argPos))
             {
@@ -135,10 +142,32 @@ namespace IELDiscordBotPOC.Classes.Services
                 var result = await _commands.ExecuteAsync(context, argPos, _provider);
 
                 if (!result.IsSuccess)
-                {
+                { 
                     //_log.Error(result.ToString());
                     await msg.DeleteAsync().ConfigureAwait(false);
                 }
+            }
+        }
+
+        private async Task HandleCaptchaRequest(SocketUserMessage msg, SocketCommandContext context)
+        {
+            Captcha outstandingCaptcha = Utilities.Utilities.OutstandingCaptchas.Find(c => c.UserID == msg.Author.Id);
+            if (outstandingCaptcha != null)
+            {
+                if (msg.Content.CompareTo(outstandingCaptcha.CaptchaCode) == 0)
+                {
+                    await context.Channel.DeleteMessageAsync(outstandingCaptcha.MessageID);
+                    await context.Channel.SendMessageAsync("You are now verified, thank you!");
+
+                    IGuild guild = _client.GetGuild(outstandingCaptcha.ServerID);
+                    IGuildUser user = await guild.GetUserAsync(outstandingCaptcha.UserID);
+                    IRole role = guild.GetRole(SanitiseRole(_db.ConfigSettings.Find("Roles", "Verified").Value));
+
+                    if (role != null)
+                        await user.AddRoleAsync(role);
+                }
+
+                Utilities.Utilities.OutstandingCaptchas.Remove(outstandingCaptcha);
             }
         }
     }
