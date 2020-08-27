@@ -5,12 +5,14 @@ using IELDiscordBotPOC.Classes.Database;
 using IELDiscordBotPOC.Classes.Models;
 using IELDiscordBotPOC.Classes.Modules;
 using IELDiscordBotPOC.Classes.Utilities;
+using IELDiscordBotPOC.Migrations;
 using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Metadata;
 using System.Text;
+using System.Threading.Channels;
 using System.Threading.Tasks;
 
 namespace IELDiscordBotPOC.Classes.Services
@@ -32,10 +34,28 @@ namespace IELDiscordBotPOC.Classes.Services
             _provider = services;
 
             _client.UserJoined += OnUserJoined;
+            _client.UserLeft += OnUserLeft;
             _client.MessageReceived += OnMessageReceieved;
             _client.GuildMemberUpdated += OnUserUpdated;
             _client.ReactionAdded += OnReactionAdded;
+            _client.ReactionRemoved += OnReactionRemoved;
+        }
 
+
+
+        private async Task OnReactionRemoved(Cacheable<IUserMessage, ulong> arg1, ISocketMessageChannel arg2, SocketReaction arg3)
+        {
+            DBConfigSettings config = _db.ConfigSettings.Find("Channels", "Log");
+            if (config != null)
+            {
+                ulong channelId = MakeNumeric(config.Value);
+                var message = await arg1.DownloadAsync();
+
+                CommandContext context = new CommandContext(_client, message);
+                var channel = await context.Guild.GetTextChannelAsync(channelId);
+
+                await channel.SendMessageAsync($"Reaction: {arg3.Emote} removed from message {message.Id} by {arg3.User.Value.Username}#{arg3.User.Value.Discriminator}");
+            }
         }
 
         private async Task OnReactionAdded(Cacheable<IUserMessage, ulong> arg1, ISocketMessageChannel arg2, SocketReaction arg3)
@@ -73,12 +93,27 @@ namespace IELDiscordBotPOC.Classes.Services
                 Utilities.Utilities.OutstandingTeamRequests.Remove(request);
                 await message.DeleteAsync();
             }
+            else
+            {
+                DBConfigSettings config = _db.ConfigSettings.Find("Channels", "Log");
+                if (config != null)
+                {
+                    ulong channelId = MakeNumeric(config.Value);
+                    var message = await arg1.DownloadAsync();
+
+                    CommandContext context = new CommandContext(_client, message);
+                    var channel = await context.Guild.GetTextChannelAsync(channelId);
+
+                    await channel.SendMessageAsync($"Reaction: {arg3.Emote} added to message {message.Id} by {arg3.User.Value.Username}#{arg3.User.Value.Discriminator}");
+
+                }
+            }
         }
 
-        private ulong SanitiseRole(string roleId)
+        private ulong MakeNumeric(string value)
         {
             string retVal = "";
-            foreach (char a in roleId)
+            foreach (char a in value)
             {
                 if (char.IsDigit(a))
                     retVal += a;
@@ -89,7 +124,7 @@ namespace IELDiscordBotPOC.Classes.Services
 
         private async Task HandleUserTeamSubmitted(CommandContext Context, TeamRequest request, string roleId)
         {
-            ulong roleNo = SanitiseRole(roleId);
+            ulong roleNo = MakeNumeric(roleId);
 
             IRole playerRole = Context.Guild.GetRole(roleNo);
             IRole teamRole = Context.Guild.GetRole(ulong.Parse(request.Team.Role));
@@ -101,6 +136,18 @@ namespace IELDiscordBotPOC.Classes.Services
         private async Task OnUserJoined(SocketGuildUser user)
         {
             await user.SendMessageAsync("", false, Embeds.WelcomeToIEL()).ConfigureAwait(false);
+
+            DBConfigSettings config = _db.ConfigSettings.Find("Channels", "Log");
+            if (config != null)
+            {
+                IGuild guild = user.Guild;
+                ITextChannel logChannel = user.Guild.GetTextChannel(MakeNumeric(config.Value));
+
+            }
+        }
+
+        private async Task OnUserLeft(SocketGuildUser arg)
+        {
         }
 
         private async Task OnUserUpdated(SocketUser oldUser, SocketUser newUser)
@@ -111,7 +158,7 @@ namespace IELDiscordBotPOC.Classes.Services
             var oldRoles = (oldGuildUser.Roles);
             var newRoles = (newGuildUser.Roles);
 
-            // if oldRoles does not contain Free Agent and newRoles does not contain Free Agent, send them a message in DMs.
+            // TODO: if oldRoles does not contain Free Agent and newRoles does not contain Free Agent, send them a message in DMs.
             // Ask Tutan for the cooldown
 
             //await newUser.SendMessageAsync("", false, Embeds.NewFreeAgent()).ConfigureAwait(false);

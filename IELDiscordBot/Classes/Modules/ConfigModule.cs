@@ -25,15 +25,16 @@ namespace IELDiscordBotPOC.Classes.Modules
             switch (sub)
             {
                 case "Roles":
-                    await HandleRoleConfigCommandAsync(key, value).ConfigureAwait(false);
+                case "Channels":
+                    await HandleConfigSubCommandAsync(sub, key, value).ConfigureAwait(false);
                     return;
             }
 
         }
 
-        private async Task HandleRoleConfigCommandAsync(string key, string value)
+        private async Task HandleConfigSubCommandAsync(string sub, string key, string value)
         {
-            DBConfigSettings config = _db.ConfigSettings.FirstOrDefault(config => config.Subsection == "Roles" && config.Key == key);
+            DBConfigSettings config = _db.ConfigSettings.FirstOrDefault(config => config.Subsection == sub && config.Key == key);
             if (config != null)
             {
                 if (string.IsNullOrEmpty(value))
@@ -48,7 +49,7 @@ namespace IELDiscordBotPOC.Classes.Modules
             {
                 if (string.IsNullOrEmpty(value)) ;
                 config = new DBConfigSettings();
-                config.Subsection = "Roles";
+                config.Subsection = sub;
                 config.Key = key;
                 config.Value = value;
 
