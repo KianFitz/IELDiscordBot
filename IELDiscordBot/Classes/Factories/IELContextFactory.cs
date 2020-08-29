@@ -35,7 +35,12 @@ namespace IELDiscordBotPOC.Classes.Factories
             {
                 Server = "localhost",
                 Password = "ielbotdev123",
+#if DEBUG
                 Database = "ielbot",
+#endif
+#if RELEASE
+                Database = "ielbot_live",
+#endif
                 UserID = "ielbot",
                 Port = 3306
             }

@@ -27,12 +27,13 @@ Phase 5:
 Phase 6:
   ☐ 4 Queues (don't know what this is)
   ☐ Generate and Delete VCs
-Phase 7:
-  ☐ Server Info
-  ☐ Member Info
   ☐ Discord Rank
   ☐ Music
 Phase 8:
   ☐ Website Integration
 Phase 9:
   ☐ Dashboard
+AdHoc Tasks:
+  ✔ DSN Calculation @started(20-08-27 13:17) @done(20-08-28 20:44) @lasted(1d7h27m35s)
+  ✔ Manual Peak configuration @done(20-08-28 22:04)
+  ✔ Multiple Accounts DSN Calculation @started(20-08-28 23:22) @done(20-08-29 00:10) @lasted(48m28s)

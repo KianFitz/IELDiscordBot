@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
+using IELDiscordBot.Classes.Models.TRN;
 using IELDiscordBotPOC.Classes.Models;
 using Microsoft.Extensions.Configuration;
 using System;
@@ -32,13 +33,11 @@ namespace IELDiscordBotPOC.Classes.Services
             await _client.LoginAsync(Discord.TokenType.Bot, _config["tokens:dev"]);
 #endif
 #if !DEBUG
-            await _client.LoginAsync(Discord.TokenType.Bot, _config["tokens:live"])
+            await _client.LoginAsync(Discord.TokenType.Bot, _config["tokens:live"]);
 #endif
             _client.Log += Log;
 
             await _client.StartAsync();
-
-            //_commands.AddTypeReader(typeof(TeamRequest), new TeamRequestTypeReader());
 
             await _commands.AddModulesAsync(Assembly.GetEntryAssembly(), _provider);
         }
