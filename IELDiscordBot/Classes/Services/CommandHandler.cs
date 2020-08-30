@@ -56,7 +56,7 @@ namespace IELDiscordBotPOC.Classes.Services
                 CommandContext context = new CommandContext(_client, message);
                 var channel = await context.Guild.GetTextChannelAsync(channelId);
 
-                await channel.SendMessageAsync($"Reaction: {arg3.Emote} removed from message {message.Id} by {arg3.User.Value.Username}#{arg3.User.Value.Discriminator}");
+                await channel.SendMessageAsync($"Reaction: {arg3.Emote} removed from message {message.Id} by <@!{arg3.UserId}>");
             }
         }
 
@@ -106,7 +106,7 @@ namespace IELDiscordBotPOC.Classes.Services
                     CommandContext context = new CommandContext(_client, message);
                     var channel = await context.Guild.GetTextChannelAsync(channelId);
 
-                    await channel.SendMessageAsync($"Reaction: {arg3.Emote} added to message {message.Id} by {arg3.User.Value.Username}#{arg3.User.Value.Discriminator}");
+                    await channel.SendMessageAsync($"Reaction: {arg3.Emote} added to message {message.Id} by <@!{arg3.UserId}>");
 
                 }
             }
