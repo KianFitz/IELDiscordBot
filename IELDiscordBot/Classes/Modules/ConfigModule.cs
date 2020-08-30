@@ -41,13 +41,23 @@ namespace IELDiscordBotPOC.Classes.Modules
                 {
                     _db.Remove(config);
                     await Context.Channel.SendMessageAsync("Deleted DB Setting");
+                    await _db.SaveChangesAsync().ConfigureAwait(false);
+                    return;
                 }
 
                 config.Value = value;
+                _db.Entry(config).State = Microsoft.EntityFrameworkCore.EntityState.Modified;
             }
             else
             {
-                if (string.IsNullOrEmpty(value)) ;
+                if (string.IsNullOrEmpty(value))
+                {
+                    await Context.Channel.SendMessageAsync("New DB Setting cannot have blank value.\r\n" +
+                        "Syntax: !config section key value\r\n" +
+                        "Example: !config Channels Log #test-channel");
+                    return;
+                }
+
                 config = new DBConfigSettings();
                 config.Subsection = sub;
                 config.Key = key;
