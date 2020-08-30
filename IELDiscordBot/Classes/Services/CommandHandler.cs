@@ -7,6 +7,7 @@ using IELDiscordBotPOC.Classes.Modules;
 using IELDiscordBotPOC.Classes.Utilities;
 using IELDiscordBotPOC.Migrations;
 using Microsoft.Extensions.Configuration;
+using NLog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,6 +20,7 @@ namespace IELDiscordBotPOC.Classes.Services
 {
     class CommandHandler
     {
+        private readonly Logger _log = LogManager.GetCurrentClassLogger();
         private readonly IELContext _db;
         private readonly DiscordSocketClient _client;
         private readonly CommandService _commands;
@@ -178,12 +180,12 @@ namespace IELDiscordBotPOC.Classes.Services
             int argPos = 0;
             if (msg.HasStringPrefix(_config["prefix"], ref argPos) || msg.HasMentionPrefix(_client.CurrentUser, ref argPos))
             {
-                //_log.Info($"{msg.Author.Username} (in {msg?.Channel?.Name}/{context?.Guild?.Name}) is trying to execute: " + msg.Content);
+                _log.Info($"{msg.Author.Username} (in {msg?.Channel?.Name}/{context?.Guild?.Name}) is trying to execute: " + msg.Content);
                 var result = await _commands.ExecuteAsync(context, argPos, _provider);
 
                 if (!result.IsSuccess)
                 {
-                    //_log.Error(result.ToString());
+                    _log.Error(result.ToString());
                     await msg.DeleteAsync().ConfigureAwait(false);
                 }
             }

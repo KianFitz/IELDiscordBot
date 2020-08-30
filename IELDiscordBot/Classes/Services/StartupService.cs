@@ -4,6 +4,7 @@ using Discord.WebSocket;
 using IELDiscordBot.Classes.Models.TRN;
 using IELDiscordBotPOC.Classes.Models;
 using Microsoft.Extensions.Configuration;
+using NLog;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -14,6 +15,7 @@ namespace IELDiscordBotPOC.Classes.Services
 {
     public class StartupService
     {
+        private readonly Logger _log = LogManager.GetCurrentClassLogger();
         private readonly DiscordSocketClient _client;
         private readonly CommandService _commands;
         private readonly IConfigurationRoot _config;
@@ -35,18 +37,10 @@ namespace IELDiscordBotPOC.Classes.Services
 #if !DEBUG
             await _client.LoginAsync(Discord.TokenType.Bot, _config["tokens:live"]);
 #endif
-            _client.Log += Log;
-
+            _log.Info("Bot is initialising...");
             await _client.StartAsync();
 
             await _commands.AddModulesAsync(Assembly.GetEntryAssembly(), _provider);
         }
-
-        private Task Log(LogMessage message)
-        {
-            Console.WriteLine(message.ToString());
-            return Task.CompletedTask;
-        }
-
     }
 }
