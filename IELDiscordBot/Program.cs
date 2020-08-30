@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
+using IELDiscordBot.Classes.Services;
 using IELDiscordBotPOC.Classes.Database;
 using IELDiscordBotPOC.Classes.Services;
 using Microsoft.EntityFrameworkCore;
@@ -33,12 +34,14 @@ namespace IELDiscordBotPOC
                 }))
                 .AddSingleton<StartupService>()
                 .AddSingleton<CommandHandler>()
+                .AddSingleton<LoggingService>()
                 .AddSingleton(_config)
                 .AddDbContext<IELContext>(options => options.UseMySQL(BuildConnectionString()));
 
 
             var provider = services.BuildServiceProvider();
 
+            provider.GetRequiredService<LoggingService>();
             await provider.GetRequiredService<StartupService>().StartAsync();
             provider.GetRequiredService<CommandHandler>();
 
