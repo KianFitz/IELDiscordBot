@@ -137,7 +137,7 @@ namespace IELDiscordBotPOC.Classes.Services
 
         private async Task OnUserJoined(SocketGuildUser user)
         {
-            await user.SendMessageAsync("", false, Embeds.WelcomeToIEL()).ConfigureAwait(false);
+            //await user.SendMessageAsync("", false, Embeds.WelcomeToIEL()).ConfigureAwait(false);
 
             DBConfigSettings config = _db.ConfigSettings.Find("Channels", "Log");
             if (config != null)

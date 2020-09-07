@@ -49,8 +49,8 @@ namespace IELDiscordBot.Classes.Models
 
     public class Lastupdated
     {
-        public DateTime value { get; set; }
-        public DateTime displayValue { get; set; }
+        public DateTime? value { get; set; }
+        public DateTime? displayValue { get; set; }
     }
 
     public class Segment

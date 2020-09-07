@@ -203,11 +203,14 @@ namespace IELDiscordBot.Classes.Modules
                 accounts.Add(new TRNAccount() { Platform = args[i], User = args[i + 1] });
 
             List<DSNCalculationData> calcData = new List<DSNCalculationData>();
+            int accountsLength = accounts.Count;
 
             foreach (var acc in accounts)
             {
                 string username = acc.User;
                 string platform = acc.Platform;
+
+                int accIdx = accounts.IndexOf(acc);
 
                 platform = ConvertPlatform(platform);
 
@@ -217,7 +220,13 @@ namespace IELDiscordBot.Classes.Modules
                     return;
                 }
 
-                await message.ModifyAsync(x => x.Content = $"Loading account.. {accounts.IndexOf(acc) + 1} of {accounts.Count}").ConfigureAwait(false);
+                await message.ModifyAsync(x =>
+                {
+                    x.Content = "";
+                    x.Embed = Embeds.DSNStatus(accIdx, accountsLength, "Getting Account Stats from TRN API");
+                });
+                //await message.ModifyAsync(x => x.Content = $"Loading account.. {accounts.IndexOf(acc) + 1} of {accounts.Count}").ConfigureAwait(false);
+
 
                 using (HttpClient client = new HttpClient())
                 {
@@ -228,30 +237,58 @@ namespace IELDiscordBot.Classes.Modules
                     string content = await response.Content.ReadAsStringAsync();
 
                     TRNObject obj = null;
+                    List<Segment> segments = new List<Segment>();
                     try
                     {
                         obj = JsonConvert.DeserializeObject<TRNObject>(content);
+
+                        segments.AddRange(obj.data.segments);
+                        segments.RemoveAll(x => _acceptableSeasons.Contains(x.attributes.season) == false);
+                        segments.RemoveAll(x => _acceptablePlaylists.Contains(x.attributes.playlistId) == false);
+
                     }
                     catch (Exception ex)
                     {
-                        await message.ModifyAsync(x => x.Content = $"Failed to load account. Error {ex.Message} at {ex.StackTrace} <@!301876830737006593>");
+                        if (content.Contains("We could not find the player"))
+                        {
+                            await message.ModifyAsync(x =>
+                            {
+                                x.Content = "";
+                                x.Embed = Embeds.DSNError(platform, username, $"Could not find account. Please check the spelling or try again.");
+                            });
+                        }
+                        else
+                        {
+                            await message.ModifyAsync(x =>
+                            {
+                                x.Content = "";
+                                x.Embed = Embeds.DSNError(platform, username, $"{ex.Message} at {ex.StackTrace} <@!301876830737006593>");
+                            });
+                        }
                         return;
                     }
 
-                    List<Segment> segments = new List<Segment>(obj.data.segments);
-                    segments.RemoveAll(x => _acceptableSeasons.Contains(x.attributes.season) == false);
-                    segments.RemoveAll(x => _acceptablePlaylists.Contains(x.attributes.playlistId) == false);
-
                     int playerId = obj.data.metadata.playerId;
+
+                    await message.ModifyAsync(x =>
+                    {
+                        x.Content = "";
+                        x.Embed = Embeds.DSNStatus(accIdx, accountsLength, $"Account Found. Player ID: {playerId}");
+                    });
 
                     apistring = string.Format(Constants.TRNMMRAPI, playerId);
                     response = await client.GetAsync(apistring);
                     content = await response.Content.ReadAsStringAsync();
                     content = MakeJSONFriendly(content);
 
-
                     for (int i = 0; i < _acceptableSeasons.Count - 1; i++)
                     {
+                        await message.ModifyAsync(x =>
+                        {
+                            x.Content = "";
+                            x.Embed = Embeds.DSNStatus(accIdx, accountsLength, $"Getting Season Info for Season {_acceptableSeasons[i]} from TRN MMR API");
+                        });
+
                         List<Datum> Data = new List<Datum>();
                         var segment = await GetSeasonSegment(_acceptableSeasons[i], platform, username);
                         if (segment == null)
@@ -335,6 +372,12 @@ namespace IELDiscordBot.Classes.Modules
 
             string usernameString = string.Join(',', accounts.Select(x => x.User));
             string platformString = string.Join(',', accounts.Select(x => x.Platform));
+
+            await message.ModifyAsync(x =>
+            {
+                x.Content = "";
+                x.Embed = Embeds.DSNStatus(accountsLength, accountsLength, $"Calculating...");
+            });
 
             await message.ModifyAsync(x =>
             {

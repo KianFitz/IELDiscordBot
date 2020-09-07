@@ -14,6 +14,6 @@ namespace IELDiscordBotPOC.Classes.Utilities
 
 
         public static Color SuccessColor = new Color(127, 255, 0);
-
+        public static Color FailureColor = new Color(220, 20, 60);
     }
 }
