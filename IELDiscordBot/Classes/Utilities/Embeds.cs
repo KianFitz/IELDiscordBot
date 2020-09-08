@@ -80,9 +80,9 @@ namespace IELDiscordBotPOC.Classes.Utilities
             }
 
             if (mmr2 > 0)
-                dsn = ((mmr1 * 0.75) + (mmr2 * 0.25));
+                dsn = ((mmr1 * 0.7) + (mmr2 * 0.3));
             else
-                dsn = (mmr1 * 0.75);
+                dsn = (mmr1 * 0.7);
 
             // Dia 1 threshold
             if (mmr1 >= 935)

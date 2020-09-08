@@ -23,7 +23,8 @@ namespace IELDiscordBot.Classes.Modules
     public class DSNModule : ModuleBase<SocketCommandContext>
     {
         private readonly List<int> _acceptableSeasons = new List<int>() { 12, 13, 14 };
-        private readonly List<int> _acceptablePlaylists = new List<int>() {  11, 13 };
+        private readonly List<int> _acceptablePlaylists = new List<int>() {  10, 11, 12, 13 };
+        private readonly DateTime _mmrCutoffDate = new DateTime(2020, 09, 06, 23, 59, 59);
 
         private readonly IELContext _db;
 
@@ -321,6 +322,8 @@ namespace IELDiscordBot.Classes.Modules
 
                     List<Duo> duos = new List<Duo>();
                     List<Standard> standard = new List<Standard>();
+                    List<Duel> duel = new List<Duel>();
+                    List<Solostandard> solo = new List<Solostandard>();
 
                     if (mmrobj.data.Duos != null)
                         duos.AddRange(mmrobj.data.Duos);
@@ -332,10 +335,22 @@ namespace IELDiscordBot.Classes.Modules
                     else
                         standard.Add(new Standard() { rating = 0 });
 
+                    if (mmrobj.data.SoloStandard != null)
+                        solo.AddRange(mmrobj.data.SoloStandard);
+                    else
+                        solo.Add(new Solostandard() { rating = 0 });
+
+                    if (mmrobj.data.Duel != null)
+                        duel.AddRange(mmrobj.data.Duel);
+                    else
+                        duel.Add(new Duel() { rating = 0 });
+
                     List<int> HighestMMRs = new List<int>
                     {
-                        duos.Max(x => x.rating),
-                        standard.Max(x => x.rating),
+                        duos.Where(x => x.collectDate < _mmrCutoffDate).Max(x => x.rating),
+                        standard.Where(x => x.collectDate < _mmrCutoffDate).Max(x => x.rating),
+                        duel.Where(x => x.collectDate < _mmrCutoffDate).Max(x => x.rating),
+                        solo.Where(x => x.collectDate < _mmrCutoffDate).Max(x => x.rating)
                     };
 
                     int highestMMR = HighestMMRs.Max();
