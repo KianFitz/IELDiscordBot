@@ -1,15 +1,5 @@
 ﻿using Discord;
-using IELDiscordBot.Classes.Models;
-using Microsoft.EntityFrameworkCore.Internal;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
-using Org.BouncyCastle.Bcpg.OpenPgp;
-using Renci.SshNet.Messages;
-using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
-using System.Text;
 using static IELDiscordBot.Classes.Modules.DSNModule;
 
 namespace IELDiscordBotPOC.Classes.Utilities
@@ -19,7 +9,7 @@ namespace IELDiscordBotPOC.Classes.Utilities
         internal static Embed NewFreeAgent()
         {
             EmbedBuilder builder = new EmbedBuilder()
-            { 
+            {
             };
 
             return builder.Build();
@@ -28,7 +18,7 @@ namespace IELDiscordBotPOC.Classes.Utilities
         internal static Embed WelcomeToIEL()
         {
             EmbedBuilder builder = new EmbedBuilder()
-            { 
+            {
             };
 
             return builder.Build();

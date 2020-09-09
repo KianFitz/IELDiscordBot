@@ -1,11 +1,7 @@
 ﻿using IELDiscordBotPOC.Classes.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
-using Microsoft.Extensions.Configuration;
 using MySql.Data.MySqlClient;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace IELDiscordBotPOC.Classes.Factories
 {

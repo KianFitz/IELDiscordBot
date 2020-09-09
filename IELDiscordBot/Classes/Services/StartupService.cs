@@ -1,14 +1,9 @@
-﻿using Discord;
-using Discord.Commands;
+﻿using Discord.Commands;
 using Discord.WebSocket;
-using IELDiscordBot.Classes.Models.TRN;
-using IELDiscordBotPOC.Classes.Models;
 using Microsoft.Extensions.Configuration;
 using NLog;
 using System;
-using System.Collections.Generic;
 using System.Reflection;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace IELDiscordBotPOC.Classes.Services

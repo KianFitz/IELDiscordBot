@@ -1,12 +1,6 @@
-﻿using Discord.Commands;
-using IELDiscordBot.Classes.Models;
+﻿using IELDiscordBot.Classes.Models;
 using IELDiscordBotPOC.Classes.Models;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
-using MySql.Data.MySqlClient;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace IELDiscordBotPOC.Classes.Database
 {

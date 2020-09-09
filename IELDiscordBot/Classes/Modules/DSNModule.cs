@@ -1,29 +1,27 @@
 ﻿using Discord.Commands;
 using IELDiscordBot.Classes.Models;
+using IELDiscordBot.Classes.Models.DSN;
+using IELDiscordBot.Classes.Models.DSN.Segments;
+using IELDiscordBot.Classes.Models.TRN;
+using IELDiscordBotPOC.Classes.Database;
 using IELDiscordBotPOC.Classes.Utilities;
+using Newtonsoft.Json;
+using NLog;
 using System;
 using System.Collections.Generic;
-using System.Net;
-using System.Net.Http;
-using System.Text;
-using System.Threading.Tasks;
-using Newtonsoft.Json;
-using Google.Protobuf.WellKnownTypes;
-using IELDiscordBot.Classes.Models.DSN;
-using System.Text.RegularExpressions;
-using IELDiscordBot.Classes.Models.DSN.Segments;
-using Microsoft.VisualBasic.CompilerServices;
-using IELDiscordBotPOC.Classes.Database;
 using System.Linq;
-using IELDiscordBot.Classes.Models.TRN;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
+using System.Net.Http;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 
 namespace IELDiscordBot.Classes.Modules
 {
     public class DSNModule : ModuleBase<SocketCommandContext>
     {
+        Logger _log = LogManager.GetCurrentClassLogger();
+
         private readonly List<int> _acceptableSeasons = new List<int>() { 12, 13, 14 };
-        private readonly List<int> _acceptablePlaylists = new List<int>() {  10, 11, 12, 13 };
+        private readonly List<int> _acceptablePlaylists = new List<int>() { 10, 11, 12, 13 };
         private readonly DateTime _mmrCutoffDate = new DateTime(2020, 09, 06, 23, 59, 59);
 
         private readonly IELContext _db;
@@ -77,7 +75,7 @@ namespace IELDiscordBot.Classes.Modules
         //        string apistring = string.Format(Constants.TRNAPI, platform, username);
 
         //        HttpResponseMessage response = await client.GetAsync(apistring).ConfigureAwait(false);
-                
+
         //        string content = await response.Content.ReadAsStringAsync();
 
         //        TRNObject obj = null;
@@ -200,7 +198,7 @@ namespace IELDiscordBot.Classes.Modules
             var message = await Context.Channel.SendMessageAsync("Loading...");
 
             List<TRNAccount> accounts = new List<TRNAccount>();
-            for (int i = 0; i < args.Length; i+=2)
+            for (int i = 0; i < args.Length; i += 2)
                 accounts.Add(new TRNAccount() { Platform = args[i], User = args[i + 1] });
 
             List<DSNCalculationData> calcData = new List<DSNCalculationData>();
@@ -265,6 +263,7 @@ namespace IELDiscordBot.Classes.Modules
                                 x.Content = "";
                                 x.Embed = Embeds.DSNError(platform, username, $"{ex.Message} at {ex.StackTrace} <@!301876830737006593>");
                             });
+                            _log.Error(content);
                         }
                         return;
                     }
@@ -294,13 +293,13 @@ namespace IELDiscordBot.Classes.Modules
                         var segment = await GetSeasonSegment(_acceptableSeasons[i], platform, username);
                         if (segment == null)
                         {
-                            calcData.Add(new DSNCalculationData() 
+                            calcData.Add(new DSNCalculationData()
                             {
                                 User = username,
                                 Platform = platform,
-                                Season = _acceptableSeasons[0], 
-                                GamesPlayed = 0, 
-                                MaxMMR = 0 
+                                Season = _acceptableSeasons[0],
+                                GamesPlayed = 0,
+                                MaxMMR = 0
                             });
                             continue;
                         }
@@ -345,13 +344,17 @@ namespace IELDiscordBot.Classes.Modules
                     else
                         duel.Add(new Duel() { rating = 0 });
 
-                    List<int> HighestMMRs = new List<int>
-                    {
-                        duos.Where(x => x.collectDate < _mmrCutoffDate).Max(x => x.rating),
-                        standard.Where(x => x.collectDate < _mmrCutoffDate).Max(x => x.rating),
-                        duel.Where(x => x.collectDate < _mmrCutoffDate).Max(x => x.rating),
-                        solo.Where(x => x.collectDate < _mmrCutoffDate).Max(x => x.rating)
-                    };
+                    List<int> HighestMMRs = new List<int>();
+
+                    duos = duos.Where(x => x.collectDate < _mmrCutoffDate).ToList();
+                    standard = standard.Where(x => x.collectDate < _mmrCutoffDate).ToList();
+                    duel = duel.Where(x => x.collectDate < _mmrCutoffDate).ToList();
+                    solo = solo.Where(x => x.collectDate < _mmrCutoffDate).ToList();
+
+                    HighestMMRs.Add(duos.Count == 0 ? 0 : duos.Max(x => x.rating));
+                    HighestMMRs.Add(standard.Count == 0 ? 0 : standard.Max(x => x.rating));
+                    HighestMMRs.Add(duel.Count == 0 ? 0 : duel.Max(x => x.rating));
+                    HighestMMRs.Add(solo.Count == 0 ? 0 : solo.Max(x => x.rating));
 
                     int highestMMR = HighestMMRs.Max();
                     calcData.Add(new DSNCalculationData()
@@ -372,7 +375,7 @@ namespace IELDiscordBot.Classes.Modules
             for (int i = 14; i > 11; i--)
             {
                 var results = calcData.Where(x => x.Season == i);
-                
+
                 if (results.Count() == 0)
                     continue;
 
@@ -417,7 +420,7 @@ namespace IELDiscordBot.Classes.Modules
 
         private string MakeJSONFriendly(string content)
         {
-            content = Regex.Replace(content, "\"0\":",  "\"Unranked\":");
+            content = Regex.Replace(content, "\"0\":", "\"Unranked\":");
             content = Regex.Replace(content, "\"10\":", "\"Duel\":");
             content = Regex.Replace(content, "\"11\":", "\"Duos\":");
             content = Regex.Replace(content, "\"12\":", "\"SoloStandard\":");

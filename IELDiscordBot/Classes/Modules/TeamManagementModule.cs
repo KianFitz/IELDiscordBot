@@ -3,13 +3,8 @@ using Discord.Commands;
 using Discord.WebSocket;
 using IELDiscordBotPOC.Classes.Database;
 using IELDiscordBotPOC.Classes.Models;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.ChangeTracking.Internal;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Net.Sockets;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace IELDiscordBotPOC.Classes.Modules
@@ -75,7 +70,7 @@ namespace IELDiscordBotPOC.Classes.Modules
             await message.AddReactionAsync(new Emoji("2️⃣"));
             await message.AddReactionAsync(new Emoji("3️⃣"));
 
-            Utilities.Utilities.OutstandingTeamRequests.Add(new TeamRequest() { MessageId = messageId, Team = t, User = user}) ;
+            Utilities.Utilities.OutstandingTeamRequests.Add(new TeamRequest() { MessageId = messageId, Team = t, User = user });
         }
 
         private async Task HandleAddPlayerToTeamAsync(IUser user, string teamName)
@@ -95,7 +90,7 @@ namespace IELDiscordBotPOC.Classes.Modules
                         }
                         await HandlePlayerAddConfirm(team, user).ConfigureAwait(false);
                     }
-                    catch(Exception ex)
+                    catch (Exception ex)
                     {
                         await Context.Channel.SendMessageAsync($"Failed to add to role: {ex.Message}");
                     }
@@ -107,7 +102,7 @@ namespace IELDiscordBotPOC.Classes.Modules
             }
             else
             {
-                    await Context.Channel.SendMessageAsync("Could not find team with that name.").ConfigureAwait(false);
+                await Context.Channel.SendMessageAsync("Could not find team with that name.").ConfigureAwait(false);
             }
         }
         #endregion

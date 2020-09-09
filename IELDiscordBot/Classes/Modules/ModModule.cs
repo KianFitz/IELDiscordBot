@@ -1,9 +1,5 @@
-﻿using Discord;
-using Discord.Commands;
+﻿using Discord.Commands;
 using System;
-using System.Collections.Generic;
-using System.Security;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace IELDiscordBotPOC.Classes.Modules
@@ -47,6 +43,6 @@ namespace IELDiscordBotPOC.Classes.Modules
             throw new NotImplementedException();
         }
         #endregion
-        
+
     }
 }

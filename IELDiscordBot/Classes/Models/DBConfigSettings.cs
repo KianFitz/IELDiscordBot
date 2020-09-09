@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace IELDiscordBotPOC.Classes.Models
+﻿namespace IELDiscordBotPOC.Classes.Models
 {
     public class DBConfigSettings
     {

@@ -3,17 +3,9 @@ using Discord.Commands;
 using Discord.WebSocket;
 using IELDiscordBotPOC.Classes.Database;
 using IELDiscordBotPOC.Classes.Models;
-using IELDiscordBotPOC.Classes.Modules;
-using IELDiscordBotPOC.Classes.Utilities;
-using IELDiscordBotPOC.Migrations;
 using Microsoft.Extensions.Configuration;
 using NLog;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection.Metadata;
-using System.Text;
-using System.Threading.Channels;
 using System.Threading.Tasks;
 
 namespace IELDiscordBotPOC.Classes.Services
@@ -77,12 +69,12 @@ namespace IELDiscordBotPOC.Classes.Services
                 {
                     case "1️⃣":
                         roleId = _db.ConfigSettings.Find("Roles", "Prospect").Value;
-                        break;    
-                                  
+                        break;
+
                     case "2️⃣":
                         roleId = _db.ConfigSettings.Find("Roles", "Challenger").Value;
-                        break;    
-                                  
+                        break;
+
                     case "3️⃣":
                         roleId = _db.ConfigSettings.Find("Roles", "Master").Value;
                         break;

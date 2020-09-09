@@ -1,10 +1,6 @@
 ﻿using IELDiscordBotPOC.Classes.Utilities;
 using Microsoft.Extensions.Configuration;
-using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Net.NetworkInformation;
-using System.Text;
 
 namespace IELDiscordBotPOC.Classes.Services
 {

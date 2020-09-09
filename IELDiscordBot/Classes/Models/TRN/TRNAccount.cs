@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace IELDiscordBot.Classes.Models.TRN
+﻿namespace IELDiscordBot.Classes.Models.TRN
 {
     public class TRNAccount
     {
