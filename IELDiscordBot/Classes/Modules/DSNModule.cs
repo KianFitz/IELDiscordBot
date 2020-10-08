@@ -64,106 +64,6 @@ namespace IELDiscordBot.Classes.Modules
                 await Context.Channel.SendMessageAsync("Modified manual peak");
             }
         }
-
-        //[Command("dsn")]
-        //public async Task HandleDSNCommandAsync(string platform, string username)
-        //{
-        //    using (HttpClient client = new HttpClient())
-        //    {
-        //        List<DSNCalculationData> calcData = new List<DSNCalculationData>();
-
-        //        string apistring = string.Format(Constants.TRNAPI, platform, username);
-
-        //        HttpResponseMessage response = await client.GetAsync(apistring).ConfigureAwait(false);
-
-        //        string content = await response.Content.ReadAsStringAsync();
-
-        //        TRNObject obj = null;
-        //        try
-        //        {
-        //            obj = JsonConvert.DeserializeObject<TRNObject>(content);
-        //        }
-        //        catch(Exception ex)
-        //        {
-
-        //        }
-
-        //        List<Segment> segments = new List<Segment>(obj.data.segments);
-        //        segments.RemoveAll(x => _acceptableSeasons.Contains(x.attributes.season) == false);
-        //        segments.RemoveAll(x => _acceptablePlaylists.Contains(x.attributes.playlistId) == false);
-
-        //        var gamesPlayed = segments.Select(x => new { x.attributes.season, x.stats.matchesPlayed.value }).ToList();
-
-        //        int playerId = obj.data.metadata.playerId;
-
-        //        apistring = string.Format(Constants.TRNMMRAPI, playerId);
-        //        response = await client.GetAsync(apistring);
-        //        content = await response.Content.ReadAsStringAsync();
-        //        content = MakeJSONFriendly(content);
-
-
-        //        for (int i = 0; i < _acceptableSeasons.Count - 1; i++)
-        //        {
-        //            List<Datum> Data = new List<Datum>();
-        //            var segment = await GetSeasonSegment(_acceptableSeasons[i], platform, username);
-        //            if (segment == null)
-        //            {
-        //                calcData.Add(new DSNCalculationData() 
-        //                { 
-        //                    Platform = platform, 
-        //                    User = username, 
-        //                    Season = _acceptableSeasons[0], 
-        //                    GamesPlayed = 0, 
-        //                    MaxMMR = 0 
-        //                });
-        //                continue;
-        //            }
-
-        //            Data.AddRange(segment.data);
-        //            Data.RemoveAll(x => _acceptablePlaylists.Contains(x.attributes.playlistId) == false);
-
-        //            calcData.Add(new DSNCalculationData()
-        //            {
-        //                Platform = platform,
-        //                User = username,
-        //                Season = _acceptableSeasons[i],
-        //                GamesPlayed = Data.Count > 0 ? Data.Sum(x => x.stats.matchesPlayed.value) : 0,
-        //                MaxMMR = Data.Count > 0 ? Data.Max(x => x.stats.rating.value) : 0
-        //            });
-        //        }
-
-        //        TRNMMRObject mmrobj = JsonConvert.DeserializeObject<TRNMMRObject>(content);
-
-        //        List<Duel> duels = new List<Duel>(mmrobj.data.Duel);
-        //        List<Duo> duos = new List<Duo>(mmrobj.data.Duos);
-        //        List<Standard> standard = new List<Standard>(mmrobj.data.Standard);
-        //        List<Solostandard> solostandard = new List<Solostandard>(mmrobj.data.SoloStandard);
-
-        //        List<int> HighestMMRs = new List<int>
-        //        {
-        //            duos.Max(x => x.rating),
-        //            standard.Max(x => x.rating),
-        //        };
-
-        //        int highestMMR = HighestMMRs.Max();
-        //        calcData.Add(new DSNCalculationData()
-        //        {
-        //            Season = _acceptableSeasons.Last(),
-        //            MaxMMR = highestMMR,
-        //            GamesPlayed = segments.Sum(x => x.stats.matchesPlayed.value)
-        //        });
-
-        //        List<ManualPeakOverride> peaks = _db.ManualPeakOverrides.ToList().Where(x => x.User == username && x.Platform == platform).ToList();
-        //        if (peaks.Count > 0)
-        //            foreach (var p in peaks)
-        //                calcData.First(x => x.Season == p.Season).MaxMMR = p.Peak;
-
-        //        var orderedData = calcData.OrderByDescending(x => x.Season);
-
-        //        await Context.Channel.SendMessageAsync("", false, Embeds.DSNCalculation(orderedData.ToList(), username, platform)).ConfigureAwait(false);
-        //    }
-        //}
-
         private string ConvertPlatform(string input)
         {
             input = input.ToLower();
@@ -281,7 +181,7 @@ namespace IELDiscordBot.Classes.Modules
                     content = await response.Content.ReadAsStringAsync();
                     content = MakeJSONFriendly(content);
 
-                    for (int i = 0; i < _acceptableSeasons.Count - 1; i++)
+                    for (int i = 0; i < _acceptableSeasons.Count; i++)
                     {
                         await message.ModifyAsync(x =>
                         {
@@ -357,14 +257,15 @@ namespace IELDiscordBot.Classes.Modules
                     HighestMMRs.Add(solo.Count == 0 ? 0 : solo.Max(x => x.rating));
 
                     int highestMMR = HighestMMRs.Max();
-                    calcData.Add(new DSNCalculationData()
-                    {
-                        Platform = platform,
-                        User = username,
-                        Season = _acceptableSeasons.Last(),
-                        MaxMMR = highestMMR,
-                        GamesPlayed = segments.Sum(x => x.stats.matchesPlayed.value)
-                    });
+                    //calcData.Add(new DSNCalculationData()
+                    //{
+                    //    Platform = platform,
+                    //    User = username,
+                    //    Season = _acceptableSeasons.Last(),
+                    //    MaxMMR = highestMMR,
+                    //    GamesPlayed = segments.Sum(x => x.stats.matchesPlayed.value)
+                    //});
+                    calcData.Last().MaxMMR = highestMMR;
                 }
 
                 var peaks = _db.ManualPeakOverrides.ToList().Where(x => x.User == username && x.Platform == platform);
