@@ -48,7 +48,7 @@ namespace IELDiscordBotPOC.Classes.Services
                 CommandContext context = new CommandContext(_client, message);
                 var channel = await context.Guild.GetTextChannelAsync(channelId);
 
-                await channel.SendMessageAsync($"Reaction: {arg3.Emote} removed from message {message.Id} by <@!{arg3.UserId}>");
+                await channel.SendMessageAsync($"Reaction: {arg3.Emote} removed from message {message.Id} by <@!{arg3.UserId}>!\r\nLink: https://discordapp.com/channels/{context.Guild.Id}/{message.Channel.Id}/{message.Id}");
             }
         }
 
@@ -98,7 +98,7 @@ namespace IELDiscordBotPOC.Classes.Services
                     CommandContext context = new CommandContext(_client, message);
                     var channel = await context.Guild.GetTextChannelAsync(channelId);
 
-                    await channel.SendMessageAsync($"Reaction: {arg3.Emote} added to message {message.Id} by <@!{arg3.UserId}>");
+                    await channel.SendMessageAsync($"Reaction: {arg3.Emote} added to message {message.Id} by <@!{arg3.UserId}>!\r\nLink: https://discordapp.com/channels/{context.Guild.Id}/{message.Channel.Id}/{message.Id}");
 
                 }
             }
