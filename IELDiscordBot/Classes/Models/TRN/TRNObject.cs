@@ -2,6 +2,7 @@
 
 namespace IELDiscordBot.Classes.Models
 {
+
     public class TRNObject
     {
         public Data data { get; set; }
@@ -29,7 +30,7 @@ namespace IELDiscordBot.Classes.Models
 
     public class Userinfo
     {
-        public int? userId { get; set; }
+        public object userId { get; set; }
         public bool isPremium { get; set; }
         public bool isVerified { get; set; }
         public bool isInfluencer { get; set; }
@@ -37,18 +38,21 @@ namespace IELDiscordBot.Classes.Models
         public object customAvatarUrl { get; set; }
         public object customHeroUrl { get; set; }
         public object[] socialAccounts { get; set; }
+        public object pageviews { get; set; }
+        public object isSuspicious { get; set; }
     }
 
     public class Metadata
     {
         public Lastupdated lastUpdated { get; set; }
         public int playerId { get; set; }
+        public int currentSeason { get; set; }
     }
 
     public class Lastupdated
     {
-        public DateTime? value { get; set; }
-        public DateTime? displayValue { get; set; }
+        public DateTime value { get; set; }
+        public DateTime displayValue { get; set; }
     }
 
     public class Segment
@@ -92,13 +96,13 @@ namespace IELDiscordBot.Classes.Models
 
     public class Wins
     {
-        public object? rank { get; set; }
+        public int? rank { get; set; }
         public float? percentile { get; set; }
         public string displayName { get; set; }
         public string displayCategory { get; set; }
         public string category { get; set; }
         public Metadata2 metadata { get; set; }
-        public int value { get; set; }
+        public int? value { get; set; }
         public string displayValue { get; set; }
         public string displayType { get; set; }
     }
@@ -109,13 +113,13 @@ namespace IELDiscordBot.Classes.Models
 
     public class Goals
     {
-        public object? rank { get; set; }
-        public object? percentile { get; set; }
+        public int? rank { get; set; }
+        public float? percentile { get; set; }
         public string displayName { get; set; }
         public string displayCategory { get; set; }
         public string category { get; set; }
         public Metadata3 metadata { get; set; }
-        public int value { get; set; }
+        public int? value { get; set; }
         public string displayValue { get; set; }
         public string displayType { get; set; }
     }
@@ -126,13 +130,13 @@ namespace IELDiscordBot.Classes.Models
 
     public class Mvps
     {
-        public object? rank { get; set; }
-        public object? percentile { get; set; }
+        public int? rank { get; set; }
+        public float? percentile { get; set; }
         public string displayName { get; set; }
         public string displayCategory { get; set; }
         public string category { get; set; }
         public Metadata4 metadata { get; set; }
-        public int value { get; set; }
+        public int? value { get; set; }
         public string displayValue { get; set; }
         public string displayType { get; set; }
     }
@@ -143,13 +147,13 @@ namespace IELDiscordBot.Classes.Models
 
     public class Saves
     {
-        public object? rank { get; set; }
-        public object? percentile { get; set; }
+        public int? rank { get; set; }
+        public float? percentile { get; set; }
         public string displayName { get; set; }
         public string displayCategory { get; set; }
         public string category { get; set; }
         public Metadata5 metadata { get; set; }
-        public int value { get; set; }
+        public int? value { get; set; }
         public string displayValue { get; set; }
         public string displayType { get; set; }
     }
@@ -160,13 +164,13 @@ namespace IELDiscordBot.Classes.Models
 
     public class Assists
     {
-        public object? rank { get; set; }
-        public object? percentile { get; set; }
+        public int? rank { get; set; }
+        public float? percentile { get; set; }
         public string displayName { get; set; }
         public string displayCategory { get; set; }
         public string category { get; set; }
         public Metadata6 metadata { get; set; }
-        public int value { get; set; }
+        public int? value { get; set; }
         public string displayValue { get; set; }
         public string displayType { get; set; }
     }
@@ -177,13 +181,13 @@ namespace IELDiscordBot.Classes.Models
 
     public class Shots
     {
-        public object? rank { get; set; }
-        public object? percentile { get; set; }
+        public int? rank { get; set; }
+        public float? percentile { get; set; }
         public string displayName { get; set; }
         public string displayCategory { get; set; }
         public string category { get; set; }
         public Metadata7 metadata { get; set; }
-        public int value { get; set; }
+        public int? value { get; set; }
         public string displayValue { get; set; }
         public string displayType { get; set; }
     }
@@ -194,13 +198,13 @@ namespace IELDiscordBot.Classes.Models
 
     public class Goalshotratio
     {
-        public object? rank { get; set; }
-        public object? percentile { get; set; }
+        public int? rank { get; set; }
+        public float? percentile { get; set; }
         public string displayName { get; set; }
         public string displayCategory { get; set; }
         public string category { get; set; }
         public Metadata8 metadata { get; set; }
-        public float value { get; set; }
+        public float? value { get; set; }
         public string displayValue { get; set; }
         public string displayType { get; set; }
     }
@@ -211,13 +215,13 @@ namespace IELDiscordBot.Classes.Models
 
     public class Score
     {
-        public object? rank { get; set; }
+        public int? rank { get; set; }
         public float? percentile { get; set; }
         public string displayName { get; set; }
         public string displayCategory { get; set; }
         public string category { get; set; }
         public Metadata9 metadata { get; set; }
-        public float value { get; set; }
+        public float? value { get; set; }
         public string displayValue { get; set; }
         public string displayType { get; set; }
     }
@@ -228,13 +232,13 @@ namespace IELDiscordBot.Classes.Models
 
     public class Seasonrewardlevel
     {
-        public object? rank { get; set; }
+        public object rank { get; set; }
         public float? percentile { get; set; }
         public string displayName { get; set; }
         public string displayCategory { get; set; }
         public string category { get; set; }
         public Metadata10 metadata { get; set; }
-        public int value { get; set; }
+        public int? value { get; set; }
         public string displayValue { get; set; }
         public string displayType { get; set; }
     }
@@ -247,13 +251,13 @@ namespace IELDiscordBot.Classes.Models
 
     public class Seasonrewardwins
     {
-        public object? rank { get; set; }
-        public object? percentile { get; set; }
+        public object rank { get; set; }
+        public object percentile { get; set; }
         public string displayName { get; set; }
         public string displayCategory { get; set; }
         public string category { get; set; }
         public Metadata11 metadata { get; set; }
-        public int value { get; set; }
+        public int? value { get; set; }
         public string displayValue { get; set; }
         public string displayType { get; set; }
     }
@@ -264,13 +268,13 @@ namespace IELDiscordBot.Classes.Models
 
     public class Tier
     {
-        public object? rank { get; set; }
-        public object? percentile { get; set; }
+        public object rank { get; set; }
+        public object percentile { get; set; }
         public string displayName { get; set; }
         public string displayCategory { get; set; }
         public string category { get; set; }
         public Metadata12 metadata { get; set; }
-        public int value { get; set; }
+        public int? value { get; set; }
         public string displayValue { get; set; }
         public string displayType { get; set; }
     }
@@ -279,17 +283,18 @@ namespace IELDiscordBot.Classes.Models
     {
         public string iconUrl { get; set; }
         public string name { get; set; }
+        public bool estimated { get; set; }
     }
 
     public class Division
     {
-        public object? rank { get; set; }
-        public object? percentile { get; set; }
+        public object rank { get; set; }
+        public object percentile { get; set; }
         public string displayName { get; set; }
         public string displayCategory { get; set; }
         public string category { get; set; }
         public Metadata13 metadata { get; set; }
-        public int value { get; set; }
+        public int? value { get; set; }
         public string displayValue { get; set; }
         public string displayType { get; set; }
     }
@@ -297,19 +302,20 @@ namespace IELDiscordBot.Classes.Models
     public class Metadata13
     {
         public string name { get; set; }
-        public int deltaDown { get; set; }
-        public int deltaUp { get; set; }
+        public bool estimated { get; set; }
+        public int? deltaDown { get; set; }
+        public int? deltaUp { get; set; }
     }
 
     public class Matchesplayed
     {
-        public object? rank { get; set; }
-        public object? percentile { get; set; }
+        public object rank { get; set; }
+        public object percentile { get; set; }
         public string displayName { get; set; }
         public string displayCategory { get; set; }
         public string category { get; set; }
         public Metadata14 metadata { get; set; }
-        public int value { get; set; }
+        public int? value { get; set; }
         public string displayValue { get; set; }
         public string displayType { get; set; }
     }
@@ -320,13 +326,13 @@ namespace IELDiscordBot.Classes.Models
 
     public class Winstreak
     {
-        public object? rank { get; set; }
-        public object? percentile { get; set; }
+        public object rank { get; set; }
+        public object percentile { get; set; }
         public string displayName { get; set; }
         public string displayCategory { get; set; }
         public string category { get; set; }
         public Metadata15 metadata { get; set; }
-        public int value { get; set; }
+        public int? value { get; set; }
         public string displayValue { get; set; }
         public string displayType { get; set; }
     }
@@ -344,7 +350,7 @@ namespace IELDiscordBot.Classes.Models
         public string displayCategory { get; set; }
         public string category { get; set; }
         public Metadata16 metadata { get; set; }
-        public int value { get; set; }
+        public int? value { get; set; }
         public string displayValue { get; set; }
         public string displayType { get; set; }
     }
@@ -362,7 +368,7 @@ namespace IELDiscordBot.Classes.Models
 
     public class Attributes1
     {
-        public int season { get; set; }
+        public int? season { get; set; }
     }
 
     public class Metadata17

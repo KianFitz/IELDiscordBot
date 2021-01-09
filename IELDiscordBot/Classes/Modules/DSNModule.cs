@@ -20,9 +20,9 @@ namespace IELDiscordBot.Classes.Modules
     {
         Logger _log = LogManager.GetCurrentClassLogger();
 
-        private readonly List<int> _acceptableSeasons = new List<int>() { 12, 13, 14 };
-        private readonly List<int> _acceptablePlaylists = new List<int>() { 10, 11, 12, 13 };
-        private readonly DateTime _mmrCutoffDate = new DateTime(2020, 09, 06, 23, 59, 59);
+        private readonly List<int> _acceptableSeasons = new List<int>() { 14, 15, 16 };
+        private readonly List<int> _acceptablePlaylists = new List<int>() { 11, 13 };
+        private readonly DateTime _mmrCutoffDate = new DateTime(2021, 09, 06, 23, 59, 59);
 
         private readonly IELContext _db;
 
