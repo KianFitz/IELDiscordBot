@@ -607,6 +607,25 @@ namespace IELDiscordBot.Classes.Services
             return "";
         }
 
+        internal void PlayerInDiscord(List<object> obj, int row)
+        {
+            ValueRange v = new ValueRange();
+            v.MajorDimension = "ROWS";
+            v.Values = new List<IList<object>> { obj };
+            SpreadsheetsResource.ValuesResource.UpdateRequest u = service.Spreadsheets.Values.Update(v, SpreadsheetID, $"DSN Hub!H{row}");//:O{idx+1}");
+            u.ValueInputOption = SpreadsheetsResource.ValuesResource.UpdateRequest.ValueInputOptionEnum.USERENTERED;
+            UpdateValuesResponse res = u.Execute();
+        }
+
+        internal void SignupAccepted(List<object> obj, int row)
+        {
+            ValueRange v = new ValueRange();
+            v.MajorDimension = "ROWS";
+            v.Values = new List<IList<object>> { obj };
+            SpreadsheetsResource.ValuesResource.UpdateRequest u = service.Spreadsheets.Values.Update(v, SpreadsheetID, $"DSN Hub!R{row}");//:O{idx+1}");
+            u.ValueInputOption = SpreadsheetsResource.ValuesResource.UpdateRequest.ValueInputOptionEnum.USERENTERED;
+            UpdateValuesResponse res = u.Execute();
+        }
     }
 }
 
