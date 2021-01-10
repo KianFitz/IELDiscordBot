@@ -1,5 +1,8 @@
 ﻿using Discord;
+using IELDiscordBot.Classes.Services;
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using static IELDiscordBot.Classes.Modules.DSNModule;
 
 namespace IELDiscordBotPOC.Classes.Utilities
@@ -46,52 +49,116 @@ namespace IELDiscordBotPOC.Classes.Utilities
             return builder.Build();
         }
 
-        internal static Embed DSNCalculation(List<DSNCalculationData> data, string user, string platform)
+        internal static Embed DSNCalculation(List<CalcData> data, string user, string platform, out List<object> obj)
         {
-            int mmr1 = 0;
-            int mmr2 = 0;
-            double dsn = 0;
-            string gp = "";
-            string mmr = "";
-            foreach (var d in data)
+            int S14Peak = 0; //alcData.Where(x => x.Season == 14).Max(y => y.Ratings).First();
+            int S15Peak = 0; //alcData.Where(x => x.Season == 15).Max(y => y.Ratings).First();
+            int S16Peak = 0; //CalcData.Where(x => x.Season == 16).Max(y => y.Ratings).First();
+
+            for (int season = 14; season < 17; season++)
             {
-                gp += $"Season {d.Season}: `{d.GamesPlayed}`\n";
-                mmr += $"Season {d.Season}: `{d.MaxMMR}`\n";
-
-                if (d.MaxMMR > mmr1)
+                int highestVal = 0;
+                foreach (var y in data)
                 {
-                    if (mmr1 > mmr2)
-                        mmr2 = mmr1;
+                    if (y.Ratings is null)
+                        continue;
 
-                    mmr1 = d.MaxMMR;
+                    if (y.Season == season)
+                    {
+                        highestVal = Math.Max(highestVal, y.Ratings.Count > 0 ? y.Ratings.Max() : 0);
+                    }
+                    else
+                    {
+                        continue;
+                    }
                 }
-                else if (d.MaxMMR > mmr2)
-                    mmr2 = d.MaxMMR;
+                switch (season)
+                {
+                    case 14:
+                        {
+                            S14Peak = highestVal;
+                            break;
+                        }
+                    case 15:
+                        {
+                            S15Peak = highestVal;
+                            break;
+                        }
+                    case 16:
+                        {
+                            S16Peak = highestVal;
+                            break;
+                        }
+                }
             }
 
-            if (mmr2 > 0)
-                dsn = ((mmr1 * 0.7) + (mmr2 * 0.3));
+            int peakS = 14;
+            int sPeakS = 0;
+
+            int highestPeak = S14Peak;
+            int secondHighestPeak = 0;
+            if (S15Peak > highestPeak)
+            {
+                secondHighestPeak = highestPeak;
+                sPeakS = 14;
+                highestPeak = S15Peak;
+            }
             else
-                dsn = (mmr1 * 0.7);
+            {
+                secondHighestPeak = S15Peak;
+                sPeakS = 15;
+            }
+            if (S16Peak > highestPeak)
+            {
+                secondHighestPeak = highestPeak;
+                sPeakS = peakS;
+                highestPeak = S16Peak;
+                peakS = 16;
+            }
+            else if (S16Peak > secondHighestPeak)
+            {
+                secondHighestPeak = S16Peak;
+                sPeakS = 16;
+            }
+
+            secondHighestPeak = Math.Max(secondHighestPeak, highestPeak - 200);
+
+            if (sPeakS == 14)
+                S14Peak = secondHighestPeak;
+            else if (sPeakS == 15)
+                S15Peak = secondHighestPeak;
+            else if (sPeakS == 16)
+                S16Peak = secondHighestPeak;
+
+            int s14Games = data.Where(x => x.Season == 14).Sum(x => x.GamesPlayed);
+            int s15Games = data.Where(x => x.Season == 15).Sum(x => x.GamesPlayed);
+            int s16Games = data.Where(x => x.Season == 16).Sum(x => x.GamesPlayed);
+
+            double dsn = (highestPeak * 0.7) + (secondHighestPeak * 0.3);
 
             // Dia 1 threshold
-            if (mmr1 >= 935)
-            {
-                if (dsn < 1100)
-                    dsn = 1100;
-            }
-            else
-                dsn = 0;
 
             string finalString = $"ID: `{user}`\nPlatform: `{platform}`\n";
             finalString += "\n**Games Played:**\n";
-            finalString += gp;
-            finalString += "\n**MMRs:**\n";
-            finalString += mmr;
-            finalString += $"\n**DSN:** `{(dsn > 0 ? dsn.ToString() : "Illegal. Player has not reached Diamond 1!")}`";
-            if (mmr2 == 0)
-                finalString += $"\n**Only 1 season peak found!!**";
+            finalString += $"\n**Season 16: `{s16Games}`**";
+            finalString += $"\n**Season 15: `{s15Games}`**";
+            finalString += $"\n**Season 14: `{s14Games}`**";
+            finalString += $"\n**MMRs:**\n";
+            finalString += $"\n**Season 16: `{S16Peak}`**";
+            finalString += $"\n**Season 15: `{S15Peak}`**";
+            finalString += $"\n**Season 14: `{S14Peak}`**";
+            finalString += $"\n**DSN:** `{dsn}`";
+            finalString += $"\n\n\n**Sheet has been updated.**";
 
+            obj = new List<object>();
+            obj.Add(s14Games);
+            obj.Add(s15Games);
+            obj.Add(s16Games);
+            obj.Add(null);
+            //obj.Add($"=IFS(ISBLANK(K{idx + 1});;AND(K{idx + 1}>=150;AND(J{idx + 1}>=150;I{idx + 1}>=150));\"Games Verified\"; AND(K{idx + 1}<=150;AND(J{idx + 1}>=150;I{idx + 1}>=150));\"Min Games S2 / 16 not reached\"; OR(J{idx + 1}<=150;I{idx + 1}<=150);\"Investigate App\")");
+            obj.Add(S14Peak);
+            obj.Add(S15Peak);
+            obj.Add(S16Peak);
 
             EmbedBuilder builder = new EmbedBuilder()
             {

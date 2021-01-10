@@ -3,6 +3,7 @@ using IELDiscordBot.Classes.Models;
 using IELDiscordBot.Classes.Models.DSN;
 using IELDiscordBot.Classes.Models.DSN.Segments;
 using IELDiscordBot.Classes.Models.TRN;
+using IELDiscordBot.Classes.Services;
 using IELDiscordBotPOC.Classes.Database;
 using IELDiscordBotPOC.Classes.Utilities;
 using Newtonsoft.Json;
@@ -22,22 +23,43 @@ namespace IELDiscordBot.Classes.Modules
 
         private readonly List<int> _acceptableSeasons = new List<int>() { 14, 15, 16 };
         private readonly List<int> _acceptablePlaylists = new List<int>() { 11, 13 };
-        private readonly DateTime _mmrCutoffDate = new DateTime(2021, 09, 06, 23, 59, 59);
+        private readonly DSNCalculatorService _service;
+
+        public DSNModule(DSNCalculatorService service, IELContext db)
+        {
+            _service = service;
+            _db = db;
+
+        }
+
+        internal enum Playlist
+        {
+            TWOS = 13,
+            THREES = 14,
+        }
+
+        enum Seasons
+        {
+            S14 = 0,
+            S15 = 1,
+            S16 = 2
+        }
+
+        DateTime[] cutOffDates = new DateTime[]
+        {
+            new DateTime(2020, 09, 23),
+            new DateTime(2020, 12, 09),
+            new DateTime(2021, 03, 31)
+        };
 
         private readonly IELContext _db;
 
-        public DSNModule(IELContext db)
+        internal struct CalcData
         {
-            _db = db;
-        }
-
-        internal class DSNCalculationData
-        {
-            public string User;
-            public string Platform;
-            public int Season;
-            public int GamesPlayed;
-            public int MaxMMR;
+            internal int Season;
+            internal Playlist Playlist;
+            internal List<int> Ratings;
+            internal int GamesPlayed;
         }
 
         [Command("manualpeak")]
@@ -86,7 +108,7 @@ namespace IELDiscordBot.Classes.Modules
         }
 
         [Command("dsn")]
-        public async Task HandleDSNCommandAsync(params string[] args)
+        public async Task HandleDSNCommandAsync(int row, params string[] args)
         {
             if (args.Length % 2 != 0)
             {
@@ -101,7 +123,7 @@ namespace IELDiscordBot.Classes.Modules
             for (int i = 0; i < args.Length; i += 2)
                 accounts.Add(new TRNAccount() { Platform = args[i], User = args[i + 1] });
 
-            List<DSNCalculationData> calcData = new List<DSNCalculationData>();
+            List<CalcData> calcData = new List<CalcData>();
             int accountsLength = accounts.Count;
 
             foreach (var acc in accounts)
@@ -135,36 +157,18 @@ namespace IELDiscordBot.Classes.Modules
 
                     string content = await response.Content.ReadAsStringAsync();
 
+                    if (string.IsNullOrEmpty(content)) return;
+                    if (content.ToLower().Contains("we could not find the player"))
+                        return;
+
                     TRNObject obj = null;
-                    List<Segment> segments = new List<Segment>();
                     try
                     {
                         obj = JsonConvert.DeserializeObject<TRNObject>(content);
-
-                        segments.AddRange(obj.data.segments);
-                        segments.RemoveAll(x => _acceptableSeasons.Contains(x.attributes.season) == false);
-                        segments.RemoveAll(x => _acceptablePlaylists.Contains(x.attributes.playlistId) == false);
-
                     }
                     catch (Exception ex)
                     {
-                        if (content.Contains("We could not find the player"))
-                        {
-                            await message.ModifyAsync(x =>
-                            {
-                                x.Content = "";
-                                x.Embed = Embeds.DSNError(platform, username, $"Could not find account. Please check the spelling or try again.");
-                            });
-                        }
-                        else
-                        {
-                            await message.ModifyAsync(x =>
-                            {
-                                x.Content = "";
-                                x.Embed = Embeds.DSNError(platform, username, $"{ex.Message} at {ex.StackTrace} <@!301876830737006593>");
-                            });
-                            _log.Error(content);
-                        }
+                        _log.Error(ex);
                         return;
                     }
 
@@ -181,110 +185,26 @@ namespace IELDiscordBot.Classes.Modules
                     content = await response.Content.ReadAsStringAsync();
                     content = MakeJSONFriendly(content);
 
-                    for (int i = 0; i < _acceptableSeasons.Count; i++)
+                    TRNMMRObject mmrObj = JsonConvert.DeserializeObject<TRNMMRObject>(content);
+
+                    List<CalcData> Data = new List<CalcData>
                     {
-                        await message.ModifyAsync(x =>
-                        {
-                            x.Content = "";
-                            x.Embed = Embeds.DSNStatus(accIdx, accountsLength, $"Getting Season Info for Season {_acceptableSeasons[i]} from TRN MMR API");
-                        });
+                        await GetCalcDataForSegmentAsync(platform, username, 14, Playlist.TWOS, mmrObj),
+                        await GetCalcDataForSegmentAsync(platform, username, 14, Playlist.THREES, mmrObj),
+                        await GetCalcDataForSegmentAsync(platform, username, 15, Playlist.TWOS, mmrObj),
+                        await GetCalcDataForSegmentAsync(platform, username, 15, Playlist.THREES, mmrObj),
+                        await GetCalcDataForSegmentAsync(platform, username, 16, Playlist.TWOS, mmrObj),
+                        await GetCalcDataForSegmentAsync(platform, username, 16, Playlist.THREES, mmrObj)
+                    };
 
-                        List<Datum> Data = new List<Datum>();
-                        var segment = await GetSeasonSegment(_acceptableSeasons[i], platform, username);
-                        if (segment == null)
-                        {
-                            calcData.Add(new DSNCalculationData()
-                            {
-                                User = username,
-                                Platform = platform,
-                                Season = _acceptableSeasons[0],
-                                GamesPlayed = 0,
-                                MaxMMR = 0
-                            });
-                            continue;
-                        }
+                    await message.ModifyAsync(x =>
+                    {
+                        x.Content = "";
+                        x.Embed = Embeds.DSNStatus(accountsLength, accountsLength, $"Calculating...");
+                    });
 
-                        Data.AddRange(segment.data);
-                        Data.RemoveAll(x => _acceptablePlaylists.Contains(x.attributes.playlistId) == false);
-
-                        calcData.Add(new DSNCalculationData()
-                        {
-                            User = username,
-                            Platform = platform,
-                            Season = _acceptableSeasons[i],
-                            GamesPlayed = Data.Count > 0 ? Data.Sum(x => x.stats.matchesPlayed.value) : 0,
-                            MaxMMR = Data.Count > 0 ? Data.Max(x => x.stats.rating.value) : 0
-                        });
-                    }
-
-                    TRNMMRObject mmrobj = JsonConvert.DeserializeObject<TRNMMRObject>(content);
-
-                    List<Duo> duos = new List<Duo>();
-                    List<Standard> standard = new List<Standard>();
-                    List<Duel> duel = new List<Duel>();
-                    List<Solostandard> solo = new List<Solostandard>();
-
-                    if (mmrobj.data.Duos != null)
-                        duos.AddRange(mmrobj.data.Duos);
-                    else
-                        duos.Add(new Duo() { rating = 0 });
-
-                    if (mmrobj.data.Standard != null)
-                        standard.AddRange(mmrobj.data.Standard);
-                    else
-                        standard.Add(new Standard() { rating = 0 });
-
-                    if (mmrobj.data.SoloStandard != null)
-                        solo.AddRange(mmrobj.data.SoloStandard);
-                    else
-                        solo.Add(new Solostandard() { rating = 0 });
-
-                    if (mmrobj.data.Duel != null)
-                        duel.AddRange(mmrobj.data.Duel);
-                    else
-                        duel.Add(new Duel() { rating = 0 });
-
-                    List<int> HighestMMRs = new List<int>();
-
-                    duos = duos.Where(x => x.collectDate < _mmrCutoffDate).ToList();
-                    standard = standard.Where(x => x.collectDate < _mmrCutoffDate).ToList();
-                    duel = duel.Where(x => x.collectDate < _mmrCutoffDate).ToList();
-                    solo = solo.Where(x => x.collectDate < _mmrCutoffDate).ToList();
-
-                    HighestMMRs.Add(duos.Count == 0 ? 0 : duos.Max(x => x.rating));
-                    HighestMMRs.Add(standard.Count == 0 ? 0 : standard.Max(x => x.rating));
-                    HighestMMRs.Add(duel.Count == 0 ? 0 : duel.Max(x => x.rating));
-                    HighestMMRs.Add(solo.Count == 0 ? 0 : solo.Max(x => x.rating));
-
-                    int highestMMR = HighestMMRs.Max();
-                    //calcData.Add(new DSNCalculationData()
-                    //{
-                    //    Platform = platform,
-                    //    User = username,
-                    //    Season = _acceptableSeasons.Last(),
-                    //    MaxMMR = highestMMR,
-                    //    GamesPlayed = segments.Sum(x => x.stats.matchesPlayed.value)
-                    //});
-                    calcData.Last().MaxMMR = highestMMR;
+                    calcData.AddRange(Data);
                 }
-
-                var peaks = _db.ManualPeakOverrides.ToList().Where(x => x.User == username && x.Platform == platform);
-                if (peaks.Count() > 0)
-                    foreach (var p in peaks)
-                        calcData.First(x => x.Season == p.Season && x.User == username && x.Platform == platform).MaxMMR = p.Peak;
-            }
-            for (int i = 14; i > 11; i--)
-            {
-                var results = calcData.Where(x => x.Season == i);
-
-                if (results.Count() == 0)
-                    continue;
-
-                int maxMMR = results.Max(x => x.MaxMMR);
-                int totalGames = results.Sum(x => x.GamesPlayed);
-
-                calcData.RemoveAll(x => x.MaxMMR != maxMMR && x.Season == i);
-                calcData.First(x => x.Season == i).GamesPlayed = totalGames;
             }
 
             var orderedData = calcData.OrderByDescending(x => x.Season);
@@ -292,18 +212,21 @@ namespace IELDiscordBot.Classes.Modules
             string usernameString = string.Join(',', accounts.Select(x => x.User));
             string platformString = string.Join(',', accounts.Select(x => x.Platform));
 
-            await message.ModifyAsync(x =>
-            {
-                x.Content = "";
-                x.Embed = Embeds.DSNStatus(accountsLength, accountsLength, $"Calculating...");
-            });
+            List<object> obj1 = new List<object>();
 
             await message.ModifyAsync(x =>
             {
                 x.Content = "";
-                x.Embed = Embeds.DSNCalculation(orderedData.ToList(), usernameString, platformString);
+                x.Embed = Embeds.DSNCalculation(orderedData.ToList(), usernameString, platformString, out List<object> obj);
+
+                obj1.AddRange(obj);
+
             }).ConfigureAwait(false);
 
+            obj1[3] = $"=IFS(ISBLANK(K{row});;OR(K{row}<20;J{row}<20;I{row}<20);\"Investigate App\";OR(K{row}>=150;J{row}>=200;I{row}>= 350);\"Games Verified\";AND(K{row}<150;J{row}<200;I{row}<350); \"Min Games not reached\")";
+            //obj1[3] = $"=IFS(ISBLANK(K{row});;AND(K{row}>=150;AND(J{row}>=150;I{row}>=150));\"Games Verified\"; AND(K{row}<=150;AND(J{row}>=150;I{row}>=150));\"Min Games S2 / 16 not reached\"; OR(J{row}<=150;I{row}<=150);\"Investigate App\")";
+
+            await _service.UpdateSpreadSheet(obj1, row);
             //await Context.Channel.SendMessageAsync("", false, Embeds.DSNCalculation(orderedData.ToList(), usernameString, platformString)).ConfigureAwait(false);
         }
 
@@ -317,6 +240,73 @@ namespace IELDiscordBot.Classes.Modules
                 var responseString = await response.Content.ReadAsStringAsync();
                 return JsonConvert.DeserializeObject<TRNSegment>(responseString);
             }
+        }
+
+        async Task<CalcData> GetCalcDataForSegmentAsync(string platform, string username, int season, Playlist playlist, TRNMMRObject obj)
+        {
+            CalcData retVal = new CalcData();
+
+            retVal.Playlist = playlist;
+            retVal.Season = season;
+
+            DateTime cutOff = DateTime.Now;
+            DateTime seasonStartDate = new DateTime(2020, 01, 01);
+
+            switch (season)
+            {
+                case 14:
+                    {
+                        cutOff = cutOffDates[(int)Seasons.S14];
+                        break;
+                    }
+                case 15:
+                    {
+                        cutOff = cutOffDates[(int)Seasons.S15];
+                        seasonStartDate = cutOffDates[(int)Seasons.S14].AddDays(1);
+                        break;
+                    }
+                case 16:
+                    {
+                        cutOff = cutOffDates[(int)Seasons.S16];
+                        seasonStartDate = cutOffDates[(int)Seasons.S15].AddDays(1);
+                        break;
+                    }
+            }
+
+            List<Datum> Datam = new List<Datum>();
+            var segment = await GetSeasonSegment(season, platform, username);
+            if (segment == null)
+                retVal.GamesPlayed = 0;
+            else
+            {
+                Datam.AddRange(segment.data);
+                Datam.RemoveAll(x => _acceptablePlaylists.Contains(x.attributes.playlistId) == false);
+                retVal.GamesPlayed = Datam.Count > 0 ? Datam.Sum(x => x.stats.matchesPlayed.value) : 0;
+            }
+
+
+            if (playlist == Playlist.TWOS)
+            {
+                if (obj.data.Duos != null)
+                {
+                    List<Duo> data = new List<Duo>(obj.data.Duos);
+                    data = data.Where(x => x.collectDate < cutOff && x.collectDate > seasonStartDate).ToList();
+                    retVal.Ratings = data.Select(x => x.rating).ToList();
+                    retVal.GamesPlayed = Datam.Count > 0 ? Datam[0].stats.matchesPlayed.value : 0;
+                }
+            }
+            if (playlist == Playlist.THREES)
+            {
+                if (obj.data.Standard != null)
+                {
+                    List<Standard> data = new List<Standard>(obj.data.Standard);
+                    data = data.Where(x => x.collectDate < cutOff && x.collectDate > seasonStartDate).ToList();
+                    retVal.Ratings = data.Select(x => x.rating).ToList();
+                    retVal.GamesPlayed = Datam.Count > 0 ? Datam[1].stats.matchesPlayed.value : 0;
+                }
+            }
+
+            return retVal;
         }
 
         private string MakeJSONFriendly(string content)
