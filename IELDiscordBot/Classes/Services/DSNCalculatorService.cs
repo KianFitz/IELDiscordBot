@@ -68,6 +68,11 @@ namespace IELDiscordBot.Classes.Services
             _client = client;
             _config = config;
             Setup();
+            service = new SheetsService(new BaseClientService.Initializer()
+            {
+                HttpClientInitializer = _sheetsCredential,
+                ApplicationName = ApplicationName
+            });
             _timer = new Timer(async _ =>
             {
                 await ProcessNewSignupsAsync().ConfigureAwait(false);
@@ -102,7 +107,7 @@ namespace IELDiscordBot.Classes.Services
             S16Peak = 14,
             TotalPeak = 15,
             DSN = 22,
-            League = 23,
+            League = 24,
             Notes = 32
         }
 
@@ -138,11 +143,7 @@ namespace IELDiscordBot.Classes.Services
 
         private async Task ProcessNewSignupsAsync()
         {
-            service = new SheetsService(new BaseClientService.Initializer()
-            {
-                HttpClientInitializer = _sheetsCredential,
-                ApplicationName = ApplicationName
-            });
+
 
             SpreadsheetsResource.ValuesResource.GetRequest request =
                 service.Spreadsheets.Values.Get(SpreadsheetID, "DSN Hub!A:AH");
@@ -598,7 +599,7 @@ namespace IELDiscordBot.Classes.Services
             {
                 IList<object> r = _latestValues[row];
 
-                if (r[(int)ColumnIDs.Discord].ToString() == discordUsername)
+                if (r[(int)ColumnIDs.Discord].ToString().ToLower() == discordUsername.ToLower())
                 {
                     return r[(int)ColumnIDs.League].ToString();
                 }
@@ -617,12 +618,26 @@ namespace IELDiscordBot.Classes.Services
             UpdateValuesResponse res = u.Execute();
         }
 
-        internal void SignupAccepted(List<object> obj, int row)
+        internal async Task SignupAccepted(List<object> obj, int row)
         {
+            await Task.Delay(3000);
+
             ValueRange v = new ValueRange();
             v.MajorDimension = "ROWS";
             v.Values = new List<IList<object>> { obj };
             SpreadsheetsResource.ValuesResource.UpdateRequest u = service.Spreadsheets.Values.Update(v, SpreadsheetID, $"DSN Hub!R{row}");//:O{idx+1}");
+            u.ValueInputOption = SpreadsheetsResource.ValuesResource.UpdateRequest.ValueInputOptionEnum.USERENTERED;
+            UpdateValuesResponse res = u.Execute();
+        }
+
+        internal async Task FARoleAssigned(List<object> obj, int row)
+        {
+            await Task.Delay(3000);
+
+            ValueRange v = new ValueRange();
+            v.MajorDimension = "ROWS";
+            v.Values = new List<IList<object>> { obj };
+            SpreadsheetsResource.ValuesResource.UpdateRequest u = service.Spreadsheets.Values.Update(v, SpreadsheetID, $"DSN Hub!Z{row}");//:O{idx+1}");
             u.ValueInputOption = SpreadsheetsResource.ValuesResource.UpdateRequest.ValueInputOptionEnum.USERENTERED;
             UpdateValuesResponse res = u.Execute();
         }

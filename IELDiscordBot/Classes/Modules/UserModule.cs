@@ -19,13 +19,16 @@ namespace IELDiscordBotPOC.Classes.Modules
         ulong AcademyRoleID = 797537384022409256;
         ulong AppsTeamID = 472298606259339267;
 
+        ulong GMRole = 472145107056066580;
+
 
         public UserModule(DSNCalculatorService service)
         {
             this.service = service;
         }
 
-        public async Task AcceptPlayerAsync(IGuildUser mentionedUser, int row)
+        [Command("acceptplayer")]
+        public async Task AcceptPlayerAsync(string username, int row)
         {
             IUser user = Context.User;
             IGuildUser caller = Context.Guild.GetUser(user.Id);
@@ -35,8 +38,18 @@ namespace IELDiscordBotPOC.Classes.Modules
                 return;
             }
 
-            SocketGuildUser guildUser = (mentionedUser as SocketGuildUser);
-            string league = service.GetLeagueAsync(guildUser.Username + "#" + guildUser.DiscriminatorValue);
+            var s = username.Split("#");
+
+            SocketGuildUser guildUser = Context.Guild.Users.FirstOrDefault(x => x.Username.ToLower() == s[0].ToLower() && x.DiscriminatorValue == ushort.Parse(s[1]));
+            if (guildUser is null)
+            {
+                await Context.Channel.SendMessageAsync($"Unable to find user {username} in Discord.");
+                return;
+            }
+
+            bool isGm = (guildUser.Roles.FirstOrDefault(x => x.Id == GMRole) != null);
+
+            string league = service.GetLeagueAsync(guildUser.Username + "#" + s[1]);
             if (league != "")
             {
                 IRole roleToAssign = null;
@@ -66,16 +79,19 @@ namespace IELDiscordBotPOC.Classes.Modules
                         return;
                 }
 
-                await guildUser.ModifyAsync(x =>
+                if (isGm == false)
                 {
-                    x.Nickname = $"[FA] {(x.Nickname.IsSpecified ? guildUser.Username : x.Nickname)}";
-                });
+                    await guildUser.ModifyAsync(x =>
+                    {
+                        x.Nickname = $"[FA] {(x.Nickname.IsSpecified ? x.Nickname : guildUser.Username)}";
+                    });
 
-                await guildUser.AddRoleAsync(roleToAssign).ConfigureAwait(false);
+                    await guildUser.AddRoleAsync(roleToAssign).ConfigureAwait(false);
 
-                ITextChannel channel = Context.Guild.GetTextChannel(FAStatusChannel);
-                await channel.SendMessageAsync($"{guildUser.Mention} you have been accepted to the IEL!");
-                await Context.Channel.SendMessageAsync($"Player {guildUser.Username}#{guildUser.DiscriminatorValue} accepted!");
+                    ITextChannel channel = Context.Guild.GetTextChannel(FAStatusChannel);
+                    await channel.SendMessageAsync($"{guildUser.Mention} you have been accepted to the IEL!");
+                }
+                await Context.Channel.SendMessageAsync($"Player {guildUser.Username}#{guildUser.DiscriminatorValue} accepted! (GM: {isGm})");
 
                 List<object> obj = new List<object>();
 
@@ -84,17 +100,24 @@ namespace IELDiscordBotPOC.Classes.Modules
 
                 obj.Clear();
 
-                service.SignupAccepted(obj, row); 
-
                 obj.Add(true);
                 obj.Add("");
                 obj.Add(true);
                 obj.Add(true);
                 obj.Add(true);
+
+                await service.SignupAccepted(obj, row);
+
+                obj.Clear();
+
+                obj.Add(true);
+                obj.Add(true);
+
+                await service.FARoleAssigned(obj, row);
             }
             else
             {
-                await Context.Channel.SendMessageAsync($"Unable to find user {guildUser.Username}#{guildUser.DiscriminatorValue}");
+                await Context.Channel.SendMessageAsync($"League column for user {username} is empty OR {username} cannot be found in the spreadsheet.");
             }
         }
     }
