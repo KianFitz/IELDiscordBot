@@ -526,37 +526,44 @@ namespace IELDiscordBot.Classes.Services
                     }
             }
 
-            List<Datum> Datam = new List<Datum>();
-            var segment = await GetSeasonSegment(season, platform, username);
-            if (segment == null)
-                retVal.GamesPlayed = 0;
-            else
+            try
             {
-                Datam.AddRange(segment.data);
-                Datam.RemoveAll(x => _acceptablePlaylists.Contains(x.attributes.playlistId) == false);
-                retVal.GamesPlayed = Datam.Count > 0 ? Datam.Sum(x => x.stats.matchesPlayed.value) : 0;
-            }
+                List<Datum> Datam = new List<Datum>();
+                var segment = await GetSeasonSegment(season, platform, username);
+                if (segment == null)
+                    retVal.GamesPlayed = 0;
+                else
+                {
+                    Datam.AddRange(segment.data);
+                    Datam.RemoveAll(x => _acceptablePlaylists.Contains(x.attributes.playlistId) == false);
+                    retVal.GamesPlayed = Datam.Count > 0 ? Datam.Sum(x => x.stats.matchesPlayed.value) : 0;
+                }
 
 
-            if (playlist == Playlist.TWOS)
-            {
-                if (obj.data.Duos != null)
+                if (playlist == Playlist.TWOS)
                 {
-                    List<Duo> data = new List<Duo>(obj.data.Duos);
-                    data = data.Where(x => x.collectDate < cutOff && x.collectDate > seasonStartDate).ToList();
-                    retVal.Ratings = data.Select(x => x.rating).ToList();
-                    retVal.GamesPlayed = Datam.Count > 0 ? Datam[0].stats.matchesPlayed.value : 0;
+                    if (obj.data.Duos != null)
+                    {
+                        List<Duo> data = new List<Duo>(obj.data.Duos);
+                        data = data.Where(x => x.collectDate < cutOff && x.collectDate > seasonStartDate).ToList();
+                        retVal.Ratings = data.Select(x => x.rating).ToList();
+                        retVal.GamesPlayed = Datam.Count > 0 ? Datam[0].stats.matchesPlayed.value : 0;
+                    }
+                }
+                if (playlist == Playlist.THREES)
+                {
+                    if (obj.data.Standard != null)
+                    {
+                        List<Standard> data = new List<Standard>(obj.data.Standard);
+                        data = data.Where(x => x.collectDate < cutOff && x.collectDate > seasonStartDate).ToList();
+                        retVal.Ratings = data.Select(x => x.rating).ToList();
+                        retVal.GamesPlayed = Datam.Count > 0 ? Datam[1].stats.matchesPlayed.value : 0;
+                    }
                 }
             }
-            if (playlist == Playlist.THREES)
+            catch(Exception ex)
             {
-                if (obj.data.Standard != null)
-                {
-                    List<Standard> data = new List<Standard>(obj.data.Standard);
-                    data = data.Where(x => x.collectDate < cutOff && x.collectDate > seasonStartDate).ToList();
-                    retVal.Ratings = data.Select(x => x.rating).ToList();
-                    retVal.GamesPlayed = Datam.Count > 0 ? Datam[1].stats.matchesPlayed.value : 0;
-                }
+                _log.Error(ex);
             }
 
             return retVal;
