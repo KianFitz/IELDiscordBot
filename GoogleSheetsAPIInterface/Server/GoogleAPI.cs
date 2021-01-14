@@ -90,7 +90,7 @@ namespace GoogleSheetsAPIInterface.Network
 
                 if (r[2].ToString().ToLower() == discordUsername.ToLower())
                 {
-                    return r[2].ToString();
+                    return r[24].ToString();
                 }
             }
 

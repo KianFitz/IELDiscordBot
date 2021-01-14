@@ -29,8 +29,21 @@ namespace GoogleSheetsAPIInterface.Network
                 { Opcodes.CMSG_DSN_CALCULATION, HandleDSNCalculationOpcode },
                 { Opcodes.CMSG_PLAYER_FA_ROLE, HandleFARoleOpcode },
                 { Opcodes.CMSG_PLAYER_IN_DISCORD, HandleDiscordOpcode },
-                { Opcodes.CMSG_PLAYER_SIGNUP_ACCEPTED, HandleSignupOpcode }
+                { Opcodes.CMSG_PLAYER_SIGNUP_ACCEPTED, HandleSignupOpcode },
+                { Opcodes.CMSG_REQUEST_LEAGUE, HandleRequestLeague }
             };
+        }
+
+        private async Task HandleRequestLeague(ByteBuffer arg)
+        {
+            string discordTag = arg.ReadString();
+
+            string league = GoogleAPI.Instance().GetLeague(discordTag);
+
+            ByteBuffer buff = new ByteBuffer(Opcodes.SMSG_LEAGUE_RESPONSE, league.Length + 4);
+            buff.WriteString(league);
+
+            await SendPacketAsync(buff).ConfigureAwait(false);
         }
 
         private async Task HandleIdentifyOpcode(ByteBuffer arg)
@@ -57,10 +70,12 @@ namespace GoogleSheetsAPIInterface.Network
         {
             List<object> obj = new List<object>();
             obj.Add(arg.ReadBool());
-            obj.Add(arg.ReadString());
             obj.Add(arg.ReadBool());
             obj.Add(arg.ReadBool());
             obj.Add(arg.ReadBool());
+            obj.Add(arg.ReadBool());
+
+            obj[1] = "";
 
             int rowNumber = arg.ReadInt();
 
@@ -88,7 +103,7 @@ namespace GoogleSheetsAPIInterface.Network
             obj.Add(arg.ReadInt());
             obj.Add(arg.ReadInt());
             obj.Add(arg.ReadInt());
-            obj.Add(null);
+            obj.Add(arg.ReadInt());
             obj.Add(arg.ReadInt());
             obj.Add(arg.ReadInt());
             obj.Add(arg.ReadInt());

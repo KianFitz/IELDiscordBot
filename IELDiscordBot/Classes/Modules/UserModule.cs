@@ -102,11 +102,11 @@ namespace IELDiscordBotPOC.Classes.Modules
                 b.WriteBool(true);
                 b.WriteInt(row);
 
-                await service.SendDataToServer(b.ToByteArray());
+                await service.SendDataToServer(b.ToByteArray());    
 
-                b = new ByteBuffer(Opcodes.CMSG_PLAYER_SIGNUP_ACCEPTED, 1 + 4 + 1 + 1 + 1);
+                b = new ByteBuffer(Opcodes.CMSG_PLAYER_SIGNUP_ACCEPTED, 1 + 1 + 1 + 1 + 1 + 4);
                 b.WriteBool(true);
-                b.WriteString("");
+                b.WriteBool(true);
                 b.WriteBool(true);
                 b.WriteBool(true);
                 b.WriteBool(true);
