@@ -57,7 +57,7 @@ namespace GoogleSheetsAPIInterface.Network
         private async Task HandleDiscordOpcode(ByteBuffer arg)
         {
             List<object> obj = new List<object>();
-            obj.Add(arg.ReadBool());
+            obj.Add(true);
 
             int rowNumber = arg.ReadInt();
 
@@ -69,12 +69,12 @@ namespace GoogleSheetsAPIInterface.Network
         private async Task HandleSignupOpcode(ByteBuffer arg)
         {
             List<object> obj = new List<object>();
-            obj.Add(arg.ReadBool());
-            obj.Add(arg.ReadBool());
-            obj.Add(arg.ReadBool());
-            obj.Add(arg.ReadBool());
-            obj.Add(arg.ReadBool());
 
+            obj.Add(true);
+            obj.Add(true);
+            obj.Add(true);
+            obj.Add(true);
+            obj.Add(true);
             obj[1] = "";
 
             int rowNumber = arg.ReadInt();
@@ -87,8 +87,7 @@ namespace GoogleSheetsAPIInterface.Network
         private async Task HandleFARoleOpcode(ByteBuffer arg)
         {
             List<object> obj = new List<object>();
-            obj.Add(arg.ReadBool());
-            obj.Add(arg.ReadBool());
+            obj.Add(true);
 
             int rowNumber = arg.ReadInt();
 

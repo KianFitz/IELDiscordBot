@@ -99,24 +99,16 @@ namespace IELDiscordBotPOC.Classes.Modules
                 List<object> obj = new List<object>();
 
                 ByteBuffer b = new ByteBuffer(Opcodes.CMSG_PLAYER_SIGNUP_ACCEPTED, 1);
-                b.WriteBool(true);
                 b.WriteInt(row);
 
                 await service.SendDataToServer(b.ToByteArray());    
 
                 b = new ByteBuffer(Opcodes.CMSG_PLAYER_SIGNUP_ACCEPTED, 9);
-                b.WriteBool(true);
-                b.WriteBool(true);
-                b.WriteBool(true);
-                b.WriteBool(true);
-                b.WriteBool(true);
                 b.WriteInt(row);
 
                 await service.SendDataToServer(b.ToByteArray());
 
                 b = new ByteBuffer(Opcodes.CMSG_PLAYER_FA_ROLE, 1 + 1);
-                b.WriteBool(true);
-                b.WriteBool(true);
                 b.WriteInt(row);
 
                 await service.SendDataToServer(b.ToByteArray());
