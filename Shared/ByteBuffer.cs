@@ -11,6 +11,7 @@ namespace Shared
         byte[] readBuffer = new byte[4096];
 
         int readPos = 0;
+
         public ByteBuffer(int opcode, int length)
         {
             WriteInt(opcode);

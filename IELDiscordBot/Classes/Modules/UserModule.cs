@@ -104,7 +104,7 @@ namespace IELDiscordBotPOC.Classes.Modules
 
                 await service.SendDataToServer(b.ToByteArray());    
 
-                b = new ByteBuffer(Opcodes.CMSG_PLAYER_SIGNUP_ACCEPTED, 1 + 1 + 1 + 1 + 1 + 4);
+                b = new ByteBuffer(Opcodes.CMSG_PLAYER_SIGNUP_ACCEPTED, 9);
                 b.WriteBool(true);
                 b.WriteBool(true);
                 b.WriteBool(true);
