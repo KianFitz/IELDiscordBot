@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "IELDiscordBot": {
+      "commandName": "Project",
+      "commandLineArgs": "false"
+    }
+  }
+}

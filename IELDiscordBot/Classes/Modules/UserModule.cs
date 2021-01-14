@@ -2,6 +2,7 @@
 using Discord.Commands;
 using Discord.WebSocket;
 using IELDiscordBot.Classes.Services;
+using Shared;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -10,7 +11,9 @@ namespace IELDiscordBotPOC.Classes.Modules
 {
     public class UserModule : ModuleBase<SocketCommandContext>
     {
-        private readonly DSNCalculatorService service;
+        
+
+        private readonly GoogleApiService service;
         ulong FAStatusChannel = 665242755731030045;
 
         ulong MasterRoleID = 671808027313045544;
@@ -22,7 +25,7 @@ namespace IELDiscordBotPOC.Classes.Modules
         ulong GMRole = 472145107056066580;
 
 
-        public UserModule(DSNCalculatorService service)
+        public UserModule(GoogleApiService service)
         {
             this.service = service;
         }
@@ -49,7 +52,7 @@ namespace IELDiscordBotPOC.Classes.Modules
 
             bool isGm = (guildUser.Roles.FirstOrDefault(x => x.Id == GMRole) != null);
 
-            string league = service.GetLeagueAsync(guildUser.Username + "#" + s[1]);
+            string league = await service.RequestLeagueAsync(guildUser.Username + "#" + s[1]);
             if (league != "")
             {
                 IRole roleToAssign = null;
@@ -95,25 +98,28 @@ namespace IELDiscordBotPOC.Classes.Modules
 
                 List<object> obj = new List<object>();
 
-                obj.Add(true);
-                service.PlayerInDiscord(obj, row);
+                ByteBuffer b = new ByteBuffer(Opcodes.CMSG_PLAYER_SIGNUP_ACCEPTED, 1);
+                b.WriteBool(true);
+                b.WriteInt(row);
 
-                obj.Clear();
+                await service.SendDataToServer(b.ToByteArray());
 
-                obj.Add(true);
-                obj.Add("");
-                obj.Add(true);
-                obj.Add(true);
-                obj.Add(true);
+                b = new ByteBuffer(Opcodes.CMSG_PLAYER_SIGNUP_ACCEPTED, 1 + 4 + 1 + 1 + 1);
+                b.WriteBool(true);
+                b.WriteString("");
+                b.WriteBool(true);
+                b.WriteBool(true);
+                b.WriteBool(true);
+                b.WriteInt(row);
 
-                await service.SignupAccepted(obj, row);
+                await service.SendDataToServer(b.ToByteArray());
 
-                obj.Clear();
+                b = new ByteBuffer(Opcodes.CMSG_PLAYER_FA_ROLE, 1 + 1);
+                b.WriteBool(true);
+                b.WriteBool(true);
+                b.WriteInt(row);
 
-                obj.Add(true);
-                obj.Add(true);
-
-                await service.FARoleAssigned(obj, row);
+                await service.SendDataToServer(b.ToByteArray());
             }
             else
             {

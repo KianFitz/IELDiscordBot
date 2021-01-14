@@ -23,13 +23,12 @@ namespace IELDiscordBot.Classes.Modules
 
         private readonly List<int> _acceptableSeasons = new List<int>() { 14, 15, 16 };
         private readonly List<int> _acceptablePlaylists = new List<int>() { 11, 13 };
-        private readonly DSNCalculatorService _service;
+        GoogleApiService _service;
 
-        public DSNModule(DSNCalculatorService service, IELContext db)
+        public DSNModule(IELContext db, GoogleApiService service)
         {
-            _service = service;
             _db = db;
-
+            _service = service;
         }
 
         internal enum Playlist
@@ -223,7 +222,7 @@ namespace IELDiscordBot.Classes.Modules
 
             }).ConfigureAwait(false);
 
-            obj1[3] = $"=IFS(ISBLANK(K{row});;OR(K{row}<20;J{row}<20;I{row}<20);\"Investigate App\";OR(K{row}>=150;J{row}>=200;I{row}>= 350);\"Games Verified\";AND(K{row}<150;J{row}<200;I{row}<350); \"Min Games not reached\")";
+            //obj1[3] = $"=IFS(ISBLANK(K{row});;OR(K{row}<20;J{row}<20;I{row}<20);\"Investigate App\";OR(K{row}>=150;J{row}>=200;I{row}>= 350);\"Games Verified\";AND(K{row}<150;J{row}<200;I{row}<350); \"Min Games not reached\")";
             //obj1[3] = $"=IFS(ISBLANK(K{row});;AND(K{row}>=150;AND(J{row}>=150;I{row}>=150));\"Games Verified\"; AND(K{row}<=150;AND(J{row}>=150;I{row}>=150));\"Min Games S2 / 16 not reached\"; OR(J{row}<=150;I{row}<=150);\"Investigate App\")";
 
             await _service.UpdateSpreadSheet(obj1, row);

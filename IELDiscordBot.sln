@@ -5,6 +5,10 @@ VisualStudioVersion = 16.0.30204.135
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IELDiscordBot", "IELDiscordBot\IELDiscordBot.csproj", "{406FBC3F-3112-4582-8470-6A93B7E76A82}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GoogleSheetsAPIInterface", "GoogleSheetsAPIInterface\GoogleSheetsAPIInterface.csproj", "{29C8A9C6-D11F-4536-B568-12841BCF50B1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shared", "Shared\Shared.csproj", "{662A38D7-7357-4793-BE38-A89A10C38498}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +19,14 @@ Global
 		{406FBC3F-3112-4582-8470-6A93B7E76A82}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{406FBC3F-3112-4582-8470-6A93B7E76A82}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{406FBC3F-3112-4582-8470-6A93B7E76A82}.Release|Any CPU.Build.0 = Release|Any CPU
+		{29C8A9C6-D11F-4536-B568-12841BCF50B1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{29C8A9C6-D11F-4536-B568-12841BCF50B1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{29C8A9C6-D11F-4536-B568-12841BCF50B1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{29C8A9C6-D11F-4536-B568-12841BCF50B1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{662A38D7-7357-4793-BE38-A89A10C38498}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{662A38D7-7357-4793-BE38-A89A10C38498}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{662A38D7-7357-4793-BE38-A89A10C38498}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{662A38D7-7357-4793-BE38-A89A10C38498}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

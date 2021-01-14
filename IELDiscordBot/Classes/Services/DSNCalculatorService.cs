@@ -75,8 +75,8 @@ namespace IELDiscordBot.Classes.Services
             });
             _timer = new Timer(async _ =>
             {
-                await ProcessNewSignupsAsync().ConfigureAwait(false);
-                await GetLatestValues().ConfigureAwait(false);
+                //await ProcessNewSignupsAsync().ConfigureAwait(false);
+                //await GetLatestValues().ConfigureAwait(false);
             },
             null,
             TimeSpan.FromSeconds(5),
@@ -143,8 +143,6 @@ namespace IELDiscordBot.Classes.Services
 
         private async Task ProcessNewSignupsAsync()
         {
-
-
             SpreadsheetsResource.ValuesResource.GetRequest request =
                 service.Spreadsheets.Values.Get(SpreadsheetID, "DSN Hub!A:AH");
 

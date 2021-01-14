@@ -17,9 +17,9 @@ namespace IELDiscordBotPOC
         private DiscordSocketClient _client;
         private IConfigurationRoot _config = ConfigService.GetConfiguration();
 
-        public static void Main(string[] args) => new Program().StartAsync().GetAwaiter().GetResult();
+        public static void Main(string[] args) => new Program().StartAsync(args).GetAwaiter().GetResult();
 
-        public async Task StartAsync()
+        public async Task StartAsync(string[] args)
         {
             var services = new ServiceCollection()
                 .AddSingleton(new DiscordSocketClient(new DiscordSocketConfig { LogLevel = LogSeverity.Debug }))
@@ -32,14 +32,17 @@ namespace IELDiscordBotPOC
                 .AddSingleton<CommandHandler>()
                 .AddSingleton<LoggingService>()
                 .AddSingleton<DSNCalculatorService>()
+                .AddSingleton<GoogleApiService>()
                 .AddSingleton(_config)
                 .AddDbContext<IELContext>(options => options.UseMySQL(BuildConnectionString()));
+
 
 
             var provider = services.BuildServiceProvider();
 
             provider.GetRequiredService<LoggingService>();
             await provider.GetRequiredService<StartupService>().StartAsync();
+            await provider.GetRequiredService<GoogleApiService>().ConnectToServer().ConfigureAwait(false);
             provider.GetRequiredService<CommandHandler>();
             provider.GetRequiredService<DSNCalculatorService>();
 
