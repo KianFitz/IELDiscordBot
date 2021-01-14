@@ -104,6 +104,8 @@ namespace IELDiscordBot.Classes.Services
 
                     _buffer = new byte[4096];
                 }
+
+                await Task.Delay(100);
             }
         }
 

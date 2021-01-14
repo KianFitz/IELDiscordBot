@@ -42,9 +42,10 @@ namespace IELDiscordBotPOC
 
             provider.GetRequiredService<LoggingService>();
             await provider.GetRequiredService<StartupService>().StartAsync();
-            await provider.GetRequiredService<GoogleApiService>().ConnectToServer().ConfigureAwait(false);
             provider.GetRequiredService<CommandHandler>();
             provider.GetRequiredService<DSNCalculatorService>();
+            await provider.GetRequiredService<GoogleApiService>().ConnectToServer().ConfigureAwait(false);
+
 
             await Task.Delay(-1);
         }

@@ -37,6 +37,8 @@ namespace GoogleSheetsAPIInterface.Network
         {
             ByteBuffer buff = new ByteBuffer(Opcodes.SMSG_IDENTIFY_ACK, 4);
             buff.WriteInt(Id);
+
+            await SendPacketAsync(buff).ConfigureAwait(false);
         }
 
         private async Task HandleDiscordOpcode(ByteBuffer arg)
@@ -100,9 +102,10 @@ namespace GoogleSheetsAPIInterface.Network
             await GoogleAPI.Instance().MakeRequest(sectionToEdit, obj);
         }
 
-        public async Task SendPacketAsync()
+        public async Task SendPacketAsync(ByteBuffer buff)
         {
-            await _stream.WriteAsync(_buffer, 0, _buffer.Length);
+            byte[] b = buff.ToByteArray();
+            await _stream.WriteAsync(b, 0, b.Length);
             await _stream.FlushAsync();
 
             Console.WriteLine($"Send {_buffer.Length} to client {Id}");
