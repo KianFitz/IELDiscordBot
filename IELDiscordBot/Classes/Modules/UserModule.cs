@@ -98,7 +98,7 @@ namespace IELDiscordBotPOC.Classes.Modules
 
                 List<object> obj = new List<object>();
 
-                ByteBuffer b = new ByteBuffer(Opcodes.CMSG_PLAYER_SIGNUP_ACCEPTED, 1);
+                ByteBuffer b = new ByteBuffer(Opcodes.CMSG_PLAYER_IN_DISCORD, 1);
                 b.WriteInt(row);
 
                 await service.SendDataToServer(b.ToByteArray());    
