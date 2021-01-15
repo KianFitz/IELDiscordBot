@@ -148,7 +148,9 @@ namespace IELDiscordBotPOC.Classes.Utilities
             finalString += $"\n**Season 15: `{S15Peak}`**";
             finalString += $"\n**Season 14: `{S14Peak}`**";
             finalString += $"\n**DSN:** `{dsn}`";
+#if RELEASE
             finalString += $"\n\n\n**Sheet has been updated.**";
+#endif
 
             obj = new List<object>();
             obj.Add(s14Games);

@@ -32,7 +32,9 @@ namespace IELDiscordBotPOC
                 .AddSingleton<CommandHandler>()
                 .AddSingleton<LoggingService>()
                 .AddSingleton<DSNCalculatorService>()
+#if RELEASE
                 .AddSingleton<GoogleApiService>()
+#endif
                 .AddSingleton(_config)
                 .AddDbContext<IELContext>(options => options.UseMySQL(BuildConnectionString()));
 
@@ -44,7 +46,9 @@ namespace IELDiscordBotPOC
             await provider.GetRequiredService<StartupService>().StartAsync();
             provider.GetRequiredService<CommandHandler>();
             provider.GetRequiredService<DSNCalculatorService>();
+#if RELEASE
             await provider.GetRequiredService<GoogleApiService>().ConnectToServer().ConfigureAwait(false);
+#endif
 
 
             await Task.Delay(-1);
