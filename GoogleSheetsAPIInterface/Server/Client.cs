@@ -88,6 +88,7 @@ namespace GoogleSheetsAPIInterface.Network
         {
             List<object> obj = new List<object>();
             obj.Add(true);
+            obj.Add(true);
 
             int rowNumber = arg.ReadInt();
 

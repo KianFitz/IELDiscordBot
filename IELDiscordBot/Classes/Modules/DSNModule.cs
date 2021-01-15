@@ -48,7 +48,7 @@ namespace IELDiscordBot.Classes.Modules
         {
             new DateTime(2020, 09, 23),
             new DateTime(2020, 12, 09),
-            new DateTime(2021, 03, 31)
+            new DateTime(2021, 01, 10)
         };
 
         private readonly IELContext _db;
