@@ -23,12 +23,18 @@ namespace IELDiscordBot.Classes.Modules
 
         private readonly List<int> _acceptableSeasons = new List<int>() { 14, 15, 16 };
         private readonly List<int> _acceptablePlaylists = new List<int>() { 11, 13 };
-        GoogleApiService _service;
 
+#if RELEASE
+        GoogleApiService _service;
         public DSNModule(IELContext db, GoogleApiService service)
         {
             _db = db;
             _service = service;
+        }
+#endif
+        public DSNModule(IELContext db)
+        {
+            _db = db;
         }
 
         internal enum Playlist

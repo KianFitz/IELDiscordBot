@@ -11,9 +11,8 @@ namespace IELDiscordBotPOC.Classes.Modules
 {
     public class UserModule : ModuleBase<SocketCommandContext>
     {
-        
 
-        private readonly GoogleApiService service;
+
         ulong FAStatusChannel = 665242755731030045;
 
         ulong MasterRoleID = 671808027313045544;
@@ -24,7 +23,8 @@ namespace IELDiscordBotPOC.Classes.Modules
 
         ulong GMRole = 472145107056066580;
 
-
+#if RELEASE
+        private readonly GoogleApiService service;
         public UserModule(GoogleApiService service)
         {
             this.service = service;
@@ -118,5 +118,7 @@ namespace IELDiscordBotPOC.Classes.Modules
                 await Context.Channel.SendMessageAsync($"League column for user {username} is empty OR {username} cannot be found in the spreadsheet.");
             }
         }
+#endif
+
     }
 }
