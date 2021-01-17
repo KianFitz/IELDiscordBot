@@ -31,7 +31,7 @@ namespace IELDiscordBotPOC
                 .AddSingleton<StartupService>()
                 .AddSingleton<CommandHandler>()
                 .AddSingleton<LoggingService>()
-                .AddSingleton<DSNCalculatorService>()
+                //.AddSingleton<DSNCalculatorService>()
 #if RELEASE
                 .AddSingleton<GoogleApiService>()
 #endif
@@ -45,7 +45,7 @@ namespace IELDiscordBotPOC
             provider.GetRequiredService<LoggingService>();
             await provider.GetRequiredService<StartupService>().StartAsync();
             provider.GetRequiredService<CommandHandler>();
-            provider.GetRequiredService<DSNCalculatorService>();
+            //provider.GetRequiredService<DSNCalculatorService>();
 #if RELEASE
             await provider.GetRequiredService<GoogleApiService>().ConnectToServer().ConfigureAwait(false);
 #endif
