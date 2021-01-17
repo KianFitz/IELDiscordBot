@@ -31,12 +31,13 @@ namespace IELDiscordBot.Classes.Modules
             _db = db;
             _service = service;
         }
-#endif
+#else
         public DSNModule(IELContext db)
         {
             _db = db;
         }
 
+#endif
         internal enum Playlist
         {
             TWOS = 13,
