@@ -67,7 +67,7 @@ namespace IELDiscordBot.Classes.Services
         {
             _client = client;
             _config = config;
-            Setup();
+            //Setup();
             service = new SheetsService(new BaseClientService.Initializer()
             {
                 HttpClientInitializer = _sheetsCredential,

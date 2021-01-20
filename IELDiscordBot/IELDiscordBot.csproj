@@ -8,6 +8,16 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="key.p12" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="key.p12">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Discord.Net" Version="2.2.0" />
     <PackageReference Include="Discord.Net.Core" Version="2.2.0" />
     <PackageReference Include="Google.Apis.Sheets.v4" Version="1.49.0.2175" />

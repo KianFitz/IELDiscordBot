@@ -9,16 +9,24 @@ using System.IO;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Google.Apis.Plus.v1;
+using Google.Apis.Plus.v1.Data;
+using System.Security.Cryptography.X509Certificates;
+
 
 namespace GoogleSheetsAPIInterface.Network
 {
     class GoogleAPI
     {
         private SheetsService service;
-        private UserCredential _sheetsCredential;
+        private ServiceAccountCredential _sheetsCredential;
+        //private UserCredential _sheetsCredential;
+        const string ServiceAccountEmail = "ieldiscordbot@inspired-rock-284217.iam.gserviceaccount.com";
+
         string[] Scopes = { SheetsService.Scope.Spreadsheets };
-        const string ApplicationName = "IEL Discord Bot .NET Appliation";
+        const string ApplicationName = "IEL Discord Bot .NET Application";
         const string SpreadsheetID = "1ozwketqZ4ZU9Dk2wyB20Yq8KDQXw1zA2EOUdXuuG7NY";
+        //const string SpreadsheetID = "1PxR7WtArPs9i_l-PotubJ2YadCDZj4km2A8WWywLilU";
 
         Timer _timer;
 
@@ -32,17 +40,24 @@ namespace GoogleSheetsAPIInterface.Network
 
         public async Task Setup()
         {
-            using (var fileStream = new FileStream("./credentials.json", FileMode.Open, FileAccess.Read))
-            {
-                string credPath = "ll7myTir69E6LbjI5a8GoBR8";
-                _sheetsCredential = GoogleWebAuthorizationBroker.AuthorizeAsync(
-                    GoogleClientSecrets.Load(fileStream).Secrets,
-                    Scopes,
-                    "user",
-                    CancellationToken.None,
-                    new FileDataStore(credPath, true)).Result;
-                Console.WriteLine("Credential File Saved to: " + credPath);
-            }
+
+            var certificate = new X509Certificate2($@"key.p12", "notasecret", X509KeyStorageFlags.Exportable);
+            _sheetsCredential = new ServiceAccountCredential(
+                new ServiceAccountCredential.Initializer(ServiceAccountEmail)
+                {
+                    Scopes = Scopes
+                }.FromCertificate(certificate));
+            //using (var fileStream = new FileStream("./credentials.json", FileMode.Open, FileAccess.Read))
+            //{
+            //    string credPath = "ll7myTir69E6LbjI5a8GoBR8";
+            //    _sheetsCredential = GoogleWebAuthorizationBroker.AuthorizeAsync(
+            //        GoogleClientSecrets.Load(fileStream).Secrets,
+            //        Scopes,
+            //        "user",
+            //        CancellationToken.None,
+            //        new FileDataStore(credPath, true)).Result;
+            //    Console.WriteLine("Credential File Saved to: " + credPath);
+            //}
 
             service = new SheetsService(new BaseClientService.Initializer()
             {

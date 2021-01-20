@@ -628,3 +628,5 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+/GoogleSheetsAPIInterface/key.p12
+/IELDiscordBot/key.p12
