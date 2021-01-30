@@ -2,6 +2,8 @@
 using Discord.Commands;
 using Discord.WebSocket;
 using IELDiscordBot.Classes.Services;
+using IELDiscordBotPOC.Classes.Services;
+using IELDiscordBotPOC.Classes.Utilities;
 using Shared;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,10 +11,16 @@ using System.Threading.Tasks;
 
 namespace IELDiscordBotPOC.Classes.Modules
 {
+    class RenameRequest
+    {
+        public IGuildUser GuildUser;
+        public ulong MessageId;
+        public string Type;
+        public string NewName;
+    }
+
     public class UserModule : ModuleBase<SocketCommandContext>
     {
-
-
         ulong FAStatusChannel = 665242755731030045;
 
         ulong MasterRoleID = 671808027313045544;
@@ -23,12 +31,49 @@ namespace IELDiscordBotPOC.Classes.Modules
 
         ulong GMRole = 472145107056066580;
 
+        private CommandHandler _commands;
+
+        [Command("rename")]
+        public async Task RequestRenameAsync(string type, [Remainder] string newName)
+        {
+            IGuildUser user = Context.User as IGuildUser;
+
+            type = type.ToLower();
+            switch (type)
+            {
+                case "discord":
+                case "spreadsheet":
+                case "both":
+                    break;
+
+                default:
+                    {
+                        await Context.Channel.SendMessageAsync("", false, Embeds.UnknownRenameType(type)).ConfigureAwait(false);
+                        return;
+                    }
+            }
+
+            var message = await Context.Channel.SendMessageAsync("", false, Embeds.RequestRename(user, type, newName)).ConfigureAwait(false);
+            ulong messageId = message.Id;
+
+            await message.AddReactionsAsync(new IEmote[] { new Emoji("✅"), new Emoji("❎") }).ConfigureAwait(false);
+
+            RenameRequest req = new RenameRequest();
+            req.Type = type;
+            req.NewName = newName;
+            req.MessageId = messageId;
+            req.GuildUser = user;
+            _commands.AddRenameRequest(req);
+        }
+
 #if RELEASE
         private readonly GoogleApiService service;
-        public UserModule(GoogleApiService service)
+        public UserModule(GoogleApiService service, CommandHandler commands)
         {
             this.service = service;
+            this._commands = commands;
         }
+
 
         [Command("acceptplayer")]
         public async Task AcceptPlayerAsync(string username, int row)

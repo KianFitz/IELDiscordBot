@@ -30,8 +30,25 @@ namespace GoogleSheetsAPIInterface.Network
                 { Opcodes.CMSG_PLAYER_FA_ROLE, HandleFARoleOpcode },
                 { Opcodes.CMSG_PLAYER_IN_DISCORD, HandleDiscordOpcode },
                 { Opcodes.CMSG_PLAYER_SIGNUP_ACCEPTED, HandleSignupOpcode },
-                { Opcodes.CMSG_REQUEST_LEAGUE, HandleRequestLeague }
+                { Opcodes.CMSG_REQUEST_LEAGUE, HandleRequestLeague },
+                { Opcodes.CMSG_NEW_NICKNAME, HandleNewNameOpcode }
             };
+        }
+
+        private async Task HandleNewNameOpcode(ByteBuffer arg)
+        {
+            string discordName = arg.ReadString();
+            string newName = arg.ReadString();
+
+            var googleApi = GoogleAPI.Instance();
+            int row = googleApi.GetRowNumber(discordName);
+            
+            if (row != -1)
+            {
+                string sectionToEdit = $"Player Data!O{row}";
+
+                await googleApi.MakeRequest(sectionToEdit, new List<object>() { newName }).ConfigureAwait(false);
+            }
         }
 
         private async Task HandleRequestLeague(ByteBuffer arg)

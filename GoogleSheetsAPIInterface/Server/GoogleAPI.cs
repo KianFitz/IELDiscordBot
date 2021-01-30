@@ -27,6 +27,7 @@ namespace GoogleSheetsAPIInterface.Network
         const string ApplicationName = "IEL Discord Bot .NET Application";
         const string SpreadsheetID = "1ozwketqZ4ZU9Dk2wyB20Yq8KDQXw1zA2EOUdXuuG7NY";
         //const string SpreadsheetID = "1PxR7WtArPs9i_l-PotubJ2YadCDZj4km2A8WWywLilU";
+        //const string SpreadsheetID = "1TT4d4zyd1Jp3nJ523mI1OPMJV3crNgEklrFfcl0_z2Y";
 
         Timer _timer;
 
@@ -110,6 +111,19 @@ namespace GoogleSheetsAPIInterface.Network
             }
 
             return "";
+        }
+
+        internal int GetRowNumber(string discordUsername)
+        {
+            for (int row = 0; row < _latestValues.Count; row++)
+            {
+                IList<object> r = _latestValues[row];
+
+                if (r[2].ToString().ToLower() == discordUsername.ToLower())
+                    return row + 1;
+            }
+
+            return -1;
         }
     }
 }

@@ -59,7 +59,7 @@ namespace IELDiscordBot.Classes.Services
 
         public async Task ConnectToServer()
         {
-            await _client.ConnectAsync("77.97.79.98", 9990);
+            await _client.ConnectAsync("127.0.0.1", 9990);
             _stream = _client.GetStream();
             await SendIdentifyAsync().ConfigureAwait(false);
             await ReadDataFromServer().ConfigureAwait(false);

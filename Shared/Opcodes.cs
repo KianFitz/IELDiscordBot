@@ -15,5 +15,6 @@ namespace Shared
         public const int CMSG_DSN_CALCULATION = 0x007;
         public const int CMSG_REQUEST_LEAGUE = 0x008;
         public const int SMSG_LEAGUE_RESPONSE = 0x009;
+        public const int CMSG_NEW_NICKNAME = 0x010;
     }
 }

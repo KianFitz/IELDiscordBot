@@ -49,6 +49,44 @@ namespace IELDiscordBotPOC.Classes.Utilities
             return builder.Build();
         }
 
+        internal static Embed UnknownRenameType(string type)
+        {
+            EmbedBuilder builder = new EmbedBuilder()
+            {
+                Color = Constants.FailureColor,
+                Description = $"{type} is an invalid rename type!." +
+                $"\r\nCorrect Syntax is !rename type newName" +
+                $" (Your new name can include spaces.)" +
+                $"\r\n Valid types are: discord, spreadsheet, both."
+            };
+
+            return builder.Build();
+        }
+
+        internal static Embed RequestRename(IUser user, string type, string newNickname)
+        {
+            EmbedBuilder builder = new EmbedBuilder()
+            { 
+                Color = Constants.SuccessColor,
+                Description = $"{user.Mention} has requested to be renamed to {newNickname} on {type}."
+            };
+            builder.AddField(new EmbedFieldBuilder() { Name = "Status", Value = "Pending", IsInline = true });
+
+            return builder.Build();
+        }
+
+        internal static Embed RequestRename(IUser user, string type, string newNickname, bool accepted, string mention)
+        {
+            EmbedBuilder builder = new EmbedBuilder()
+            {
+                Color = accepted ? Constants.SuccessColor : Constants.FailureColor,
+                Description = $"{user.Mention} has requested to be renamed to {newNickname} on {type}",
+            };
+            builder.AddField(new EmbedFieldBuilder() { Name = "Status", Value = $"{(accepted ? "Accepted" : "Denied")} by {mention}", IsInline = true });
+
+            return builder.Build();
+        }
+
         internal static Embed DSNCalculation(List<CalcData> data, string user, string platform, out List<object> obj)
         {
             int S14Peak = 0; //alcData.Where(x => x.Season == 14).Max(y => y.Ratings).First();
