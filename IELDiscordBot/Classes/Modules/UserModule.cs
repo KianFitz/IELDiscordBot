@@ -36,6 +36,9 @@ namespace IELDiscordBotPOC.Classes.Modules
         [Command("rename")]
         public async Task RequestRenameAsync(string type, [Remainder] string newName)
         {
+            if (Context.Channel.Id != 530861574689259526)
+                return;
+
             IGuildUser user = Context.User as IGuildUser;
 
             type = type.ToLower();
