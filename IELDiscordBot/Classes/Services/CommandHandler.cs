@@ -30,7 +30,9 @@ namespace IELDiscordBotPOC.Classes.Services
 
         private readonly IEmote _acceptEmote;
         private readonly IEmote _denyEmote;
+        private readonly IEmote _upvoteEmote;
 
+        private readonly ulong _emoteVoteChannel;
         public CommandHandler(IELContext db, DiscordSocketClient discord, CommandService commands, IConfigurationRoot config, IServiceProvider services, GoogleApiService google)
         {
             _db = db;
@@ -43,6 +45,9 @@ namespace IELDiscordBotPOC.Classes.Services
 
             _acceptEmote = new Emoji("✅");
             _denyEmote = new Emoji("❎");
+            _upvoteEmote = new Emoji("");
+
+            _emoteVoteChannel = 805461819187003423;
 
             _client.UserJoined += OnUserJoined;
             _client.UserLeft += OnUserLeft;
@@ -284,6 +289,16 @@ namespace IELDiscordBotPOC.Classes.Services
                     await msg.DeleteAsync().ConfigureAwait(false);
                 }
             }
+
+            if (message.Channel.Id == _emoteVoteChannel)
+            {
+                await HandleEmoteVote(message).ConfigureAwait(false);
+            }
+        }
+
+        private async Task HandleEmoteVote(SocketMessage message)
+        {
+            await message.AddReactionAsync(_upvoteEmote);
         }
     }
 }
