@@ -45,7 +45,7 @@ namespace IELDiscordBotPOC.Classes.Services
 
             _acceptEmote = new Emoji("✅");
             _denyEmote = new Emoji("❎");
-            _upvoteEmote = new Emoji("");
+            _upvoteEmote = new Emoji("⬆️");
 
             _emoteVoteChannel = 805461819187003423;
 
