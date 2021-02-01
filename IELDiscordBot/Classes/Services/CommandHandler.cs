@@ -57,8 +57,10 @@ namespace IELDiscordBotPOC.Classes.Services
             _client.ReactionRemoved += OnReactionRemoved;
             _staffRoleIDs = new List<ulong>()
             {
-                645400648581644288, // Trial Staff
-                566199114073899008  // Staff Role
+                468918928845045780, // IEL Managers
+                639039764393230347, // IEL Team Leaders
+                469683155805274122, // Moderation Team
+                547754108346433536  // Support Team
             };
         }
 
