@@ -33,7 +33,7 @@ namespace IELDiscordBotPOC.Classes.Services
         private readonly IEmote _upvoteEmote;
 
         private readonly ulong _emoteVoteChannel;
-        public CommandHandler(IELContext db, DiscordSocketClient discord, CommandService commands, IConfigurationRoot config, IServiceProvider services, GoogleApiService google)
+        public CommandHandler(IELContext db, DiscordSocketClient discord, CommandService commands, IConfigurationRoot config, IServiceProvider services/*, GoogleApiService google*/)
         {
             _db = db;
             _client = discord;
@@ -41,7 +41,7 @@ namespace IELDiscordBotPOC.Classes.Services
             _config = config;
             _provider = services;
             _renameRequests = new List<RenameRequest>();
-            _googleService = google;
+            //_googleService = google;
 
             _acceptEmote = new Emoji("✅");
             _denyEmote = new Emoji("❎");
@@ -66,7 +66,7 @@ namespace IELDiscordBotPOC.Classes.Services
 
         private bool IsStaffMember(IGuildUser user)
         {
-            return user.RoleIds.Contains(_staffRoleIDs[0]) || user.RoleIds.Contains(_staffRoleIDs[1]);
+            return user.RoleIds.Select(x => x).Intersect(_staffRoleIDs).Any();
         }
 
         private async Task OnReactionRemoved(Cacheable<IUserMessage, ulong> arg1, ISocketMessageChannel arg2, SocketReaction arg3)
