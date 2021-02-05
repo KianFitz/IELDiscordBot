@@ -1,4 +1,5 @@
-﻿using IELDiscordBot.Classes.Models;
+using Discord.Commands;
+using IELDiscordBot.Classes.Models;
 using IELDiscordBotPOC.Classes.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,6 +9,7 @@ namespace IELDiscordBotPOC.Classes.Database
     {
         internal DbSet<Team> Teams { get; set; }
         internal DbSet<DBConfigSettings> ConfigSettings { get; set; }
+        internal DbSet<CustomCommand> CustomCommands { get; set; }
         internal DbSet<ManualPeakOverride> ManualPeakOverrides { get; set; }
 
         public IELContext(DbContextOptions<IELContext> options) : base(options) { }
@@ -36,6 +38,11 @@ namespace IELDiscordBotPOC.Classes.Database
             modelBuilder.Entity<DBConfigSettings>().Property("Subsection").HasMaxLength(100).IsRequired();
             modelBuilder.Entity<DBConfigSettings>().Property("Key").HasMaxLength(50).IsRequired();
             modelBuilder.Entity<DBConfigSettings>().Property("Value").HasMaxLength(50).IsRequired();
+
+            modelBuilder.Entity<CustomCommand>().HasKey("ID");
+            modelBuilder.Entity<CustomCommand>().Property("ID").IsRequired();
+            modelBuilder.Entity<CustomCommand>().Property("Command").HasMaxLength(30).IsRequired();
+            modelBuilder.Entity<CustomCommand>().Property("ReturnValue").HasMaxLength(5000).IsRequired();
 
             modelBuilder.Entity<ManualPeakOverride>().HasKey("Platform", "User", "Season");
             modelBuilder.Entity<ManualPeakOverride>().Property("Platform").HasMaxLength(10).IsRequired();

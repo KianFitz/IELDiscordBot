@@ -2,14 +2,16 @@
 using IELDiscordBotPOC.Classes.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace IELDiscordBotPOC.Migrations
 {
     [DbContext(typeof(IELContext))]
-    partial class IELContextModelSnapshot : ModelSnapshot
+    [Migration("20200825154715_CustomCommands")]
+    partial class CustomCommands
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -35,27 +37,6 @@ namespace IELDiscordBotPOC.Migrations
                     b.HasKey("ID");
 
                     b.ToTable("CustomCommands");
-                });
-
-            modelBuilder.Entity("IELDiscordBot.Classes.Models.ManualPeakOverride", b =>
-                {
-                    b.Property<string>("Platform")
-                        .HasColumnType("varchar(10)")
-                        .HasMaxLength(10);
-
-                    b.Property<string>("User")
-                        .HasColumnType("varchar(50)")
-                        .HasMaxLength(50);
-
-                    b.Property<int>("Season")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Peak")
-                        .HasColumnType("int");
-
-                    b.HasKey("Platform", "User", "Season");
-
-                    b.ToTable("ManualPeakOverrides");
                 });
 
             modelBuilder.Entity("IELDiscordBotPOC.Classes.Models.DBConfigSettings", b =>
