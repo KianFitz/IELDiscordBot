@@ -45,8 +45,17 @@ namespace IELDiscordBotPOC.Classes.Modules
             switch (type)
             {
                 case "discord":
-                case "spreadsheet":
                 case "both":
+                {
+                    if (newName.Length > 32)
+                    {
+                        await Context.Channel.SendMessageAsync("", false, Embeds.NameTooLong(user, newName)).ConfigureAwait(false);
+                        return;
+                    }
+                    break;
+                }
+
+                case "spreadsheet":
                     break;
 
                 default:

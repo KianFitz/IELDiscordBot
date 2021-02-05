@@ -63,6 +63,17 @@ namespace IELDiscordBotPOC.Classes.Utilities
             return builder.Build();
         }
 
+        internal static Embed NameTooLong(IGuildUser user, string newName)
+        {
+            EmbedBuilder builder = new EmbedBuilder()
+            {
+                Color = Constants.FailureColor,
+                Description = $"{user.Mention}, the name you have selected ({newName}) is too long for Discord. Please choose a name with 32 characters or less."
+            };
+
+            return builder.Build();
+        }
+
         internal static Embed RequestRename(IUser user, string type, string newNickname)
         {
             EmbedBuilder builder = new EmbedBuilder()
