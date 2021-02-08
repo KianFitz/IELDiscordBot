@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 
 namespace IELDiscordBot.Classes.Services
 {
+    [Obsolete("Using GoogleApiService which is obsolete", true)]
     public class GoogleApiService
     {
         private readonly IConfigurationRoot _config;

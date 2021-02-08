@@ -32,6 +32,13 @@ namespace IELDiscordBotPOC.Classes.Modules
         ulong GMRole = 472145107056066580;
 
         private CommandHandler _commands;
+        private DSNCalculatorService _service;
+
+        public UserModule(CommandHandler commands, DSNCalculatorService service)
+        {
+            _commands = commands;
+            _service = service;
+        }
 
         [Command("rename")]
         public async Task RequestRenameAsync(string type, [Remainder] string newName)
@@ -78,15 +85,6 @@ namespace IELDiscordBotPOC.Classes.Modules
             _commands.AddRenameRequest(req);
         }
 
-#if RELEASE
-        private readonly GoogleApiService service;
-        public UserModule(GoogleApiService service, CommandHandler commands)
-        {
-            this.service = service;
-            this._commands = commands;
-        }
-
-
         [Command("acceptplayer")]
         public async Task AcceptPlayerAsync(string username, int row)
         {
@@ -109,7 +107,7 @@ namespace IELDiscordBotPOC.Classes.Modules
 
             bool isGm = (guildUser.Roles.FirstOrDefault(x => x.Id == GMRole) != null);
 
-            string league = await service.RequestLeagueAsync(guildUser.Username + "#" + s[1]);
+            string league = _service.GetLeague(guildUser.Username + "#" + s[1]);
             if (league != "")
             {
                 IRole roleToAssign = null;
@@ -154,28 +152,34 @@ namespace IELDiscordBotPOC.Classes.Modules
                 await Context.Channel.SendMessageAsync($"Player {guildUser.Username}#{guildUser.DiscriminatorValue} accepted! (GM: {isGm})");
 
                 List<object> obj = new List<object>();
+                obj.Add(true);
+                string sectionToEdit = $"DSN Hub!H{row}";
 
-                ByteBuffer b = new ByteBuffer(Opcodes.CMSG_PLAYER_IN_DISCORD, 1);
-                b.WriteInt(row);
+                await _service.MakeRequest(sectionToEdit, obj);
+                await Task.Delay(2000);
 
-                await service.SendDataToServer(b.ToByteArray());    
+                obj = new List<object>();
+                obj.Add(true);
+                obj.Add("");
+                obj.Add(true);
+                obj.Add(true);
+                obj.Add(true);
+                sectionToEdit = $"DSN Hub!R{row}";
 
-                b = new ByteBuffer(Opcodes.CMSG_PLAYER_SIGNUP_ACCEPTED, 9);
-                b.WriteInt(row);
+                await _service.MakeRequest(sectionToEdit, obj);
+                await Task.Delay(2000);
 
-                await service.SendDataToServer(b.ToByteArray());
+                obj = new List<object>();
+                obj.Add(true);
+                obj.Add(true);
+                sectionToEdit = $"DSN Hub!Z{row}";
 
-                b = new ByteBuffer(Opcodes.CMSG_PLAYER_FA_ROLE, 1 + 1);
-                b.WriteInt(row);
-
-                await service.SendDataToServer(b.ToByteArray());
+                await _service.MakeRequest(sectionToEdit, obj);
             }
             else
             {
                 await Context.Channel.SendMessageAsync($"League column for user {username} is empty OR {username} cannot be found in the spreadsheet.");
             }
         }
-#endif
-
     }
 }

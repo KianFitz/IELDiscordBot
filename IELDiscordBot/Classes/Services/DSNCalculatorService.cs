@@ -3,14 +3,11 @@ using Microsoft.Extensions.Configuration;
 using NLog;
 using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Google.Apis.Auth.OAuth2;
 using Google.Apis.Sheets.v4.Data;
 using Google.Apis.Sheets.v4;
-using System.IO;
-using Google.Apis.Util.Store;
 using Google.Apis.Services;
 using System.Net.Http;
 using IELDiscordBotPOC.Classes.Utilities;
@@ -20,6 +17,8 @@ using IELDiscordBot.Classes.Models.DSN.Segments;
 using System.Text.RegularExpressions;
 using IELDiscordBot.Classes.Models.DSN;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
+
 
 namespace IELDiscordBot.Classes.Services
 {
@@ -67,26 +66,23 @@ namespace IELDiscordBot.Classes.Services
         {
             _client = client;
             _config = config;
-            //Setup();
-            service = new SheetsService(new BaseClientService.Initializer()
-            {
-                HttpClientInitializer = _sheetsCredential,
-                ApplicationName = ApplicationName
-            });
-            _timer = new Timer(async _ =>
+            Setup();
+             _timer = new Timer(async _ =>
             {
                 //await ProcessNewSignupsAsync().ConfigureAwait(false);
-                //await GetLatestValues().ConfigureAwait(false);
+                await GetLatestValues().ConfigureAwait(false);
             },
             null,
             TimeSpan.FromSeconds(5),
             TimeSpan.FromMinutes(10));
         }
 
-        UserCredential _sheetsCredential;
+        ServiceAccountCredential _sheetsCredential;
         string[] Scopes = { SheetsService.Scope.Spreadsheets };
-        const string ApplicationName = "IEL Discord Bot .NET Appliation";
+        const string ApplicationName = "IEL Discord Bot .NET Application";
         const string SpreadsheetID = "1ozwketqZ4ZU9Dk2wyB20Yq8KDQXw1zA2EOUdXuuG7NY";
+        const string ServiceAccountEmail = "ieldiscordbot@inspired-rock-284217.iam.gserviceaccount.com";
+
 
         enum ColumnIDs
         {
@@ -114,17 +110,18 @@ namespace IELDiscordBot.Classes.Services
 
         private void Setup()
         {
-            using (var fileStream = new FileStream(_config["dsn:sheets:credentials"], FileMode.Open, FileAccess.Read))
+            var certificate = new X509Certificate2($@"key.p12", "notasecret", X509KeyStorageFlags.Exportable);
+            _sheetsCredential = new ServiceAccountCredential(
+                new ServiceAccountCredential.Initializer(ServiceAccountEmail)
+                {
+                    Scopes = Scopes
+                }.FromCertificate(certificate));
+
+            service = new SheetsService(new BaseClientService.Initializer()
             {
-                string credPath = _config["dsn:sheets:token"];
-                _sheetsCredential = GoogleWebAuthorizationBroker.AuthorizeAsync(
-                    GoogleClientSecrets.Load(fileStream).Secrets,
-                    Scopes,
-                    "user",
-                    CancellationToken.None,
-                    new FileDataStore(credPath, true)).Result;
-                _log.Info("Credential File Saved to: " + credPath);
-            }
+                HttpClientInitializer = _sheetsCredential,
+                ApplicationName = ApplicationName
+            });
         }
 
         private SheetsService service;
@@ -370,7 +367,7 @@ namespace IELDiscordBot.Classes.Services
             obj.Add(s14Games);
             obj.Add(s15Games);
             obj.Add(s16Games);
-            obj.Add($"=IFS(ISBLANK(K{idx + 1});;AND(K{idx + 1}>=150;AND(J{idx + 1}>=150;I{idx + 1}>=150));\"Games Verified\"; AND(K{idx + 1}<=150;AND(J{idx + 1}>=150;I{idx + 1}>=150));\"Min Games S2 / 16 not reached\"; OR(J{idx + 1}<=150;I{idx + 1}<=150);\"Investigate App\")");
+            obj.Add($"=IFS(ISBLANK(K{row});;OR(K{row}<20;J{row}<20;I{row}<20);\"Investigate App\";OR(K{row}>=150;J{row}>=200;I{row}>= 350);\"Games Verified\";AND(K{row}<150;J{row}<200;I{row}<350); \"Min Games not reached\")");
             obj.Add(S14Peak);
             obj.Add(S15Peak);
             obj.Add(S16Peak);
@@ -391,10 +388,6 @@ namespace IELDiscordBot.Classes.Services
             u = service.Spreadsheets.Values.Update(v, SpreadsheetID, $"DSN Hub!AH{idx + 1}");//:O{idx+1}");
             u.ValueInputOption = SpreadsheetsResource.ValuesResource.UpdateRequest.ValueInputOptionEnum.USERENTERED;
             res = u.Execute();
-
-            _log.Info($"Updating DSN Calculator Returned: {res.UpdatedCells}");
-            ErrorLog = "";
-            AccountsChecked = "Accounts Checked: ";
         }
 
         private string MakeJSONFriendly(string content)
@@ -578,8 +571,6 @@ namespace IELDiscordBot.Classes.Services
                 return JsonConvert.DeserializeObject<TRNSegment>(responseString);
             }
         }
-
-
         struct CalcData
         {
             internal int Season;
@@ -588,17 +579,17 @@ namespace IELDiscordBot.Classes.Services
             internal int GamesPlayed;
         }
 
-        internal async Task UpdateSpreadSheet(List<object> obj, int row)
+        public async Task MakeRequest(string sectionToEdit, List<object> obj)
         {
             ValueRange v = new ValueRange();
             v.MajorDimension = "ROWS";
             v.Values = new List<IList<object>> { obj };
-            SpreadsheetsResource.ValuesResource.UpdateRequest u = service.Spreadsheets.Values.Update(v, SpreadsheetID, $"DSN Hub!I{row}");//:O{idx+1}");
+            SpreadsheetsResource.ValuesResource.UpdateRequest u = service.Spreadsheets.Values.Update(v, SpreadsheetID, sectionToEdit);//:O{idx+1}");
             u.ValueInputOption = SpreadsheetsResource.ValuesResource.UpdateRequest.ValueInputOptionEnum.USERENTERED;
             UpdateValuesResponse res = u.Execute();
         }
 
-        internal string GetLeagueAsync(string discordUsername)
+        internal string GetLeague(string discordUsername)
         {
             for (int row = 0; row < _latestValues.Count; row++)
             {
@@ -613,38 +604,17 @@ namespace IELDiscordBot.Classes.Services
             return "";
         }
 
-        internal void PlayerInDiscord(List<object> obj, int row)
+        internal int GetRowNumber(string discordUsername)
         {
-            ValueRange v = new ValueRange();
-            v.MajorDimension = "ROWS";
-            v.Values = new List<IList<object>> { obj };
-            SpreadsheetsResource.ValuesResource.UpdateRequest u = service.Spreadsheets.Values.Update(v, SpreadsheetID, $"DSN Hub!H{row}");//:O{idx+1}");
-            u.ValueInputOption = SpreadsheetsResource.ValuesResource.UpdateRequest.ValueInputOptionEnum.USERENTERED;
-            UpdateValuesResponse res = u.Execute();
-        }
+            for (int row = 0; row < _latestValues.Count; row++)
+            {
+                IList<object> r = _latestValues[row];
 
-        internal async Task SignupAccepted(List<object> obj, int row)
-        {
-            await Task.Delay(3000);
+                if (r[2].ToString().ToLower() == discordUsername.ToLower())
+                    return row + 1;
+            }
 
-            ValueRange v = new ValueRange();
-            v.MajorDimension = "ROWS";
-            v.Values = new List<IList<object>> { obj };
-            SpreadsheetsResource.ValuesResource.UpdateRequest u = service.Spreadsheets.Values.Update(v, SpreadsheetID, $"DSN Hub!R{row}");//:O{idx+1}");
-            u.ValueInputOption = SpreadsheetsResource.ValuesResource.UpdateRequest.ValueInputOptionEnum.USERENTERED;
-            UpdateValuesResponse res = u.Execute();
-        }
-
-        internal async Task FARoleAssigned(List<object> obj, int row)
-        {
-            await Task.Delay(3000);
-
-            ValueRange v = new ValueRange();
-            v.MajorDimension = "ROWS";
-            v.Values = new List<IList<object>> { obj };
-            SpreadsheetsResource.ValuesResource.UpdateRequest u = service.Spreadsheets.Values.Update(v, SpreadsheetID, $"DSN Hub!Z{row}");//:O{idx+1}");
-            u.ValueInputOption = SpreadsheetsResource.ValuesResource.UpdateRequest.ValueInputOptionEnum.USERENTERED;
-            UpdateValuesResponse res = u.Execute();
+            return -1;
         }
     }
 }

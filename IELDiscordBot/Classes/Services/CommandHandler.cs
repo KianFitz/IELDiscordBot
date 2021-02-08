@@ -27,8 +27,8 @@ namespace IELDiscordBotPOC.Classes.Services
         private readonly IConfigurationRoot _config;
         private readonly IServiceProvider _provider;
         private readonly List<RenameRequest> _renameRequests;
-        private readonly GoogleApiService _googleService;
         private readonly DeleteMessageService _deleteService;
+        private readonly DSNCalculatorService _dsn;
         private readonly List<ulong> _staffRoleIDs;
 
         private readonly IEmote _acceptEmote;
@@ -36,7 +36,7 @@ namespace IELDiscordBotPOC.Classes.Services
         private readonly IEmote _upvoteEmote;
 
         private readonly ulong _emoteVoteChannel;
-        public CommandHandler(IELContext db, DiscordSocketClient discord, CommandService commands, IConfigurationRoot config, IServiceProvider services, GoogleApiService google, DeleteMessageService delete)
+        public CommandHandler(IELContext db, DiscordSocketClient discord, CommandService commands, IConfigurationRoot config, IServiceProvider services, DeleteMessageService delete, DSNCalculatorService dsn)
         {
             _db = db;
             _client = discord;
@@ -44,8 +44,8 @@ namespace IELDiscordBotPOC.Classes.Services
             _config = config;
             _provider = services;
             _renameRequests = new List<RenameRequest>();
-            _googleService = google;
             _deleteService = delete;
+            _dsn = dsn;
 
             _acceptEmote = new Emoji("✅");
             _denyEmote = new Emoji("❎");
@@ -135,12 +135,18 @@ namespace IELDiscordBotPOC.Classes.Services
                     }).ConfigureAwait(false);
                 }
 
+                
                 if (req.Type == "spreadsheet" || req.Type == "both")
                 {
-                    ByteBuffer packet = new ByteBuffer(Opcodes.CMSG_NEW_NICKNAME, req.GuildUser.Username.Length + 5 + req.NewName.Length);
-                    packet.WriteString(req.GuildUser.Username + "#" + req.GuildUser.Discriminator);
-                    packet.WriteString(req.NewName);
-                    await _googleService.SendDataToServer(packet.ToByteArray()).ConfigureAwait(false);
+                    string fullName = $"{req.GuildUser.Username}#{req.GuildUser.Discriminator}";
+                    int row = _dsn.GetRowNumber(fullName);
+
+                    if (row != -1)
+                    {
+                        string sectionToEdit = $"Player Data!O{row}";
+                        await _dsn.MakeRequest(sectionToEdit, new List<object>() { req.NewName}).ConfigureAwait(false);
+                        return;
+                    }
                 }
 
                 await message.ModifyAsync(x => x.Embed = Embeds.RequestRename(req.GuildUser, req.Type, req.NewName, accepted, approver.Mention));

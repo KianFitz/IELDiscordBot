@@ -88,11 +88,10 @@ namespace GoogleSheetsAPIInterface.Network
             List<object> obj = new List<object>();
 
             obj.Add(true);
+            obj.Add("");
             obj.Add(true);
             obj.Add(true);
             obj.Add(true);
-            obj.Add(true);
-            obj[1] = "";
 
             int rowNumber = arg.ReadInt();
 
@@ -126,7 +125,6 @@ namespace GoogleSheetsAPIInterface.Network
             obj.Add(arg.ReadInt());
 
             int row = arg.ReadInt();
-            //obj[3] = $"=IFS(ISBLANK(K{row});;AND(K{row}>=150;AND(J{row}>=150;I{row}>=150));\"Games Verified\"; AND(K{row}<=150;AND(J{row}>=150;I{row}>=150));\"Min Games S2 / 16 not reached\"; OR(J{row}<=150;I{row}<=150);\"Investigate App\")";
             obj[3] = $"=IFS(ISBLANK(K{row});;OR(K{row}<20;J{row}<20;I{row}<20);\"Investigate App\";OR(K{row}>=150;J{row}>=200;I{row}>= 350);\"Games Verified\";AND(K{row}<150;J{row}<200;I{row}<350); \"Min Games not reached\")";
 
             string sectionToEdit = $"DSN Hub!I{row}";

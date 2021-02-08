@@ -23,21 +23,11 @@ namespace IELDiscordBot.Classes.Modules
 
         private readonly List<int> _acceptableSeasons = new List<int>() { 14, 15, 16 };
         private readonly List<int> _acceptablePlaylists = new List<int>() { 11, 13 };
-
-#if RELEASE
-        GoogleApiService _service;
-        public DSNModule(IELContext db, GoogleApiService service)
+        public DSNModule(IELContext db, DSNCalculatorService dsn)
         {
             _db = db;
-            _service = service;
+            _dsn = dsn;
         }
-#else
-        public DSNModule(IELContext db)
-        {
-            _db = db;
-        }
-
-#endif
         internal enum Playlist
         {
             TWOS = 13,
@@ -59,6 +49,7 @@ namespace IELDiscordBot.Classes.Modules
         };
 
         private readonly IELContext _db;
+        private readonly DSNCalculatorService _dsn;
 
         internal struct CalcData
         {
@@ -233,7 +224,10 @@ namespace IELDiscordBot.Classes.Modules
             //obj1[3] = $"=IFS(ISBLANK(K{row});;AND(K{row}>=150;AND(J{row}>=150;I{row}>=150));\"Games Verified\"; AND(K{row}<=150;AND(J{row}>=150;I{row}>=150));\"Min Games S2 / 16 not reached\"; OR(J{row}<=150;I{row}<=150);\"Investigate App\")";
 
 #if RELEASE
-            await _service.UpdateSpreadSheet(obj1, row);
+            //await _service.UpdateSpreadSheet(obj1, row);
+            obj1[3] = $"=IFS(ISBLANK(K{row});;OR(K{row}<20;J{row}<20;I{row}<20);\"Investigate App\";OR(K{row}>=150;J{row}>=200;I{row}>= 350);\"Games Verified\";AND(K{row}<150;J{row}<200;I{row}<350); \"Min Games not reached\")";
+            string sectionToEdit = $"DSN Hub!I{row}";
+            await _dsn.MakeRequest(sectionToEdit, obj1);
 #endif
             //await Context.Channel.SendMessageAsync("", false, Embeds.DSNCalculation(orderedData.ToList(), usernameString, platformString)).ConfigureAwait(false);
         }

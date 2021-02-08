@@ -2,15 +2,10 @@
 using Google.Apis.Services;
 using Google.Apis.Sheets.v4;
 using Google.Apis.Sheets.v4.Data;
-using Google.Apis.Util.Store;
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Google.Apis.Plus.v1;
-using Google.Apis.Plus.v1.Data;
 using System.Security.Cryptography.X509Certificates;
 
 
@@ -48,17 +43,6 @@ namespace GoogleSheetsAPIInterface.Network
                 {
                     Scopes = Scopes
                 }.FromCertificate(certificate));
-            //using (var fileStream = new FileStream("./credentials.json", FileMode.Open, FileAccess.Read))
-            //{
-            //    string credPath = "ll7myTir69E6LbjI5a8GoBR8";
-            //    _sheetsCredential = GoogleWebAuthorizationBroker.AuthorizeAsync(
-            //        GoogleClientSecrets.Load(fileStream).Secrets,
-            //        Scopes,
-            //        "user",
-            //        CancellationToken.None,
-            //        new FileDataStore(credPath, true)).Result;
-            //    Console.WriteLine("Credential File Saved to: " + credPath);
-            //}
 
             service = new SheetsService(new BaseClientService.Initializer()
             {
