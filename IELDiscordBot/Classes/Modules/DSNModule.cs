@@ -59,6 +59,36 @@ namespace IELDiscordBot.Classes.Modules
             internal int GamesPlayed;
         }
 
+        [Command("getplayerids")]
+        public async Task HandlePlayerIdCommand()
+        {
+            var players = _dsn.GetAllPlayers();
+
+            foreach (var discordID in players)
+            {
+                if (discordID == "Discord name") continue;
+
+                string username = discordID.Substring(0, discordID.IndexOf('#'));
+                string disc = discordID.Substring(discordID.IndexOf('#') + 1);
+
+                _log.Info($"Searching for user {username}#{disc}.");
+
+                var user = Context.Guild.Users.FirstOrDefault(x => x.Username == username && x.Discriminator == disc);
+                if (user is null)
+                {
+                    _log.Info($"Unable to find user {username}#{disc}");
+                    continue;
+                }
+                else
+                {
+                    _log.Info($"User {username}#{disc} found. ID {user.Id}");
+                    await _dsn.MakeRequest($"DSN Hub!AI{_dsn.GetRowNumber(discordID)}", new List<object>() { user.Id.ToString()} );
+                    await Task.Delay(2000);
+                }
+            }
+
+        }
+
         [Command("manualpeak")]
         public async Task HandleManualPeakCommandAsync(string platform, string user, int season, int peak)
         {

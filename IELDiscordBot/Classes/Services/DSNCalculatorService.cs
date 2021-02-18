@@ -77,9 +77,16 @@ namespace IELDiscordBot.Classes.Services
             TimeSpan.FromMinutes(10));
         }
 
+        internal List<string> GetAllPlayers()
+        {
+            return _latestValues.Select(x => x[(int)ColumnIDs.Discord].ToString()).ToList();
+        }
+
         ServiceAccountCredential _sheetsCredential;
         string[] Scopes = { SheetsService.Scope.Spreadsheets };
         const string ApplicationName = "IEL Discord Bot .NET Application";
+
+
         const string SpreadsheetID = "1ozwketqZ4ZU9Dk2wyB20Yq8KDQXw1zA2EOUdXuuG7NY";
         const string ServiceAccountEmail = "ieldiscordbot@inspired-rock-284217.iam.gserviceaccount.com";
 
