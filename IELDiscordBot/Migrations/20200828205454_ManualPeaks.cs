@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore.Migrations;
 
-namespace IELDiscordBotPOC.Migrations
+namespace IELDiscordBot.Migrations
 {
     public partial class ManualPeaks : Migration
     {

@@ -1,6 +1,6 @@
 ﻿using Discord.Commands;
 using IELDiscordBot.Classes.Models;
-using IELDiscordBotPOC.Classes.Database;
+using IELDiscordBot.Classes.Database;
 using System;
 using System.Collections.Generic;
 using System.Linq;

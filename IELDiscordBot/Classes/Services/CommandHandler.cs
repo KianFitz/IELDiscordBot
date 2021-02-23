@@ -3,10 +3,10 @@ using Discord.Commands;
 using Discord.WebSocket;
 using IELDiscordBot.Classes.Services;
 using IELDiscordBot.Classes.Models;
-using IELDiscordBotPOC.Classes.Database;
-using IELDiscordBotPOC.Classes.Models;
-using IELDiscordBotPOC.Classes.Modules;
-using IELDiscordBotPOC.Classes.Utilities;
+using IELDiscordBot.Classes.Database;
+using IELDiscordBot.Classes.Models;
+using IELDiscordBot.Classes.Modules;
+using IELDiscordBot.Classes.Utilities;
 using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.Extensions.Configuration;
 using NLog;
@@ -15,8 +15,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using IELDiscordBot.Classes.Utilities;
+using System.Text.RegularExpressions;
 
-namespace IELDiscordBotPOC.Classes.Services
+namespace IELDiscordBot.Classes.Services
 {
     public class CommandHandler
     {
@@ -30,12 +32,16 @@ namespace IELDiscordBotPOC.Classes.Services
         private readonly DeleteMessageService _deleteService;
         private readonly DSNCalculatorService _dsn;
         private readonly List<ulong> _staffRoleIDs;
+        private readonly List<Franchise> _franchises;
+
 
         private readonly IEmote _acceptEmote;
         private readonly IEmote _denyEmote;
         private readonly IEmote _upvoteEmote;
 
         private readonly ulong _emoteVoteChannel;
+        private readonly ulong _ielPollChannel;
+        private readonly ulong _franchiseContacts;
         public CommandHandler(IELContext db, DiscordSocketClient discord, CommandService commands, IConfigurationRoot config, IServiceProvider services, DeleteMessageService delete, DSNCalculatorService dsn)
         {
             _db = db;
@@ -46,12 +52,15 @@ namespace IELDiscordBotPOC.Classes.Services
             _renameRequests = new List<RenameRequest>();
             _deleteService = delete;
             _dsn = dsn;
+            _franchises = new List<Franchise>();
 
             _acceptEmote = new Emoji("✅");
             _denyEmote = new Emoji("❎");
             _upvoteEmote = new Emoji("⬆️");
 
             _emoteVoteChannel = 805461819187003423;
+            _ielPollChannel = 781593835477270583;
+            _franchiseContacts = 668540809410248714;
 
             _client.UserJoined += OnUserJoined;
             _client.UserLeft += OnUserLeft;
@@ -59,6 +68,8 @@ namespace IELDiscordBotPOC.Classes.Services
             _client.GuildMemberUpdated += OnUserUpdated;
             _client.ReactionAdded += OnReactionAdded;
             _client.ReactionRemoved += OnReactionRemoved;
+            _client.GuildAvailable += OnGuildAvailable;
+
             _staffRoleIDs = new List<ulong>()
             {
                 468918928845045780, // IEL Managers
@@ -66,6 +77,66 @@ namespace IELDiscordBotPOC.Classes.Services
                 469683155805274122, // Moderation Team
                 547754108346433536  // Support Team
             };
+        }
+
+        struct Franchise
+        {
+            internal string Name;
+            internal IGuildUser GM;
+            internal IGuildUser AGM;
+            internal IGuildUser MasterCaptain;
+            internal IGuildUser ChallengerCaptain;
+            internal IGuildUser ProspectCaptain;
+        }
+
+
+        private async Task OnGuildAvailable(SocketGuild arg)
+        {
+            string GetValue(string input)
+            {
+                return input.Substring(input.IndexOf("-") + 1);
+            }
+
+            string GetName(string input)
+            {
+                int startIndex = input.IndexOf("**") + 2;
+                int endIndex = input.LastIndexOf("**");
+
+
+                return input.Substring(startIndex, endIndex - startIndex);
+            }
+
+            if (arg.Id != 468918204362653696) return;
+
+            var franchiseContacts = arg.GetTextChannel(_franchiseContacts);
+            var messages = await franchiseContacts.GetMessagesAsync().FlattenAsync();
+
+            foreach (var msg in messages)
+            {
+                var lines = msg.Content.Split("---------------------------------------------");
+
+                foreach (var franchise in lines)
+                {
+                    var m = franchise.Split("\n");
+                    m = m.Where(x => String.IsNullOrEmpty(x) == false && x != "__**Season 8 Franchise Contacts**__").ToArray();
+                    if (m.Length <= 1) continue;
+
+                    Franchise f = new Franchise();
+
+                    f.Name = GetName(m[0]);
+                    //TODO: HARDCODED FIX
+                    if (f.Name == "Zero Fox") f.Name = "Zero Fox Gaming";
+                    f.GM = arg.GetUser(MentionUtils.ParseUser(GetValue(m[1]).Trim()));
+                    f.AGM = arg.GetUser(MentionUtils.ParseUser(GetValue(m[2]).Trim()));
+                    f.MasterCaptain = arg.GetUser(MentionUtils.ParseUser(GetValue(m[3]).Trim()));
+                    f.ChallengerCaptain = arg.GetUser(MentionUtils.ParseUser(GetValue(m[4]).Trim()));
+                    f.ProspectCaptain = arg.GetUser(MentionUtils.ParseUser(GetValue(m[5]).Trim()));
+
+                    _franchises.Add(f);
+
+                }
+            }
+
         }
 
         private bool IsStaffMember(IGuildUser user)
@@ -135,7 +206,7 @@ namespace IELDiscordBotPOC.Classes.Services
                     }).ConfigureAwait(false);
                 }
 
-                
+
                 if (req.Type == "spreadsheet" || req.Type == "both")
                 {
                     string fullName = $"{req.GuildUser.Username}#{req.GuildUser.Discriminator}";
@@ -144,7 +215,7 @@ namespace IELDiscordBotPOC.Classes.Services
                     if (row != -1)
                     {
                         string sectionToEdit = $"Player Data!O{row}";
-                        await _dsn.MakeRequest(sectionToEdit, new List<object>() { req.NewName}).ConfigureAwait(false);
+                        await _dsn.MakeRequest(sectionToEdit, new List<object>() { req.NewName }).ConfigureAwait(false);
                         return;
                     }
                 }
@@ -296,6 +367,12 @@ namespace IELDiscordBotPOC.Classes.Services
                 return;
             }
 
+            if (message.Channel.Id == _ielPollChannel)
+            {
+                await HandlePollPostedAsync(message).ConfigureAwait(false);
+                return;
+            }
+
             int argPos = 0;
             if (msg.HasStringPrefix(_config["prefix"], ref argPos))
             {
@@ -315,6 +392,75 @@ namespace IELDiscordBotPOC.Classes.Services
                     await msg.DeleteAsync().ConfigureAwait(false);
                 }
             }
+        }
+
+        struct PollEntry
+        {
+            internal string League;
+            internal string Team1;
+            internal string Team2;
+        }
+
+
+        // TODO: Really hacky. Tried to do it with hashtables and sscanf but REGEX SAID NO.
+        private async Task HandlePollPostedAsync(SocketMessage message)
+        {
+            string[] lines = message.Content.Split("\n");
+            lines = lines.Where(x => Regex.IsMatch(x, "(Prospect|Challenger|Master)([A-Za-z ])+ vs ([A-Za-z ])+")).ToArray();
+
+            List<PollEntry> entries = new List<PollEntry>();
+
+            foreach (string line in lines)
+            {
+                string tmp = line.Remove(0, line.IndexOf(" ") + 1);
+                string league = tmp.Substring(0, tmp.IndexOf(" ") + 1);
+                tmp = tmp.Replace(league, "");
+                league = league.Trim();
+
+                string team1 = tmp.Substring(0, tmp.IndexOf("vs")).Trim();
+                string team2 = tmp.Substring(tmp.IndexOf("vs") + 2).Trim();
+
+
+                PollEntry entry = new PollEntry()
+                {
+                    League = league,
+                    Team1 = team1,
+                    Team2 = team2
+                };
+
+                entries.Add(entry);
+            }
+            List<IGuildUser> usersToSendTo = new List<IGuildUser>();
+
+            foreach (PollEntry e in entries)
+            {
+                Franchise f = _franchises.First(x => x.Name == e.Team1);
+                Franchise f2 = _franchises.First(x => x.Name == e.Team2);
+
+                switch (e.League)
+                {
+                    case "Prospect":
+                        {
+                            usersToSendTo.Add(f.ProspectCaptain);
+                            usersToSendTo.Add(f2.ProspectCaptain);
+                            break;
+                        }
+                    case "Challenger":
+                        {
+                            usersToSendTo.Add(f.ChallengerCaptain);
+                            usersToSendTo.Add(f2.ChallengerCaptain);
+                            break;
+                        }
+                    case "Master":
+                        {
+                            usersToSendTo.Add(f.MasterCaptain);
+                            usersToSendTo.Add(f2.MasterCaptain);
+                            break;
+                        }
+                }
+            }
+            usersToSendTo.ForEach(x => x.SendMessageAsync("", false, Embeds.PollStreamGame()).ConfigureAwait(false));
+            _log.Info($"Message sent to the following users: {string.Join(",", usersToSendTo.Select(x => x.Nickname))}");
         }
 
         private async Task ExecuteCustomCommandAsync(SocketCommandContext context, CustomCommand cmd)

@@ -2,7 +2,7 @@
 using System;
 using System.Threading.Tasks;
 
-namespace IELDiscordBotPOC.Classes.Modules
+namespace IELDiscordBot.Classes.Modules
 {
     public class ModModule : ModuleBase<SocketCommandContext>
     {

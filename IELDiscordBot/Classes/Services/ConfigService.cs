@@ -1,8 +1,8 @@
-﻿using IELDiscordBotPOC.Classes.Utilities;
+﻿using IELDiscordBot.Classes.Utilities;
 using Microsoft.Extensions.Configuration;
 using System.IO;
 
-namespace IELDiscordBotPOC.Classes.Services
+namespace IELDiscordBot.Classes.Services
 {
     public class ConfigService
     {

@@ -1,9 +1,9 @@
-﻿using IELDiscordBotPOC.Classes.Database;
+﻿using IELDiscordBot.Classes.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using MySql.Data.MySqlClient;
 
-namespace IELDiscordBotPOC.Classes.Factories
+namespace IELDiscordBot.Classes.Factories
 {
     class IELContextFactory : IDesignTimeDbContextFactory<IELContext>
     {

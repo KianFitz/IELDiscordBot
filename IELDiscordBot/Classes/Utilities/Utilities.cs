@@ -1,8 +1,8 @@
-﻿using IELDiscordBotPOC.Classes.Models;
+﻿using IELDiscordBot.Classes.Models;
 using System;
 using System.Collections.Generic;
 
-namespace IELDiscordBotPOC.Classes.Utilities
+namespace IELDiscordBot.Classes.Utilities
 {
     class Utilities
     {

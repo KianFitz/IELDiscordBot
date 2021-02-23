@@ -2,15 +2,15 @@
 using Discord.Commands;
 using Discord.WebSocket;
 using IELDiscordBot.Classes.Services;
-using IELDiscordBotPOC.Classes.Database;
-using IELDiscordBotPOC.Classes.Services;
+using IELDiscordBot.Classes.Database;
+using IELDiscordBot.Classes.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using MySql.Data.MySqlClient;
 using System.Threading.Tasks;
 
-namespace IELDiscordBotPOC
+namespace IELDiscordBot
 {
     public class Program
     {

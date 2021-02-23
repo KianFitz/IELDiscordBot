@@ -6,7 +6,7 @@ using System;
 using System.Reflection;
 using System.Threading.Tasks;
 
-namespace IELDiscordBotPOC.Classes.Services
+namespace IELDiscordBot.Classes.Services
 {
     public class StartupService
     {

@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore.Migrations;
 using MySql.Data.EntityFrameworkCore.Metadata;
 
-namespace IELDiscordBotPOC.Migrations
+namespace IELDiscordBot.Migrations
 {
     public partial class CustomCommands : Migration
     {

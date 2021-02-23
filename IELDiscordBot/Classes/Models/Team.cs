@@ -1,6 +1,6 @@
 ﻿using Discord.WebSocket;
 
-namespace IELDiscordBotPOC.Classes.Models
+namespace IELDiscordBot.Classes.Models
 {
     public class Team
     {

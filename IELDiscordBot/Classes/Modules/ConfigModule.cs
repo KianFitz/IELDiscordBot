@@ -1,10 +1,10 @@
 ﻿using Discord.Commands;
-using IELDiscordBotPOC.Classes.Database;
-using IELDiscordBotPOC.Classes.Models;
+using IELDiscordBot.Classes.Database;
+using IELDiscordBot.Classes.Models;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace IELDiscordBotPOC.Classes.Modules
+namespace IELDiscordBot.Classes.Modules
 {
     public class ConfigModule : ModuleBase<SocketCommandContext>
     {

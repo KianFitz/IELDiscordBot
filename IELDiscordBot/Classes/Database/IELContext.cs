@@ -1,9 +1,9 @@
 using Discord.Commands;
 using IELDiscordBot.Classes.Models;
-using IELDiscordBotPOC.Classes.Models;
+using IELDiscordBot.Classes.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace IELDiscordBotPOC.Classes.Database
+namespace IELDiscordBot.Classes.Database
 {
     public class IELContext : DbContext
     {

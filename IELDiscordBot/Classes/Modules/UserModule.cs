@@ -2,14 +2,14 @@
 using Discord.Commands;
 using Discord.WebSocket;
 using IELDiscordBot.Classes.Services;
-using IELDiscordBotPOC.Classes.Services;
-using IELDiscordBotPOC.Classes.Utilities;
+using IELDiscordBot.Classes.Services;
+using IELDiscordBot.Classes.Utilities;
 using Shared;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace IELDiscordBotPOC.Classes.Modules
+namespace IELDiscordBot.Classes.Modules
 {
     class RenameRequest
     {

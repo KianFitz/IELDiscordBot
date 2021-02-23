@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using static IELDiscordBot.Classes.Modules.DSNModule;
 
-namespace IELDiscordBotPOC.Classes.Utilities
+namespace IELDiscordBot.Classes.Utilities
 {
     class Embeds
     {
@@ -82,6 +82,23 @@ namespace IELDiscordBotPOC.Classes.Utilities
                 Description = $"{user.Mention} has requested to be renamed to {newNickname} on {type}."
             };
             builder.AddField(new EmbedFieldBuilder() { Name = "Status", Value = "Pending", IsInline = true });
+
+            return builder.Build();
+        }
+
+        internal static Embed PollStreamGame()
+        {
+            EmbedBuilder builder = new EmbedBuilder()
+            {
+                Color = Constants.SuccessColor,
+                Description =
+
+                $"Hello!\nOne of your upcoming games has been selected to be part of the community vote." +
+                $"\n\nIf you do not wish for your game to be streamed, or if there is any change to your scheduling. Please contact the Stream Team Manager." +
+                $"\nIf you do not contact us, it will be assumed that you are okay with being on stream and if your team wins the vote you are bound to playing on stream." +
+                $"\nStreamed Games are subject to the following section of the IEL Manual: https://tinyurl.com/IELStreamedSeries" +
+                $"\n\n Finally, please do not reply to this bot directly, it is not a managed inbox and your message won't be received."
+            };
 
             return builder.Build();
         }
@@ -218,5 +235,7 @@ namespace IELDiscordBotPOC.Classes.Utilities
             };
             return builder.Build();
         }
+
+
     }
 }

@@ -1,6 +1,6 @@
 ﻿using Discord;
 
-namespace IELDiscordBotPOC.Classes.Utilities
+namespace IELDiscordBot.Classes.Utilities
 {
     class Constants
     {

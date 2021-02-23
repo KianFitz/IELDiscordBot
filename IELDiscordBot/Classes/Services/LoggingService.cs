@@ -1,7 +1,7 @@
 ﻿using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
-using IELDiscordBotPOC.Classes.Utilities;
+using IELDiscordBot.Classes.Utilities;
 using NLog;
 using NLog.Conditions;
 using NLog.Config;
@@ -18,7 +18,7 @@ namespace IELDiscordBot.Classes.Services
         private readonly DiscordSocketClient _discord;
         private readonly CommandService _commands;
 
-        private string _logDirectory => Path.Combine(Utilities.GetBasePath(), "Logs");
+        private string _logDirectory => Path.Combine(Utilities.Utilities.GetBasePath(), "Logs");
         private string _logFile => Path.Combine(_logDirectory, $"{DateTime.UtcNow.ToString("yyyy-MM-dd")}.txt");
 
         public LoggingService(DiscordSocketClient discord, CommandService commands)
