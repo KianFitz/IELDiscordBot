@@ -89,6 +89,7 @@ namespace IELDiscordBot.Classes.Modules
         [Command("removeteamtags")]
         public async Task RemoveAllPlayerTags()
         {
+            await Context.Guild.DownloadUsersAsync().ConfigureAwait(false);
             var users = Context.Guild.Users;
             int amountUpdated = 0;
 
