@@ -89,19 +89,22 @@ namespace IELDiscordBot.Classes.Modules
         [Command("removeteamtags")]
         public async Task RemoveAllPlayerTags()
         {
+            var message = await Context.Channel.SendMessageAsync($"Downloading user list..");
+
             await Context.Guild.DownloadUsersAsync().ConfigureAwait(false);
             var users = Context.Guild.Users;
             int amountUpdated = 0;
 
-            var message = await Context.Channel.SendMessageAsync($"Removing team tags from player's nicknames.");
+            await message.ModifyAsync(x => x.Content = $"Renaming players..").ConfigureAwait(false);
 
             foreach (var user in users)
             {
                 if (user.Nickname != null)
                 {
-                    if (Regex.IsMatch(user.Nickname, @"^\[w+\]"))
+                    string oldName = user.Nickname;
+                    string newName = Regex.Replace(user.Nickname, @"^\[\w+\] ", "");
+                    if (oldName != newName)
                     {
-                        string newName = Regex.Replace(user.Nickname, @"^\w+\] ", "");
                         await user.ModifyAsync(x =>
                         {
                             x.Nickname = newName;
