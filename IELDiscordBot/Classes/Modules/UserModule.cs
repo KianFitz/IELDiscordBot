@@ -96,11 +96,13 @@ namespace IELDiscordBot.Classes.Modules
             var users = Context.Guild.Users;
             int amountUpdated = 0;
             int errorsCounted = 0;
+            int usersChecked = 0;
             
             await message.ModifyAsync(x => x.Content = $"Renaming players..").ConfigureAwait(false);
 
             foreach (var user in users)
             {
+                usersChecked++;
                 if (user.Nickname != null)
                 {
                     try
@@ -120,6 +122,10 @@ namespace IELDiscordBot.Classes.Modules
                     {
                         errorsCounted++;
                     }
+                }
+                if (usersChecked % 50 == 0)
+                {
+                    await message.ModifyAsync(x => x.Content = $"Renaming Users. Checked: {usersChecked}. Removed {amountUpdated} tags. Caught {errorsCounted} errors.").ConfigureAwait(false);
                 }
             }
 
