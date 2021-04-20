@@ -5,6 +5,7 @@ using IELDiscordBot.Classes.Services;
 using IELDiscordBot.Classes.Services;
 using IELDiscordBot.Classes.Utilities;
 using Shared;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -94,27 +95,35 @@ namespace IELDiscordBot.Classes.Modules
             await Context.Guild.DownloadUsersAsync().ConfigureAwait(false);
             var users = Context.Guild.Users;
             int amountUpdated = 0;
-
+            int errorsCounted = 0;
+            
             await message.ModifyAsync(x => x.Content = $"Renaming players..").ConfigureAwait(false);
 
             foreach (var user in users)
             {
                 if (user.Nickname != null)
                 {
-                    string oldName = user.Nickname;
-                    string newName = Regex.Replace(user.Nickname, @"^\[\w+\] ", "");
-                    if (oldName != newName)
+                    try
                     {
-                        await user.ModifyAsync(x =>
+                        string oldName = user.Nickname;
+                        string newName = Regex.Replace(user.Nickname, @"^\[\w+\] ", "");
+                        if (oldName != newName)
                         {
-                            x.Nickname = newName;
-                        }).ConfigureAwait(false);
-                        amountUpdated++;
+                            await user.ModifyAsync(x =>
+                            {
+                                x.Nickname = newName;
+                            }).ConfigureAwait(false);
+                            amountUpdated++;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        errorsCounted++;
                     }
                 }
             }
 
-            await message.ModifyAsync(x => x.Content = $"Operation completed! Removed {amountUpdated} tags.").ConfigureAwait(false);
+            await message.ModifyAsync(x => x.Content = $"Operation completed! Removed {amountUpdated} tags. Caught {errorsCounted} errors.").ConfigureAwait(false);
         }
 
         [Command("acceptplayer")]
