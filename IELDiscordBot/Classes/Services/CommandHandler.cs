@@ -1,10 +1,8 @@
 ﻿using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
-using IELDiscordBot.Classes.Services;
 using IELDiscordBot.Classes.Models;
 using IELDiscordBot.Classes.Database;
-using IELDiscordBot.Classes.Models;
 using IELDiscordBot.Classes.Modules;
 using IELDiscordBot.Classes.Utilities;
 using Microsoft.EntityFrameworkCore.Internal;
@@ -15,7 +13,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using IELDiscordBot.Classes.Utilities;
 using System.Text.RegularExpressions;
 
 namespace IELDiscordBot.Classes.Services

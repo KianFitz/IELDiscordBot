@@ -7,6 +7,7 @@ using IELDiscordBot.Classes.Utilities;
 using Shared;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace IELDiscordBot.Classes.Modules
@@ -83,6 +84,33 @@ namespace IELDiscordBot.Classes.Modules
             req.MessageId = messageId;
             req.GuildUser = user;
             _commands.AddRenameRequest(req);
+        }
+
+        [Command("removeteamtags")]
+        public async Task RemoveAllPlayerTags()
+        {
+            var users = Context.Guild.Users;
+            int amountUpdated = 0;
+
+            var message = await Context.Channel.SendMessageAsync($"Removing team tags from player's nicknames.");
+
+            foreach (var user in users)
+            {
+                if (user.Nickname != null)
+                {
+                    if (Regex.IsMatch(user.Nickname, @"^\[w+\]"))
+                    {
+                        string newName = Regex.Replace(user.Nickname, @"^\w+\] ", "");
+                        await user.ModifyAsync(x =>
+                        {
+                            x.Nickname = newName;
+                        }).ConfigureAwait(false);
+                        amountUpdated++;
+                    }
+                }
+            }
+
+            await message.ModifyAsync(x => x.Content = $"Operation completed! Removed {amountUpdated} tags.").ConfigureAwait(false);
         }
 
         [Command("acceptplayer")]

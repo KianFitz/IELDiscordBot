@@ -49,9 +49,9 @@ namespace IELDiscordBot.Classes.Services
 
         DateTime[] cutOffDates = new DateTime[]
         {
-            new DateTime(2020, 09, 23),
             new DateTime(2020, 12, 09),
-            new DateTime(2021, 01, 10)
+            new DateTime(2021, 04, 07),
+            new DateTime(2021, 05, 01)
         };
 
         internal class DSNCalculationData
