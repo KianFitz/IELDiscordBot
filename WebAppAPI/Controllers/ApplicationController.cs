@@ -26,7 +26,7 @@ namespace WebAppAPI.Controllers
             {
                 List<object> objList = new List<object>();
 
-                objList.Add(DateTime.Now);
+                objList.Add(DateTime.Now.ToLongDateString());
                 objList.Add(signup.user.id);
                 objList.Add(signup.user.name);
                 objList.Add("'" + signup.user.discordId);
