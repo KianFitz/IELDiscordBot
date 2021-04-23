@@ -34,7 +34,7 @@ namespace WebAppAPI.Controllers
                 objList.Add(@$"https://webapp.imperialesportsleague.co.uk/user/{signup.user.id}");
                 objList.Add(signup.user.referral);
                 objList.Add(signup.feedback);
-                //objList.AddRange(signup.socialAccounts.Where(x => x.active && x.type == "twitter").Select(x => x.platform_name).Take(17));
+                objList.AddRange(signup.socialAccounts.Where(x => x.active && x.type == "twitter").Select(x => x.platform_name).Take(17));
 
                 int rowNumber = SpreadsheetService.Instance().GetNextAvailableRow();
                 await SpreadsheetService.Instance().MakeRequest($"Player Data!A:H{rowNumber}", objList).ConfigureAwait(false);
