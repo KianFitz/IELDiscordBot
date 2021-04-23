@@ -20,7 +20,7 @@ namespace WebAppAPI.Controllers
         }
 
         [HttpPost]
-        public async Task<int> InsertSignup([FromBody] Signup signup)
+        public async Task<string> InsertSignup([FromBody] Signup signup)
         {
             try
             {
@@ -39,11 +39,11 @@ namespace WebAppAPI.Controllers
                 int rowNumber = SpreadsheetService.Instance().GetNextAvailableRow();
                 await SpreadsheetService.Instance().MakeRequest($"Player Data!A:H{rowNumber}", objList).ConfigureAwait(false);
 
-                return 200;
+                return "200";
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                return 500;
+                return ex.Message;
             }
         }
     }
