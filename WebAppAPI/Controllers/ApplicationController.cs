@@ -33,7 +33,8 @@ namespace WebAppAPI.Controllers
                 objList.Add(signup.user.location);
                 objList.Add(@$"https://webapp.imperialesportsleague.co.uk/user/{signup.user.id}");
                 objList.Add(signup.user.referral);
-                objList.Add("@null");
+                objList.Add(signup.feedback);
+                objList.AddRange(signup.socialAccounts.Where(x => x.active && x.type == "twitter").Take(17));
 
                 int rowNumber = SpreadsheetService.Instance().GetNextAvailableRow();
                 await SpreadsheetService.Instance().MakeRequest($"Player Data!A:H{rowNumber}", objList).ConfigureAwait(false);
@@ -53,6 +54,7 @@ namespace WebAppAPI.Controllers
         public string feedback;
         public User user;
         public Platform[] platforms;
+        public SocialAccount[] socialAccounts;
     }
 
     public class User
@@ -69,7 +71,16 @@ namespace WebAppAPI.Controllers
         public int id;
         public string type;
         public string? platform_id;
-        public string? platform_type;
+        public string? platform_name;
+        public bool active;
+    }
+
+    public class SocialAccount
+    {
+        public int id;
+        public string type;
+        public string? platform_id;
+        public string? platform_name;
         public bool active;
     }
 }
