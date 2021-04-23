@@ -37,7 +37,7 @@ namespace WebAppAPI.Controllers
                 objList.AddRange(signup.socialAccounts.Where(x => x.active && x.type == "twitter").Select(x => x.platform_name).Take(17));
 
                 int rowNumber = SpreadsheetService.Instance().GetNextAvailableRow();
-                await SpreadsheetService.Instance().MakeRequest($"Player Data!A:H{rowNumber}", objList).ConfigureAwait(false);
+                await SpreadsheetService.Instance().MakeRequest($"Player Data!A:Y{rowNumber}", objList).ConfigureAwait(false);
 
                 return "200";
             }
