@@ -66,7 +66,7 @@ namespace Shared
 
         private void Setup()
         {
-            var certificate = new X509Certificate2($@"D:\Old PC\Development\IEL\IELDiscordBotOrig\WebAppAPI\bin\Debug\netcoreapp3.1\key.p12", "notasecret", X509KeyStorageFlags.Exportable);
+            var certificate = new X509Certificate2($@"key.p12", "notasecret", X509KeyStorageFlags.Exportable);
             _sheetsCredential = new ServiceAccountCredential(
                 new ServiceAccountCredential.Initializer(ServiceAccountEmail)
                 {
