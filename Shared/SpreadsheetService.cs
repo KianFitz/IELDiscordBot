@@ -41,6 +41,7 @@ namespace Shared
             ValueRange response = request.Execute();
 
             _latestValues = response.Values;
+            _rowToEdit += _latestValues.Count - 1;
         }
 
 

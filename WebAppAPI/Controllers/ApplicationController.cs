@@ -22,21 +22,28 @@ namespace WebAppAPI.Controllers
         [HttpPost]
         public async Task<int> InsertSignup([FromBody] Signup signup)
         {
-            List<object> objList = new List<object>();
+            try
+            {
+                List<object> objList = new List<object>();
 
-            objList.Add(DateTime.Now);
-            objList.Add(signup.user.id);
-            objList.Add(signup.user.name);
-            objList.Add("'"+ signup.user.discordId);
-            objList.Add(signup.user.location);
-            objList.Add(@$"https://webapp.imperialesportsleague.co.uk/user/{signup.user.id}");
-            objList.Add(signup.user.referral);
-            objList.Add("@null");
+                objList.Add(DateTime.Now);
+                objList.Add(signup.user.id);
+                objList.Add(signup.user.name);
+                objList.Add("'" + signup.user.discordId);
+                objList.Add(signup.user.location);
+                objList.Add(@$"https://webapp.imperialesportsleague.co.uk/user/{signup.user.id}");
+                objList.Add(signup.user.referral);
+                objList.Add("@null");
 
-            int rowNumber = SpreadsheetService.Instance().GetNextAvailableRow();
-            await SpreadsheetService.Instance().MakeRequest($"Player Data!A:H{rowNumber}", objList).ConfigureAwait(false);
+                int rowNumber = SpreadsheetService.Instance().GetNextAvailableRow();
+                await SpreadsheetService.Instance().MakeRequest($"Player Data!A:H{rowNumber}", objList).ConfigureAwait(false);
 
-            return 200;
+                return 200;
+            }
+            catch (Exception)
+            {
+                return 500;
+            }
         }
     }
 
