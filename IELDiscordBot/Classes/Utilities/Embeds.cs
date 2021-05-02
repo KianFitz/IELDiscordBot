@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using static IELDiscordBot.Classes.Modules.DSNModule;
+using static IELDiscordBot.Classes.Services.DSNCalculatorService;
 
 namespace IELDiscordBot.Classes.Utilities
 {
@@ -115,13 +116,13 @@ namespace IELDiscordBot.Classes.Utilities
             return builder.Build();
         }
 
-        internal static Embed DSNCalculation(List<CalcData> data, string user, string platform, out List<object> obj)
+        internal static Embed DSNCalculation(List<CalcData> data, string user, string platform)
         {
-            int S14Peak = 0; //alcData.Where(x => x.Season == 14).Max(y => y.Ratings).First();
-            int S15Peak = 0; //alcData.Where(x => x.Season == 15).Max(y => y.Ratings).First();
-            int S16Peak = 0; //CalcData.Where(x => x.Season == 16).Max(y => y.Ratings).First();
+            int S15Peak = 0;
+            int S16Peak = 0;
+            int S17Peak = 0;
 
-            for (int season = 14; season < 17; season++)
+            for (int season = 15; season < 18; season++)
             {
                 int highestVal = 0;
                 foreach (var y in data)
@@ -129,22 +130,11 @@ namespace IELDiscordBot.Classes.Utilities
                     if (y.Ratings is null)
                         continue;
 
-                    if (y.Season == season)
-                    {
-                        highestVal = Math.Max(highestVal, y.Ratings.Count > 0 ? y.Ratings.Max() : 0);
-                    }
-                    else
-                    {
-                        continue;
-                    }
+                    if (y.Season == season) highestVal = Math.Max(highestVal, y.Ratings.Count > 0 ? y.Ratings.Max() : 0);
+                    else continue;
                 }
                 switch (season)
                 {
-                    case 14:
-                        {
-                            S14Peak = highestVal;
-                            break;
-                        }
                     case 15:
                         {
                             S15Peak = highestVal;
@@ -155,50 +145,55 @@ namespace IELDiscordBot.Classes.Utilities
                             S16Peak = highestVal;
                             break;
                         }
+                    case 17:
+                        {
+                            S17Peak = highestVal;
+                            break;
+                        }
                 }
             }
 
-            int peakS = 14;
+            int peakS = 15;
             int sPeakS = 0;
 
-            int highestPeak = S14Peak;
+            int highestPeak = S15Peak;
             int secondHighestPeak = 0;
-            if (S15Peak > highestPeak)
+            if (S16Peak > highestPeak)
             {
                 secondHighestPeak = highestPeak;
-                sPeakS = 14;
+                sPeakS = 15;
                 highestPeak = S15Peak;
             }
             else
             {
-                secondHighestPeak = S15Peak;
-                sPeakS = 15;
+                secondHighestPeak = S16Peak;
+                sPeakS = 16;
             }
-            if (S16Peak > highestPeak)
+            if (S17Peak > highestPeak)
             {
                 secondHighestPeak = highestPeak;
                 sPeakS = peakS;
-                highestPeak = S16Peak;
-                peakS = 16;
+                highestPeak = S17Peak;
+                peakS = 17;
             }
-            else if (S16Peak > secondHighestPeak)
+            else if (S17Peak > secondHighestPeak)
             {
-                secondHighestPeak = S16Peak;
-                sPeakS = 16;
+                secondHighestPeak = S17Peak;
+                sPeakS = 17;
             }
 
             secondHighestPeak = Math.Max(secondHighestPeak, highestPeak - 200);
 
-            if (sPeakS == 14)
-                S14Peak = secondHighestPeak;
-            else if (sPeakS == 15)
+            if (sPeakS == 15)
                 S15Peak = secondHighestPeak;
             else if (sPeakS == 16)
                 S16Peak = secondHighestPeak;
+            else if (sPeakS == 17)
+                S17Peak = secondHighestPeak;
 
-            int s14Games = data.Where(x => x.Season == 14).Sum(x => x.GamesPlayed);
             int s15Games = data.Where(x => x.Season == 15).Sum(x => x.GamesPlayed);
             int s16Games = data.Where(x => x.Season == 16).Sum(x => x.GamesPlayed);
+            int s17Games = data.Where(x => x.Season == 17).Sum(x => x.GamesPlayed);
 
             double dsn = (highestPeak * 0.7) + (secondHighestPeak * 0.3);
 
@@ -206,27 +201,17 @@ namespace IELDiscordBot.Classes.Utilities
 
             string finalString = $"ID: `{user}`\nPlatform: `{platform}`\n";
             finalString += "\n**Games Played:**\n";
-            finalString += $"\n**Season 16: `{s16Games}`**";
-            finalString += $"\n**Season 15: `{s15Games}`**";
-            finalString += $"\n**Season 14: `{s14Games}`**";
+            finalString += $"\n**Season 2: `{s17Games}`**";
+            finalString += $"\n**Season 2: `{s16Games}`**";
+            finalString += $"\n**Season 1: `{s15Games}`**";
             finalString += $"\n**MMRs:**\n";
-            finalString += $"\n**Season 16: `{S16Peak}`**";
-            finalString += $"\n**Season 15: `{S15Peak}`**";
-            finalString += $"\n**Season 14: `{S14Peak}`**";
+            finalString += $"\n**Season 3: `{S17Peak}`**";
+            finalString += $"\n**Season 2: `{S16Peak}`**";
+            finalString += $"\n**Season 1: `{S15Peak}`**";
             finalString += $"\n**DSN:** `{dsn}`";
 #if RELEASE
             finalString += $"\n\n\n**Sheet has been updated.**";
 #endif
-
-            obj = new List<object>();
-            obj.Add(s14Games);
-            obj.Add(s15Games);
-            obj.Add(s16Games);
-            obj.Add(null);
-            //obj.Add($"=IFS(ISBLANK(K{idx + 1});;AND(K{idx + 1}>=150;AND(J{idx + 1}>=150;I{idx + 1}>=150));\"Games Verified\"; AND(K{idx + 1}<=150;AND(J{idx + 1}>=150;I{idx + 1}>=150));\"Min Games S2 / 16 not reached\"; OR(J{idx + 1}<=150;I{idx + 1}<=150);\"Investigate App\")");
-            obj.Add(S14Peak);
-            obj.Add(S15Peak);
-            obj.Add(S16Peak);
 
             EmbedBuilder builder = new EmbedBuilder()
             {

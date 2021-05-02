@@ -18,7 +18,7 @@ using System.Text.RegularExpressions;
 using IELDiscordBot.Classes.Models.DSN;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
-
+using IELDiscordBot.Classes.Models.WebAppAPI;
 
 namespace IELDiscordBot.Classes.Services
 {
@@ -26,32 +26,36 @@ namespace IELDiscordBot.Classes.Services
     {
         private readonly Logger _log = LogManager.GetCurrentClassLogger();
         private readonly DiscordSocketClient _client;
+        private readonly HttpClient _webClient;
         private readonly IConfigurationRoot _config;
         private readonly Timer _timer;
-
         private readonly List<int> _acceptablePlaylists = new List<int>() { 11, 13 };
-
         private static string ErrorLog = "";
         private static string AccountsChecked = "Accounts Checked: ";
+        ServiceAccountCredential _sheetsCredential;
+        string[] Scopes = { SheetsService.Scope.Spreadsheets };
+        const string ApplicationName = "IEL Discord Bot .NET Application";
+        const string SpreadsheetID = "1Yf38nVz_WD3VBf74LTjnt75NNLvAp54SySrvt2PRf3I";
+        const string ServiceAccountEmail = "ieldiscordbot@inspired-rock-284217.iam.gserviceaccount.com";
 
-        enum Playlist
+        public enum Playlist
         {
             TWOS = 13,
             THREES = 14,
         }
 
-        enum Seasons
+        public enum Seasons
         {
-            S14 = 0,
-            S15 = 1,
-            S16 = 2
+            S15 = 0,
+            S16 = 1,
+            S17 = 2
         }
 
         DateTime[] cutOffDates = new DateTime[]
         {
             new DateTime(2020, 12, 09),
             new DateTime(2021, 04, 07),
-            new DateTime(2021, 05, 01)
+            new DateTime(2021, 05, 02)
         };
 
         internal class DSNCalculationData
@@ -66,52 +70,26 @@ namespace IELDiscordBot.Classes.Services
         {
             _client = client;
             _config = config;
+            _webClient = new HttpClient();
             Setup();
              _timer = new Timer(async _ =>
             {
-                //await ProcessNewSignupsAsync().ConfigureAwait(false);
+                await ProcessNewSignupsAsync().ConfigureAwait(false);
                 await GetLatestValues().ConfigureAwait(false);
             },
             null,
             TimeSpan.FromSeconds(5),
-            TimeSpan.FromMinutes(10));
+            TimeSpan.FromMinutes(5));
         }
-
-        internal List<string> GetAllPlayers()
-        {
-            return _latestValues.Select(x => x[(int)ColumnIDs.Discord].ToString()).ToList();
-        }
-
-        ServiceAccountCredential _sheetsCredential;
-        string[] Scopes = { SheetsService.Scope.Spreadsheets };
-        const string ApplicationName = "IEL Discord Bot .NET Application";
-
-
-        const string SpreadsheetID = "1ozwketqZ4ZU9Dk2wyB20Yq8KDQXw1zA2EOUdXuuG7NY";
-        const string ServiceAccountEmail = "ieldiscordbot@inspired-rock-284217.iam.gserviceaccount.com";
-
 
         enum ColumnIDs
         {
             Name = 0,
-            Country = 1,
-            Discord = 2,
-            Platform = 3,
-            Tracker = 4,
-            RawAltID = 5,
-            AltTracker = 6,
-            InDiscordCheck = 7,
-            S14Games = 8,
-            S15Games = 9,
-            S16Games = 10,
-            MinGamesReached = 11,
-            S14Peak = 12,
-            S15Peak = 13,
-            S16Peak = 14,
-            TotalPeak = 15,
-            DSN = 22,
-            League = 24,
-            Notes = 32
+            Discord = 1,
+            PlayerID = 2,
+            ProfileLink = 3,
+            DSN = 19,
+            League = 20
         }
 
 
@@ -132,23 +110,54 @@ namespace IELDiscordBot.Classes.Services
         }
 
         private SheetsService service;
-
         private IList<IList<object>> _latestValues = null;
+        private IList<IList<object>> _oldValues = null;
+        private Queue<SpreadsheetUpdate> _updates = new Queue<SpreadsheetUpdate>();
+
 
         private async Task GetLatestValues()
         {
             SpreadsheetsResource.ValuesResource.GetRequest request =
-    service.Spreadsheets.Values.Get(SpreadsheetID, "DSN Hub!A:AH");
+    service.Spreadsheets.Values.Get(SpreadsheetID, "DSN Hub!A:AA");
 
             ValueRange response = await request.ExecuteAsync().ConfigureAwait(false);
 
+            if (_latestValues != null) _oldValues = _latestValues;
+
             _latestValues = response.Values;
+
+            CheckForUpdates();
+        }
+
+        private void CheckForUpdates()
+        {
+            List<string> _updates = new List<string>();
+
+            for (int idx = 0; idx < _latestValues.Count; idx++)
+            {
+                var currentRow = _latestValues[idx];
+                var oldRow = _latestValues[idx];
+
+            }
+        }
+        public async Task<Platform[]> GetAccountsFromWebApp(int playerId)
+        {
+            string url = $"https://webapp.imperialesportsleague.co.uk/api/platforms/{playerId}";
+
+            var request = await _webClient.GetAsync(url).ConfigureAwait(false);
+            if (request.StatusCode != System.Net.HttpStatusCode.OK)
+            {
+                _log.Error($"Error getting values for player id: {playerId} from webapp!");
+                return null;
+            }
+            string content = await request.Content.ReadAsStringAsync().ConfigureAwait(false);
+            return JsonConvert.DeserializeObject<Platform[]>(content);
         }
 
         private async Task ProcessNewSignupsAsync()
         {
             SpreadsheetsResource.ValuesResource.GetRequest request =
-                service.Spreadsheets.Values.Get(SpreadsheetID, "DSN Hub!A:AH");
+                service.Spreadsheets.Values.Get(SpreadsheetID, "DSN Hub!A:AA");
 
             ValueRange response = await request.ExecuteAsync().ConfigureAwait(false);
 
@@ -157,138 +166,54 @@ namespace IELDiscordBot.Classes.Services
             for (int row = 0; row < values.Count; row++)
             {
                 IList<object> r = values[row];
-
-                if (string.IsNullOrEmpty(r[(int)ColumnIDs.S14Games].ToString()))
+                if (string.IsNullOrEmpty(r[(int)ColumnIDs.Name].ToString())) continue;
+                if (string.IsNullOrEmpty(r[(int)ColumnIDs.DSN].ToString()))
                 {
-                    if (values[row].Count >= 34)
-                    {
-                        if (string.IsNullOrEmpty(r[(int)ColumnIDs.Notes].ToString()) == false)
-                            continue;
-                    }
                     await CalculateDSN(r, service, row);
-
+                    _log.Info($"Completed DSN Calculation for User: {r[(int)ColumnIDs.Name]}");
+                    await Task.Delay(10000);
                 }
             }
         }
 
+        private readonly string[] _allowedPlatforms = { "steam", "xbl", "psn", "xbox", "ps" };
+
         private async Task CalculateDSN(IList<object> row, SheetsService service, int idx)
         {
-            string mainPlatform = row[(int)ColumnIDs.Platform].ToString();
-            mainPlatform = ConvertPlatform(mainPlatform);
-            //string mainID = ReplacePlatform(row[(int)ColumnIDs.Tracker].ToString().Replace(Constants.TRNREDUNDANT, Constants.TRNREPLACE));
-            string mainID = row[(int)ColumnIDs.Tracker].ToString();
-            mainID = mainID.Substring(mainID.LastIndexOf('/') + 1);
-            if (mainPlatform.ToLower() == "switch") return;
-
-            List<string> array = row[(int)ColumnIDs.AltTracker].ToString().Split(" ").ToList();
-            array.RemoveAll(x => x.ToLower() == "on");
-            array.RemoveAll(x => x == "");
-
-            if (array.Count != 0)
-                return;
-
-            if (mainID.Contains("#"))
-            {
-                mainID = mainID.Substring(mainID.IndexOf("#") + 1);
-            }
+            //Get Accounts from WebApp
+            var r = await GetAccountsFromWebApp(int.Parse(row[(int)ColumnIDs.PlayerID].ToString()));
+            //Filter Accounts
+            r = r.Where(x => _allowedPlatforms.Contains(x.type)).ToArray();
 
             List<CalcData> CalcData = new List<CalcData>();
-            var x = await TRNRequest(mainPlatform, mainID);
 
-            if (x is null) return;
-            CalcData.AddRange(x);
+            string dsnCommand = $"!dsn {idx + 1} ";
 
-            List<KeyValuePair<string, string>> altAccounts = new List<KeyValuePair<string, string>>();
-
-
-            if (array.Count == 1)
-                altAccounts.Add(new KeyValuePair<string, string>(mainPlatform, array[0]));
-
-            for (int i = 0; i < array.Count; i++)
+            //Check data for each account.
+            foreach (var account in r)
             {
-                if (array.Count >= 20) break;
-
-                string s1 = array[i];
-                s1 = s1.ToLower();
-
-                s1.Replace(":", "");
-                s1.Replace("(", "");
-                s1.Replace(")", "");
-                s1.Trim();
-
-                if (s1.Contains("epic") || s1.Contains("switch"))
-                    continue;
-
-                if (s1.Contains("steamcommunity.com"))
+                account.type = ConvertPlatform(account.type);
+                if (account.type == "steam")
                 {
-                    if (s1.EndsWith('/'))
-                        s1 = s1.Substring(0, s1.Length - 1);
-
-                    string profilelink = s1.Substring(s1.LastIndexOf('/') + 1);
-
-                    altAccounts.Add(new KeyValuePair<string, string>("steam", profilelink));
-                    continue;
-
+                    account.id = account.id.Substring(account.id.LastIndexOf('/') + 1);
+                    if (account.id.EndsWith("/"))
+                        account.id.Remove(account.id.Length - 1);
                 }
-
-                if (array.Count > i + 1)
-                {
-                    string s2 = array[i + 1];
-                    s2 = s2.ToLower();
-
-                    s2.Replace(":", "");
-                    s2.Replace("(", "");
-                    s2.Replace(")", "");
-                    s2.Trim();
-
-
-                    if (s2.Contains("epic") || s2.Contains("switch")) continue;
-
-                    if (s2.Contains("steamcommunity.com"))
-                    {
-                        if (s2.EndsWith('/'))
-                            s2 = s2.Substring(0, s2.Length - 1);
-
-                        string profilelink = s2.Substring(s2.LastIndexOf('/') + 1);
-
-                        altAccounts.Add(new KeyValuePair<string, string>("steam", profilelink));
-                        continue;
-                    }
-
-                    if (ConvertPlatform(s1) != s1)
-                    {
-                        altAccounts.Add(new KeyValuePair<string, string>(s1, s2));
-                    }
-                    if (ConvertPlatform(s2) != s2)
-                    {
-                        altAccounts.Add(new KeyValuePair<string, string>(s2, s1));
-                    }
-
-                    altAccounts.Add(new KeyValuePair<string, string>(mainPlatform, s1));
-
-                }
+                var trnResponse = await TRNRequest(account.type, account.id);
+                if (trnResponse is null) continue;
+                CalcData.AddRange(trnResponse);
             }
 
-            foreach (var account in altAccounts)
-            {
-                List<CalcData> acc = await TRNRequest(account.Key, account.Value);
-                if (acc is null)
-                {
-                    ErrorLog += $"Error Finding Account: Platform: {account.Key} Account: {account.Value} // ";
-                    _log.Error(ErrorLog);
-                }
-                else
-                {
-                    AccountsChecked += $"\r\nPlatform: {account.Key} Account: {account.Value} -- ";
-                    CalcData.AddRange(acc);
-                }
-            }
+            await CalcAndSendResponse(idx, CalcData);
+        }
 
-            int S14Peak = 0; //alcData.Where(x => x.Season == 14).Max(y => y.Ratings).First();
-            int S15Peak = 0; //alcData.Where(x => x.Season == 15).Max(y => y.Ratings).First();
-            int S16Peak = 0; //CalcData.Where(x => x.Season == 16).Max(y => y.Ratings).First();
+        public async Task CalcAndSendResponse(int idx, List<CalcData> CalcData)
+        {
+            int S15Peak = 0;
+            int S16Peak = 0;
+            int S17Peak = 0;
 
-            for (int season = 14; season < 17; season++)
+            for (int season = 15; season < 18; season++)
             {
                 int highestVal = 0;
                 foreach (var y in CalcData)
@@ -296,22 +221,11 @@ namespace IELDiscordBot.Classes.Services
                     if (y.Ratings is null)
                         continue;
 
-                    if (y.Season == season)
-                    {
-                        highestVal = Math.Max(highestVal, y.Ratings.Count > 0 ? y.Ratings.Max() : 0);
-                    }
-                    else
-                    {
-                        continue;
-                    }
+                    if (y.Season == season) highestVal = Math.Max(highestVal, y.Ratings.Count > 0 ? y.Ratings.Max() : 0);
+                    else continue;
                 }
                 switch (season)
                 {
-                    case 14:
-                        {
-                            S14Peak = highestVal;
-                            break;
-                        }
                     case 15:
                         {
                             S15Peak = highestVal;
@@ -322,79 +236,75 @@ namespace IELDiscordBot.Classes.Services
                             S16Peak = highestVal;
                             break;
                         }
+                    case 17:
+                        {
+                            S17Peak = highestVal;
+                            break;
+                        }
                 }
             }
 
-            int peakS = 14;
+            int peakS = 15;
             int sPeakS = 0;
 
-            int highestPeak = S14Peak;
+            int highestPeak = S15Peak;
             int secondHighestPeak = 0;
-            if (S15Peak > highestPeak)
+            if (S16Peak > highestPeak)
             {
                 secondHighestPeak = highestPeak;
-                sPeakS = 14;
+                sPeakS = 15;
                 highestPeak = S15Peak;
             }
             else
             {
-                secondHighestPeak = S15Peak;
-                sPeakS = 15;
+                secondHighestPeak = S16Peak;
+                sPeakS = 16;
             }
-            if (S16Peak > highestPeak)
+            if (S17Peak > highestPeak)
             {
                 secondHighestPeak = highestPeak;
                 sPeakS = peakS;
-                highestPeak = S16Peak;
-                peakS = 16;
-            }   
-            else if (S16Peak > secondHighestPeak)
+                highestPeak = S17Peak;
+                peakS = 17;
+            }
+            else if (S17Peak > secondHighestPeak)
             {
-                secondHighestPeak = S16Peak;
-                sPeakS = 16;
+                secondHighestPeak = S17Peak;
+                sPeakS = 17;
             }
 
             secondHighestPeak = Math.Max(secondHighestPeak, highestPeak - 200);
 
-            if (sPeakS == 14)
-                S14Peak = secondHighestPeak;
-            else if (sPeakS == 15)
+            if (sPeakS == 15)
                 S15Peak = secondHighestPeak;
             else if (sPeakS == 16)
                 S16Peak = secondHighestPeak;
+            else if (sPeakS == 17)
+                S17Peak = secondHighestPeak;
 
-            int s14Games = CalcData.Where(x => x.Season == 14).Sum(x => x.GamesPlayed);
             int s15Games = CalcData.Where(x => x.Season == 15).Sum(x => x.GamesPlayed);
             int s16Games = CalcData.Where(x => x.Season == 16).Sum(x => x.GamesPlayed);
-            //double DSN = (highestPeak * 0.7) + (secondHighestPeak * 0.3);
+            int s17Games = CalcData.Where(x => x.Season == 17).Sum(x => x.GamesPlayed);
 
             IList<object> obj = new List<object>();
             UpdateValuesResponse res = null;
 
-            obj.Add(s14Games);
             obj.Add(s15Games);
             obj.Add(s16Games);
-            obj.Add($"=IFS(ISBLANK(K{row});;OR(K{row}<20;J{row}<20;I{row}<20);\"Investigate App\";OR(K{row}>=150;J{row}>=200;I{row}>= 350);\"Games Verified\";AND(K{row}<150;J{row}<200;I{row}<350); \"Min Games not reached\")");
-            obj.Add(S14Peak);
+            obj.Add(s17Games);
+            obj.Add(null);
             obj.Add(S15Peak);
             obj.Add(S16Peak);
+            obj.Add(S17Peak);
+
+            obj[3] = $"=IFS(ISBLANK(A{idx + 1});;AND(NOT(ISBLANK(A{idx + 1}));ISBLANK(F{idx + 1});ISBLANK(G{idx + 1});ISBLANK(H{idx + 1});ISBLANK(J{idx + 1});ISBLANK(K{idx + 1});ISBLANK(L{idx + 1})); \"Pending\";AND(NOT(ISBLANK(A{idx + 1}));OR(ISBLANK(F{idx + 1});ISBLANK(G{idx + 1});ISBLANK(H{idx + 1});ISBLANK(J{idx + 1});ISBLANK(K{idx + 1});ISBLANK(L{idx + 1}))); \"Missing Data\";OR(H{idx + 1} < DV_MinGAbsolut; G{idx + 1} < DV_MinGAbsolut; F{idx + 1} < DV_MinGAbsolut; L{idx + 1} = 0; K{idx + 1} = 0; J{idx + 1} = 0); \"Investigate App\";AND(H{idx + 1} < DV_MinGCurrent; G{idx + 1} < DV_MinGPrev1; F{idx + 1} < DV_MinGPrev2); \"Min Games not reached\";AND(L{idx + 1} < DV_DSNMin; K{idx + 1} < DV_DSNMin; F{idx + 1} < DV_DSNMin); \"Too Low\";OR(H{idx + 1} >= DV_MinGCurrent; G{idx + 1} >= DV_MinGPrev1; F{idx + 1} >= DV_MinGPrev2); \"Verified\")";
 
             ValueRange v = new ValueRange();
             v.MajorDimension = "ROWS";
             v.Values = new List<IList<object>> { obj };
-            SpreadsheetsResource.ValuesResource.UpdateRequest u = service.Spreadsheets.Values.Update(v, SpreadsheetID, $"DSN Hub!I{idx + 1}");//:O{idx+1}");
+            SpreadsheetsResource.ValuesResource.UpdateRequest u = service.Spreadsheets.Values.Update(v, SpreadsheetID, $"DSN Hub!F{idx + 1}");//:O{idx+1}");
             u.ValueInputOption = SpreadsheetsResource.ValuesResource.UpdateRequest.ValueInputOptionEnum.USERENTERED;
-            res = u.Execute();
-
-
-            obj = new List<object>();
-            obj.Add(AccountsChecked);
-            v = new ValueRange();
-            v.MajorDimension = "ROWS";
-            v.Values = new List<IList<object>> { obj };
-            u = service.Spreadsheets.Values.Update(v, SpreadsheetID, $"DSN Hub!AH{idx + 1}");//:O{idx+1}");
-            u.ValueInputOption = SpreadsheetsResource.ValuesResource.UpdateRequest.ValueInputOptionEnum.USERENTERED;
-            res = u.Execute();
+            res = await u.ExecuteAsync();
         }
 
         private string MakeJSONFriendly(string content)
@@ -433,20 +343,16 @@ namespace IELDiscordBot.Classes.Services
             return input;
         }
 
-        string ReplacePlatform(string input)
-        {
-            input.ToLower();
-
-            input = input.Replace("pc", "steam");
-            input = input.Replace("xbox", "xbl");
-            input = input.Replace("ps4", "psn");
-
-            return input;
-        }
-
-        private async Task<List<CalcData>> TRNRequest(string platform, string username)
+        public async Task<List<CalcData>> TRNRequest(string platform, string username)
         {
             platform = ConvertPlatform(platform);
+            if (platform == "steam")
+            {
+                username = username.Substring(username.LastIndexOf('/') + 1);
+                if (username.EndsWith("/"))
+                    username.Remove(username.Length - 1);
+            }
+
             using (HttpClient client = new HttpClient())
             {
                 string apistring = string.Format(Constants.TRNAPI, platform, username);
@@ -481,12 +387,12 @@ namespace IELDiscordBot.Classes.Services
 
                 List<CalcData> Data = new List<CalcData>
                 {
-                    await GetCalcDataForSegmentAsync(platform, username, 14, Playlist.TWOS, mmrObj),
-                    await GetCalcDataForSegmentAsync(platform, username, 14, Playlist.THREES, mmrObj),
                     await GetCalcDataForSegmentAsync(platform, username, 15, Playlist.TWOS, mmrObj),
                     await GetCalcDataForSegmentAsync(platform, username, 15, Playlist.THREES, mmrObj),
                     await GetCalcDataForSegmentAsync(platform, username, 16, Playlist.TWOS, mmrObj),
-                    await GetCalcDataForSegmentAsync(platform, username, 16, Playlist.THREES, mmrObj)
+                    await GetCalcDataForSegmentAsync(platform, username, 16, Playlist.THREES, mmrObj),
+                    await GetCalcDataForSegmentAsync(platform, username, 17, Playlist.TWOS, mmrObj),
+                    await GetCalcDataForSegmentAsync(platform, username, 17, Playlist.THREES, mmrObj)
                 };
 
                 return Data;
@@ -505,21 +411,21 @@ namespace IELDiscordBot.Classes.Services
 
             switch (season)
             {
-                case 14:
-                    {
-                        cutOff = cutOffDates[(int)Seasons.S14];
-                        break;
-                    }
                 case 15:
                     {
                         cutOff = cutOffDates[(int)Seasons.S15];
-                        seasonStartDate = cutOffDates[(int)Seasons.S14].AddDays(1);
                         break;
                     }
                 case 16:
                     {
                         cutOff = cutOffDates[(int)Seasons.S16];
                         seasonStartDate = cutOffDates[(int)Seasons.S15].AddDays(1);
+                        break;
+                    }
+                case 17:
+                    {
+                        cutOff = cutOffDates[(int)Seasons.S17];
+                        seasonStartDate = cutOffDates[(int)Seasons.S16].AddDays(1);
                         break;
                     }
             }
@@ -578,7 +484,7 @@ namespace IELDiscordBot.Classes.Services
                 return JsonConvert.DeserializeObject<TRNSegment>(responseString);
             }
         }
-        struct CalcData
+        public struct CalcData
         {
             internal int Season;
             internal Playlist Playlist;
