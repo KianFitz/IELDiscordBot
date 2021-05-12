@@ -378,12 +378,12 @@ namespace IELDiscordBot.Classes.Services
 
                 if (!result.IsSuccess)
                 {
-                    if (CheckForCustomCommand(msg, argPos, out CustomCommand cmd))
-                    {
-                        //var result = await _customCommands.ExecuteAsync(context, argPos, _provider);
-                        await ExecuteCustomCommandAsync(context, cmd).ConfigureAwait(false);
-                        return;
-                    }
+                    //if (CheckForCustomCommand(msg, argPos, out CustomCommand cmd))
+                    //{
+                    //    //var result = await _customCommands.ExecuteAsync(context, argPos, _provider);
+                    //    await ExecuteCustomCommandAsync(context, cmd).ConfigureAwait(false);
+                    //    return;
+                    //}
 
                     //_log.Error(result.ToString());
                     await msg.DeleteAsync().ConfigureAwait(false);

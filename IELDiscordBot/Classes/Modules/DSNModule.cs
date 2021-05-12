@@ -80,6 +80,8 @@ namespace IELDiscordBot.Classes.Modules
                 case "ps4":
                 case "psn":
                     return "psn";
+                case "epic":
+                    return "epic";
             }
 
             return input;
@@ -113,7 +115,7 @@ namespace IELDiscordBot.Classes.Modules
 
                 platform = ConvertPlatform(platform);
 
-                if (platform != "xbl" && platform != "psn" && platform != "steam")
+                if (platform != "xbl" && platform != "psn" && platform != "steam" && platform != "epic")
                 {
                     await message.ModifyAsync(x => x.Content = $"Unable to load account. Platform {platform} invalid.").ConfigureAwait(false);
                     return;
@@ -131,6 +133,7 @@ namespace IELDiscordBot.Classes.Modules
                 calcData.AddRange(data);
             }
 
+            calcData = calcData.Distinct().ToList();
             var orderedData = calcData.OrderByDescending(x => x.Season);
 
             string usernameString = string.Join(',', accounts.Select(x => x.User));
@@ -140,13 +143,14 @@ namespace IELDiscordBot.Classes.Modules
             await message.ModifyAsync(x =>
             {
                 x.Content = "";
-                x.Embed = Embeds.DSNCalculation(orderedData.ToList(), usernameString, platformString);
+                x.Embed = Embeds.DSNCalculation(orderedData.ToList(), usernameString, platformString, row);
 
             }).ConfigureAwait(false);
 
 
 #if RELEASE
-            await _dsn.CalcAndSendResponse(row, calcData).ConfigureAwait(false);
+            if (row == 0) return;
+            await _dsn.CalcAndSendResponse(row, calcData, true).ConfigureAwait(false);
 #endif
         }
     }

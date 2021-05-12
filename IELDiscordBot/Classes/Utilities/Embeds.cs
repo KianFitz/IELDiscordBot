@@ -116,7 +116,7 @@ namespace IELDiscordBot.Classes.Utilities
             return builder.Build();
         }
 
-        internal static Embed DSNCalculation(List<CalcData> data, string user, string platform)
+        internal static Embed DSNCalculation(List<CalcData> data, string user, string platform, int row)
         {
             int S15Peak = 0;
             int S16Peak = 0;
@@ -153,47 +153,22 @@ namespace IELDiscordBot.Classes.Utilities
                 }
             }
 
-            int peakS = 15;
-            int sPeakS = 0;
+            List<int> peaks = new List<int>();
+            peaks.Add(S15Peak);
+            peaks.Add(S16Peak);
+            peaks.Add(S17Peak);
+            peaks = peaks.OrderByDescending(x => x).ToList();
 
-            int highestPeak = S15Peak;
-            int secondHighestPeak = 0;
-            if (S16Peak > highestPeak)
-            {
-                secondHighestPeak = highestPeak;
-                sPeakS = 15;
-                highestPeak = S15Peak;
-            }
-            else
-            {
-                secondHighestPeak = S16Peak;
-                sPeakS = 16;
-            }
-            if (S17Peak > highestPeak)
-            {
-                secondHighestPeak = highestPeak;
-                sPeakS = peakS;
-                highestPeak = S17Peak;
-                peakS = 17;
-            }
-            else if (S17Peak > secondHighestPeak)
-            {
-                secondHighestPeak = S17Peak;
-                sPeakS = 17;
-            }
+            int highestPeak = peaks[0];
+            int secondHighestPeak = peaks[1];
 
-            secondHighestPeak = Math.Max(secondHighestPeak, highestPeak - 200);
+            if (secondHighestPeak < highestPeak - 200)
+                secondHighestPeak = highestPeak - 200;
 
-            if (sPeakS == 15)
-                S15Peak = secondHighestPeak;
-            else if (sPeakS == 16)
-                S16Peak = secondHighestPeak;
-            else if (sPeakS == 17)
-                S17Peak = secondHighestPeak;
 
             int s15Games = data.Where(x => x.Season == 15).Sum(x => x.GamesPlayed);
             int s16Games = data.Where(x => x.Season == 16).Sum(x => x.GamesPlayed);
-            int s17Games = data.Where(x => x.Season == 17).Sum(x => x.GamesPlayed);
+            int s17Games = data.Where(x => x.Season == 17).Select(x => x.GamesPlayed).Distinct().Sum();
 
             double dsn = (highestPeak * 0.7) + (secondHighestPeak * 0.3);
 
@@ -201,7 +176,7 @@ namespace IELDiscordBot.Classes.Utilities
 
             string finalString = $"ID: `{user}`\nPlatform: `{platform}`\n";
             finalString += "\n**Games Played:**\n";
-            finalString += $"\n**Season 2: `{s17Games}`**";
+            finalString += $"\n**Season 3: `{s17Games}`**";
             finalString += $"\n**Season 2: `{s16Games}`**";
             finalString += $"\n**Season 1: `{s15Games}`**";
             finalString += $"\n**MMRs:**\n";
@@ -210,7 +185,8 @@ namespace IELDiscordBot.Classes.Utilities
             finalString += $"\n**Season 1: `{S15Peak}`**";
             finalString += $"\n**DSN:** `{dsn}`";
 #if RELEASE
-            finalString += $"\n\n\n**Sheet has been updated.**";
+            if (row != 0)
+                finalString += $"\n\n\n**Sheet has been updated.**";
 #endif
 
             EmbedBuilder builder = new EmbedBuilder()
@@ -221,6 +197,93 @@ namespace IELDiscordBot.Classes.Utilities
             return builder.Build();
         }
 
+        internal static Embed NoSignup(ulong discordId)
+        {
+            EmbedBuilder builder = new EmbedBuilder()
+            {
+                Color = Constants.SuccessColor,
+                Description = $"<@{discordId}>, I could not find an application for your Discord ID. Please ensure that you were logged in with the correct Discord Account when signing up."
+            };
+            return builder.Build();
+        }
 
+        internal static Embed SignupDetails(string profileName, string id, string profileLink, string status, string platformLinks, ulong requestor)
+        {
+            EmbedBuilder builder = new EmbedBuilder()
+            {
+                Color = Constants.SuccessColor,
+            };
+
+            switch (status)
+            {
+                case "Notify of Approval":
+                    status = "Awaiting Acceptance";
+                    break;
+                case "Pending":
+                    status = "Awaiting Calculation";
+                    break;
+                case "Requirements not reached":
+                    status = "Denied";
+                    break;
+                case "Notify of Denied Signup":
+                    status = "Awaiting Denial";
+                    break;
+                case "Approved and Notified":
+                    status = "Accepted";
+                    break;
+                case "Investigate App":
+                case "Issue":
+                case "Missing Data":
+                    status = "Missing Data/Information/Signup Incomplete";
+                    break;
+            }
+
+
+            builder.AddField(new EmbedFieldBuilder() { Name = "Profile Name", Value = profileName });
+            builder.AddField(new EmbedFieldBuilder() { Name = "Discord Id", Value = id });
+            builder.AddField(new EmbedFieldBuilder() { Name = "Profile Link", Value = profileLink});
+            builder.AddField(new EmbedFieldBuilder() { Name = "Application Status", Value = status });
+            builder.AddField(new EmbedFieldBuilder() { Name = "Accounts Linked", Value = platformLinks});
+
+            builder.Description = "Here are the details of your application. If you have any questions please ask a member of the Support or Applications teams.";
+            if (status == "Missing Data/Information/Signup Incomplete" && id == requestor.ToString())
+                builder.Description += "\r\nIf you were denied due to your games played, please type !rechecksignup to have your games recounted.";
+
+            return builder.Build();
+        }
+
+        internal static Embed SignupRecalculated(ulong discordId)
+        {
+            EmbedBuilder builder = new EmbedBuilder()
+            {
+                Color = Constants.SuccessColor,
+                Description = $"<@{discordId}> your games have been rechecked. Please wait up to 48 hours from running this command to hear back about your application." +
+                $"\r\nIf you do not hear from us in that time, please check your application again here with the !signup command"
+            };
+            return builder.Build();
+        }
+
+        internal static Embed ErrorLog(string errorLog)
+        {
+            EmbedBuilder builder = new EmbedBuilder()
+            {
+                Color = Constants.SuccessColor,
+                Description = $"The following errors occured during assigning the roles: {errorLog}"
+            };
+            return builder.Build();
+        }
+
+        internal static Embed AssigningLeagueRoles(int remaining, Dictionary<string, int> _assignedCounters)
+        {
+            EmbedBuilder builder = new EmbedBuilder()
+            {
+                Color = Constants.SuccessColor,
+                Description = $"There are {remaining} players left to assign. \r\n" +
+                $"Current Stats:" +
+                string.Join("\r\n", _assignedCounters.Select(x => x.Key +": "+ x.Value))
+                + $"\r\n\r\nETA: {remaining * 1.5} seconds."
+            };
+            return builder.Build();
+        }
     }
 }

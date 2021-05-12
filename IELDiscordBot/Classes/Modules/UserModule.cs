@@ -132,99 +132,61 @@ namespace IELDiscordBot.Classes.Modules
             await message.ModifyAsync(x => x.Content = $"Operation completed! Removed {amountUpdated} tags. Caught {errorsCounted} errors.").ConfigureAwait(false);
         }
 
-        //[Command("acceptplayer")]
-        //public async Task AcceptPlayerAsync(int row)
-        //{
-        //    IUser user = Context.User;
-        //    IGuildUser caller = Context.Guild.GetUser(user.Id);
-        //    if (caller.RoleIds.Contains(AppsTeamID) == false)
-        //    {
-        //        await Context.Channel.SendMessageAsync($"You do not have permission to run this command.");
-        //        return;
-        //    }
+        [Command("accept")]
+        public async Task AcceptPlayer(int row)
+        {
+            IUser user = Context.User;
+            IGuildUser caller = Context.Guild.GetUser(user.Id);
+            if (caller.RoleIds.Contains(AppsTeamID) == false)
+            {
+                await Context.Channel.SendMessageAsync($"You do not have permission to run this command.");
+                return;
+            }
 
-        //    SocketGuildUser guildUser = Context.Guild.Users.FirstOrDefault(x => x.Username.ToLower() == s[0].ToLower() && x.DiscriminatorValue == ushort.Parse(s[1]));
-        //    if (guildUser is null)
-        //    {
-        //        await Context.Channel.SendMessageAsync($"Unable to find user {username} in Discord.");
-        //        return;
-        //    }
+            await _service.QueueAccept(row, Context.Guild, Context.Channel);
+        }
 
-        //    bool isGm = (guildUser.Roles.FirstOrDefault(x => x.Id == GMRole) != null);
+        [Command("deny")]
+        public async Task DenyPlayer(int row)
+        {
+            IUser user = Context.User;
+            IGuildUser caller = Context.Guild.GetUser(user.Id);
+            if (caller.RoleIds.Contains(AppsTeamID) == false)
+            {
+                await Context.Channel.SendMessageAsync($"You do not have permission to run this command.");
+                return;
+            }
 
-        //    string league = _service.GetLeague(guildUser.Username + "#" + s[1]);
-        //    if (league != "")
-        //    {
-        //        IRole roleToAssign = null;
-        //        switch (league)
-        //        {
-        //            case "Academy":
-        //                {
-        //                    roleToAssign = Context.Guild.GetRole(AcademyRoleID);
-        //                    break;
-        //                }
-        //            case "Prospect":
-        //                {
-        //                    roleToAssign = Context.Guild.GetRole(ProspectRoleID);
-        //                    break;
-        //                }
-        //            case "Challenger":
-        //                {
-        //                    roleToAssign = Context.Guild.GetRole(ChallengerRoleID);
-        //                    break;
-        //                }
-        //            case "Master":
-        //                {
-        //                    roleToAssign = Context.Guild.GetRole(MasterRoleID);
-        //                    break;
-        //                }
-        //            default:
-        //                return;
-        //        }
+            await _service.QueueDeny(row, Context.Guild, Context.Channel);
+        }
 
-        //        if (isGm == false)
-        //        {
-        //            await guildUser.ModifyAsync(x =>
-        //            {
-        //                x.Nickname = $"[FA] {(x.Nickname.IsSpecified ? x.Nickname : guildUser.Username)}";
-        //            });
+        [Command("assignleagueroles")]
+        public async Task AssignLeagueFARoles()
+        {
+            await _service.AssignLeagueFARoles(Context.Channel, Context.Guild);
+        }
 
-        //            await guildUser.AddRoleAsync(roleToAssign).ConfigureAwait(false);
+        [Command("signup")]
+        public async Task CheckCurrentSignup(ulong discordId = 0)
+        {
+            if (discordId == 0)
+                discordId = Context.User.Id;
 
-        //            ITextChannel channel = Context.Guild.GetTextChannel(FAStatusChannel);
-        //            await channel.SendMessageAsync($"{guildUser.Mention} you have been accepted to the IEL!");
-        //        }
-        //        await Context.Channel.SendMessageAsync($"Player {guildUser.Username}#{guildUser.DiscriminatorValue} accepted! (GM: {isGm})");
+            await _service.GetSignupDetails(discordId, Context.Channel, Context.User.Id);
+        }
 
-        //        List<object> obj = new List<object>();
-        //        obj.Add(true);
-        //        string sectionToEdit = $"DSN Hub!H{row}";
+        [Command("rechecksignup")]
+        public async Task RecheckSignup()
+        {
+            await _service.RecheckSignup(Context.User.Id, Context.Channel).ConfigureAwait(false);
+        }
 
-        //        await _service.MakeRequest(sectionToEdit, obj);
-        //        await Task.Delay(2000);
+        [Command("rechecksignup")]
+        public async Task RecheckSignup(ulong userId)
+        {
+            if (Context.User.Id != 301876830737006593) return;
 
-        //        obj = new List<object>();
-        //        obj.Add(true);
-        //        obj.Add("");
-        //        obj.Add(true);
-        //        obj.Add(true);
-        //        obj.Add(true);
-        //        sectionToEdit = $"DSN Hub!R{row}";
-
-        //        await _service.MakeRequest(sectionToEdit, obj);
-        //        await Task.Delay(2000);
-
-        //        obj = new List<object>();
-        //        obj.Add(true);
-        //        obj.Add(true);
-        //        sectionToEdit = $"DSN Hub!Z{row}";
-
-        //        await _service.MakeRequest(sectionToEdit, obj);
-        //    }
-        //    else
-        //    {
-        //        await Context.Channel.SendMessageAsync($"League column for user {username} is empty OR {username} cannot be found in the spreadsheet.");
-        //    }
-        //}
+            await _service.RecheckSignup(userId, Context.Channel).ConfigureAwait(false);
+        }
     }
 }
