@@ -23,15 +23,7 @@ namespace IELDiscordBot.Classes.Modules
 
     public class UserModule : ModuleBase<SocketCommandContext>
     {
-        ulong FAStatusChannel = 665242755731030045;
-
-        ulong MasterRoleID = 671808027313045544;
-        ulong ChallengerRoleID = 670230994627854347;
-        ulong ProspectRoleID = 670231374896168960;
-        ulong AcademyRoleID = 797537384022409256;
         ulong AppsTeamID = 472298606259339267;
-
-        ulong GMRole = 472145107056066580;
 
         private CommandHandler _commands;
         private DSNCalculatorService _service;
@@ -43,7 +35,18 @@ namespace IELDiscordBot.Classes.Modules
         }
 
         [Command("rename")]
-        public async Task RequestRenameAsync(string type, [Remainder] string newName)
+        [Name("rename")]
+        [Summary("Update the user's nickname on a given platform.")]
+        public async Task RequestRenameAsync
+        (
+            [Name("type")]
+            [Summary("Where the rename should take place.\r\nValid Types are: spreadsheet|discord|both")]
+            string type,
+
+            [Name("newName")]
+            [Summary("What the nickname should be updated to.")]
+            [Remainder] string newName
+        )
         {
             if (Context.Channel.Id != 530861574689259526)
                 return;
@@ -55,14 +58,14 @@ namespace IELDiscordBot.Classes.Modules
             {
                 case "discord":
                 case "both":
-                {
-                    if (newName.Length > 32)
                     {
-                        await Context.Channel.SendMessageAsync("", false, Embeds.NameTooLong(user, newName)).ConfigureAwait(false);
-                        return;
+                        if (newName.Length > 32)
+                        {
+                            await Context.Channel.SendMessageAsync("", false, Embeds.NameTooLong(user, newName)).ConfigureAwait(false);
+                            return;
+                        }
+                        break;
                     }
-                    break;
-                }
 
                 case "spreadsheet":
                     break;
@@ -97,7 +100,7 @@ namespace IELDiscordBot.Classes.Modules
             int amountUpdated = 0;
             int errorsCounted = 0;
             int usersChecked = 0;
-            
+
             await message.ModifyAsync(x => x.Content = $"Renaming players..").ConfigureAwait(false);
 
             foreach (var user in users)
@@ -167,7 +170,9 @@ namespace IELDiscordBot.Classes.Modules
         }
 
         [Command("signup")]
-        public async Task CheckCurrentSignup(ulong discordId = 0)
+        [Name("signup")]
+        [Summary("Check the signup status for the provided Discord Id. If no ID is provided, checks the signup for the calling user.")]
+        public async Task CheckCurrentSignup([Name("discordId")][Summary("The Discord ID of the user to lookup")]ulong discordId = 0)
         {
             if (discordId == 0)
                 discordId = Context.User.Id;
@@ -176,17 +181,21 @@ namespace IELDiscordBot.Classes.Modules
         }
 
         [Command("rechecksignup")]
+        [Name("rechecksignup")]
+        [Summary("Runs the DSN calculation process used by the Application Team. Can only be run once per 48 hours.")]
         public async Task RecheckSignup()
         {
             await _service.RecheckSignup(Context.User.Id, Context.Channel).ConfigureAwait(false);
         }
 
-        [Command("rechecksignup")]
-        public async Task RecheckSignup(ulong userId)
+        [Command("help")]
+        [Name("help")]
+        [Summary("Nice, I suppose someone had to try it. " +
+            "It searches the internal command database and uses a summary that I have written for the commands/parameters to let you know how to use the bot. " +
+            "You're welcome :)")]
+        public async Task GetHelpForCommand([Name("command")][Summary("The name of the command to get the documentation for")]string command)
         {
-            if (Context.User.Id != 301876830737006593) return;
-
-            await _service.RecheckSignup(userId, Context.Channel).ConfigureAwait(false);
+            await _commands.SendHelpForCommand(command, Context);
         }
     }
 }

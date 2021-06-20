@@ -283,12 +283,20 @@ namespace IELDiscordBot.Classes.Services
 
         internal async Task QueueAccept(int row, SocketGuild guild, ISocketMessageChannel channel)
         {
+            var roles = GetRoles(guild, row);
+
+            if (roles is null)
+            {
+                await channel.SendMessageAsync($"Row {row} could not be added to accept/deny queue, user left Discord server.");
+                return;
+            }
+
             _signupStatus.Add(new StatusClass()
             { 
                 Accept = true,
                 DenyReason = "",
                 DiscordUser = guild.GetUser(GetDiscordID(row)),
-                RolesToAdd = GetRoles(guild, row),
+                RolesToAdd = roles,
                 StaffChannel = channel,
                 RowNumber = row
             });
@@ -300,7 +308,14 @@ namespace IELDiscordBot.Classes.Services
         {
             IRole gmRole = guild.GetRole(472145107056066580);
 
-            if (guild.GetUser(GetDiscordID(row)).Roles.Any(x => x.Id == 472145107056066580)) return new IRole[] { };
+            IGuildUser guildUser = guild.GetUser(GetDiscordID(row));
+
+            if (guildUser is null)
+            {
+                return null;
+            }
+
+            if ((guildUser as SocketGuildUser).Roles.Any(x => x.Id == 472145107056066580)) return new IRole[] { };
 
             Dictionary<string, IRole> faRoles = new Dictionary<string, IRole>()
             {
@@ -434,11 +449,18 @@ namespace IELDiscordBot.Classes.Services
 
         internal async Task QueueDeny(int row, SocketGuild guild, ISocketMessageChannel channel)
         {
+            IGuildUser discordUser = guild.GetUser(GetDiscordID(row));
+            if (discordUser is null)
+            {
+                await channel.SendMessageAsync($"Row {row} could not be added to accept/deny queue. User has left Discord server.");
+                return;
+            }
+
             _signupStatus.Add(new StatusClass()
             {
                 Accept = false,
                 DenyReason = GetDenyReason(row),
-                DiscordUser = guild.GetUser(GetDiscordID(row)),
+                DiscordUser = discordUser as SocketGuildUser,
                 StaffChannel = channel,
                 RowNumber = row
             });
@@ -663,6 +685,7 @@ namespace IELDiscordBot.Classes.Services
                 string apistring = string.Format(Constants.TRNAPI, platform, username);
 
                 HttpResponseMessage response = await client.GetAsync(apistring).ConfigureAwait(false);
+                _log.Info($@"Cookies\r\n{ string.Join("\r\n", response.RequestMessage.Content)}");
 
                 string content = await response.Content.ReadAsStringAsync();
 
