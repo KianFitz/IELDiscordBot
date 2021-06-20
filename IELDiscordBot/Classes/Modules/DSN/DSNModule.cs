@@ -141,7 +141,9 @@ namespace IELDiscordBot.Classes.Modules
                 x.Embed = Embeds.DSNCalculation(orderedData.ToList(), accountString, platformString, row);
 
             }).ConfigureAwait(false);
-            await _dsn.CalcAndSendResponse(row, CalcData);
+
+            if (row == 0) return;
+            await _dsn.CalcAndSendResponse(row, CalcData, true);
         }
 
         [Command("dsn")]
