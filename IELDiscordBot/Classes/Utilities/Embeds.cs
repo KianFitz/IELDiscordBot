@@ -1,4 +1,5 @@
 ﻿using Discord;
+using Discord.Commands;
 using IELDiscordBot.Classes.Services;
 using System;
 using System.Collections.Generic;
@@ -249,6 +250,42 @@ namespace IELDiscordBot.Classes.Utilities
             if (status == "Missing Data/Information/Signup Incomplete" && id == requestor.ToString())
                 builder.Description += "\r\nIf you were denied due to your games played, please type !rechecksignup to have your games recounted.";
 
+            return builder.Build();
+        }
+
+        internal static Embed CommandHelp(CommandMatch foundCommand)
+        {
+            string syntax = $"!{foundCommand.Command.Name}";
+            string parameterText = $"";
+
+
+            EmbedBuilder builder = new EmbedBuilder()
+            {
+                Color = Constants.SuccessColor,
+                Description = "I found the following command that matched your search query."
+            };
+            builder.Fields.Add(new EmbedFieldBuilder() { Name = "Command Name", Value = foundCommand.Command.Name });
+            builder.Fields.Add(new EmbedFieldBuilder() { Name = "Summary", Value = foundCommand.Command.Summary });
+
+            foreach (var param in foundCommand.Command.Parameters)
+            {
+                parameterText += $"**{param.Name}** - Type: **{param.Type.Name}** - {param.Summary}\r\n";
+                syntax += "{" + param.Name + "}";
+            }
+
+            builder.Fields.Add(new EmbedFieldBuilder() { Name = "Syntax", Value = syntax });
+            builder.Fields.Add(new EmbedFieldBuilder() { Name = "Parameters", Value = parameterText });
+
+            return builder.Build();
+        }
+
+        internal static Embed CommandNotFound(string command)
+        {
+            EmbedBuilder builder = new EmbedBuilder()
+            {
+                Color = Constants.FailureColor,
+                Description = $"Sorry, I was not able to find any commands with the name {command}. Please check your spelling and try again."
+            };
             return builder.Build();
         }
 
