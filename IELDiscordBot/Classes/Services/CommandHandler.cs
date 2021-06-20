@@ -222,6 +222,22 @@ namespace IELDiscordBot.Classes.Services
             }
         }
 
+        internal async Task SendHelpForCommand(string command, ICommandContext Context)
+        {
+            var result = _commands.Search(Context, command);
+            if (result.IsSuccess)
+            {
+                foreach (var foundCommand in result.Commands)
+                {
+                    await Context.Channel.SendMessageAsync("", false, Embeds.CommandHelp(foundCommand)).ConfigureAwait(false);
+                }
+            }
+            else
+            {
+                await Context.Channel.SendMessageAsync("", false, Embeds.CommandNotFound(command)).ConfigureAwait(false);
+            }
+        }
+
         private async Task OnReactionAdded(Cacheable<IUserMessage, ulong> arg1, ISocketMessageChannel arg2, SocketReaction arg3)
         {
             if (arg3.UserId == _client.CurrentUser.Id) return;
