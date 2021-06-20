@@ -491,7 +491,7 @@ namespace IELDiscordBot.Classes.Services
             //Get Accounts from WebApp
             var r = await GetAccountsFromWebApp(int.Parse(row[(int)ColumnIDs.PlayerID].ToString()));
             //Filter Accounts
-            r = r.Where(x => _allowedPlatforms.Contains(x.type)).ToArray();
+            r = r.Where(x => _allowedPlatforms.Contains(x.type) && x.active).ToArray();
 
             List<CalcData> CalcData = new List<CalcData>();
 

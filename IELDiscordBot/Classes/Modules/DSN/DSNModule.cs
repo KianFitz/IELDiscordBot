@@ -94,7 +94,7 @@ namespace IELDiscordBot.Classes.Modules
             //Get Accounts from WebApp
             var r = await _dsn.GetAccountsFromWebApp(profileId);
             //Filter Accounts
-            r = r.Where(x => _dsn._allowedPlatforms.Contains(x.type)).ToArray();
+            r = r.Where(x => _dsn._allowedPlatforms.Contains(x.type) && x.active).ToArray();
 
             List<CalcData> CalcData = new List<CalcData>();
             var message = await Context.Channel.SendMessageAsync("Loading...");
