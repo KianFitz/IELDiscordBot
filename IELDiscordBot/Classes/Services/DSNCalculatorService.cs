@@ -483,7 +483,7 @@ namespace IELDiscordBot.Classes.Services
             return _latestValues[row - 1][17].ToString();
         }
 
-        private readonly string[] _allowedPlatforms = { "steam", "xbl", "psn", "xbox", "ps", "epic" };
+        internal readonly string[] _allowedPlatforms = { "steam", "xbl", "psn", "xbox", "ps", "epic" };
         private List<int> lockedRows = new List<int>();
 
         private async Task CalculateDSN(IList<object> row, SheetsService service, int idx)
