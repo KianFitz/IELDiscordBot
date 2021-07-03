@@ -8,15 +8,18 @@ using System.Reflection;
 using System.Reflection.Metadata.Ecma335;
 using System.Text;
 using System.Threading.Tasks;
+using IELDiscordBot.Classes.Services;
 
 namespace IELDiscordBot.Classes.Modules
 {
     public class CustomCommandModule : ModuleBase<SocketCommandContext>
     {
         private IELContext _db;
-        public CustomCommandModule(IELContext db)
+        private CommandHandler _commandHandler;
+        public CustomCommandModule(IELContext db, CommandHandler handler)
         {
             _db = db;
+            _commandHandler = handler;
         }
 
         [Command("custom")]
@@ -53,6 +56,10 @@ namespace IELDiscordBot.Classes.Modules
             else
             {
                 // TODO: ADD Validation so that it can't overlap with real commands.
+                if (_commandHandler.ContainsCommand(key))
+                {
+                    return;
+                }
 
                 cc = new CustomCommand
                 {

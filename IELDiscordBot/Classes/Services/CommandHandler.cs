@@ -51,13 +51,13 @@ namespace IELDiscordBot.Classes.Services
             _dsn = dsn;
             _franchises = new List<Franchise>();
 
-            _acceptEmote = new Emoji("✅");
-            _denyEmote = new Emoji("❎");
-            _upvoteEmote = new Emoji("⬆️");
+            _acceptEmote = new Emoji(_config["emojis:accept"]);
+            _denyEmote = new Emoji(_config["emojis:deny"]);
+            _upvoteEmote = new Emoji(_config["emojis:upvote"]);
 
-            _emoteVoteChannel = 805461819187003423;
-            _ielPollChannel = 781593835477270583;
-            _franchiseContacts = 668540809410248714;
+            _emoteVoteChannel = ulong.Parse(_config["ids:textChannelIds:emoteVoteChannel"]);
+            _ielPollChannel = ulong.Parse(_config["ids:textChannelIds:pollChannel"]);
+            _franchiseContacts = ulong.Parse(_config["ids:textChannelIds:franchiseContactsChannel"]);
 
             _client.UserJoined += OnUserJoined;
             _client.UserLeft += OnUserLeft;
@@ -69,11 +69,16 @@ namespace IELDiscordBot.Classes.Services
 
             _staffRoleIDs = new List<ulong>()
             {
-                468918928845045780, // IEL Managers
-                639039764393230347, // IEL Team Leaders
-                469683155805274122, // Moderation Team
-                547754108346433536  // Support Team
+                ulong.Parse(_config["ids:staffRoles:IELManagers"]),
+                ulong.Parse(_config["ids:staffRoles:IELTeamLeaders"]),
+                ulong.Parse(_config["ids:staffRoles:IELModerationTeam"]),
+                ulong.Parse(_config["ids:staffRoles:IELSupportTeam"])
             };
+        }
+
+        internal bool ContainsCommand(string key)
+        {
+            return (_commands.Commands.Any(x => x.Name == key));
         }
 
         struct Franchise
@@ -89,50 +94,6 @@ namespace IELDiscordBot.Classes.Services
 
         private async Task OnGuildAvailable(SocketGuild arg)
         {
-            string GetValue(string input)
-            {
-                return input.Substring(input.IndexOf("-") + 1);
-            }
-
-            string GetName(string input)
-            {
-                int startIndex = input.IndexOf("**") + 2;
-                int endIndex = input.LastIndexOf("**");
-
-
-                return input.Substring(startIndex, endIndex - startIndex);
-            }
-
-            if (arg.Id != 468918204362653696) return;
-
-            var franchiseContacts = arg.GetTextChannel(_franchiseContacts);
-            var messages = await franchiseContacts.GetMessagesAsync().FlattenAsync();
-
-            foreach (var msg in messages)
-            {
-                var lines = msg.Content.Split("---------------------------------------------");
-
-                foreach (var franchise in lines)
-                {
-                    var m = franchise.Split("\n");
-                    m = m.Where(x => String.IsNullOrEmpty(x) == false && x != "__**Season 8 Franchise Contacts**__").ToArray();
-                    if (m.Length <= 1) continue;
-
-                    Franchise f = new Franchise();
-
-                    f.Name = GetName(m[0]);
-                    //TODO: HARDCODED FIX
-                    if (f.Name == "Zero Fox") f.Name = "Zero Fox Gaming";
-                    f.GM = arg.GetUser(MentionUtils.ParseUser(GetValue(m[1]).Trim()));
-                    f.AGM = arg.GetUser(MentionUtils.ParseUser(GetValue(m[2]).Trim()));
-                    f.MasterCaptain = arg.GetUser(MentionUtils.ParseUser(GetValue(m[3]).Trim()));
-                    f.ChallengerCaptain = arg.GetUser(MentionUtils.ParseUser(GetValue(m[4]).Trim()));
-                    f.ProspectCaptain = arg.GetUser(MentionUtils.ParseUser(GetValue(m[5]).Trim()));
-
-                    _franchises.Add(f);
-
-                }
-            }
 
         }
 
@@ -243,59 +204,10 @@ namespace IELDiscordBot.Classes.Services
             if (arg3.UserId == _client.CurrentUser.Id) return;
 
             var message = await arg1.DownloadAsync();
-
             IUser user = await message.Channel.GetUserAsync(arg3.UserId).ConfigureAwait(false);
 
+
             await HandleExtraReactionMethodsAsync(arg1.Id, arg3, user, message).ConfigureAwait(false);
-
-            //if (arg3.User.Value == _client.CurrentUser)
-            //    return;
-
-            //TeamRequest request = Utilities.Utilities.OutstandingTeamRequests.Find(req => req.MessageId == arg3.MessageId);
-            //if (request != null)
-            //{
-            //    var message = await arg1.DownloadAsync();
-
-            //    CommandContext context = new CommandContext(_client, message);
-            //    string roleId = "";
-
-            //    switch (arg3.Emote.ToString())
-            //    {
-            //        case "1️⃣":
-            //            roleId = _db.ConfigSettings.Find("Roles", "Prospect").Value;
-            //            break;
-
-            //        case "2️⃣":
-            //            roleId = _db.ConfigSettings.Find("Roles", "Challenger").Value;
-            //            break;
-
-            //        case "3️⃣":
-            //            roleId = _db.ConfigSettings.Find("Roles", "Master").Value;
-            //            break;
-
-            //        default:
-            //            return;
-            //    }
-            //    await HandleUserTeamSubmitted(context, request, roleId);
-
-            //    Utilities.Utilities.OutstandingTeamRequests.Remove(request);
-            //    await message.DeleteAsync();
-            //}
-            //else
-            //{
-            //    DBConfigSettings config = _db.ConfigSettings.Find("Channels", "Log");
-            //    if (config != null)
-            //    {
-            //        ulong channelId = MakeNumeric(config.Value);
-            //        var message = await arg1.DownloadAsync();
-
-            //        CommandContext context = new CommandContext(_client, message);
-            //        var channel = await context.Guild.GetTextChannelAsync(channelId);
-
-            //        await channel.SendMessageAsync($"Reaction: {arg3.Emote} added to message {message.Id} by <@!{arg3.UserId}>!\r\nLink: https://discordapp.com/channels/{context.Guild.Id}/{message.Channel.Id}/{message.Id}");
-
-            //    }
-            //}
         }
 
         private async Task HandleExtraReactionMethodsAsync(ulong messageId, SocketReaction reaction, IUser approver, IUserMessage message)
@@ -320,17 +232,6 @@ namespace IELDiscordBot.Classes.Services
             return ulong.Parse(retVal);
         }
 
-        private async Task HandleUserTeamSubmitted(CommandContext Context, TeamRequest request, string roleId)
-        {
-            ulong roleNo = MakeNumeric(roleId);
-
-            IRole playerRole = Context.Guild.GetRole(roleNo);
-            IRole teamRole = Context.Guild.GetRole(ulong.Parse(request.Team.Role));
-
-            await request.User.AddRoleAsync(playerRole);
-            await request.User.AddRoleAsync(teamRole);
-        }
-
         private async Task OnUserJoined(SocketGuildUser user)
         {
             //await user.SendMessageAsync("", false, Embeds.WelcomeToIEL()).ConfigureAwait(false);
@@ -340,7 +241,6 @@ namespace IELDiscordBot.Classes.Services
             {
                 IGuild guild = user.Guild;
                 ITextChannel logChannel = user.Guild.GetTextChannel(MakeNumeric(config.Value));
-
             }
         }
 
@@ -412,68 +312,6 @@ namespace IELDiscordBot.Classes.Services
             internal string League;
             internal string Team1;
             internal string Team2;
-        }
-
-
-        // TODO: Really hacky. Tried to do it with hashtables and sscanf but REGEX SAID NO.
-        private async Task HandlePollPostedAsync(SocketMessage message)
-        {
-            string[] lines = message.Content.Split("\n");
-            lines = lines.Where(x => Regex.IsMatch(x, "(Prospect|Challenger|Master)([A-Za-z ])+ vs ([A-Za-z ])+")).ToArray();
-
-            List<PollEntry> entries = new List<PollEntry>();
-
-            foreach (string line in lines)
-            {
-                string tmp = line.Remove(0, line.IndexOf(" ") + 1);
-                string league = tmp.Substring(0, tmp.IndexOf(" ") + 1);
-                tmp = tmp.Replace(league, "");
-                league = league.Trim();
-
-                string team1 = tmp.Substring(0, tmp.IndexOf("vs")).Trim();
-                string team2 = tmp.Substring(tmp.IndexOf("vs") + 2).Trim();
-
-
-                PollEntry entry = new PollEntry()
-                {
-                    League = league,
-                    Team1 = team1,
-                    Team2 = team2
-                };
-
-                entries.Add(entry);
-            }
-            List<IGuildUser> usersToSendTo = new List<IGuildUser>();
-
-            foreach (PollEntry e in entries)
-            {
-                Franchise f = _franchises.First(x => x.Name == e.Team1);
-                Franchise f2 = _franchises.First(x => x.Name == e.Team2);
-
-                switch (e.League)
-                {
-                    case "Prospect":
-                        {
-                            usersToSendTo.Add(f.ProspectCaptain);
-                            usersToSendTo.Add(f2.ProspectCaptain);
-                            break;
-                        }
-                    case "Challenger":
-                        {
-                            usersToSendTo.Add(f.ChallengerCaptain);
-                            usersToSendTo.Add(f2.ChallengerCaptain);
-                            break;
-                        }
-                    case "Master":
-                        {
-                            usersToSendTo.Add(f.MasterCaptain);
-                            usersToSendTo.Add(f2.MasterCaptain);
-                            break;
-                        }
-                }
-            }
-            usersToSendTo.ForEach(x => x.SendMessageAsync("", false, Embeds.PollStreamGame()).ConfigureAwait(false));
-            _log.Info($"Message sent to the following users: {string.Join(",", usersToSendTo.Select(x => x.Nickname))}");
         }
 
         private async Task ExecuteCustomCommandAsync(SocketCommandContext context, CustomCommand cmd)
