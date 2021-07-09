@@ -30,6 +30,7 @@ namespace IELDiscordBot.Classes.Services
         private readonly DSNCalculatorService _dsn;
         private readonly List<ulong> _staffRoleIDs;
         private readonly List<Franchise> _franchises;
+        private readonly VoiceService _voiceService;
 
 
         private readonly IEmote _acceptEmote;
@@ -39,7 +40,8 @@ namespace IELDiscordBot.Classes.Services
         private readonly ulong _emoteVoteChannel;
         private readonly ulong _ielPollChannel;
         private readonly ulong _franchiseContacts;
-        public CommandHandler(IELContext db, DiscordSocketClient discord, CommandService commands, IConfigurationRoot config, IServiceProvider services, DeleteMessageService delete, DSNCalculatorService dsn)
+        public CommandHandler(IELContext db, DiscordSocketClient discord, CommandService commands, IConfigurationRoot config,
+            IServiceProvider services, DeleteMessageService delete, DSNCalculatorService dsn, VoiceService voice)
         {
             _db = db;
             _client = discord;
@@ -49,15 +51,19 @@ namespace IELDiscordBot.Classes.Services
             _renameRequests = new List<RenameRequest>();
             _deleteService = delete;
             _dsn = dsn;
+            _voiceService = voice;
             _franchises = new List<Franchise>();
 
             _acceptEmote = new Emoji(_config["emojis:accept"]);
             _denyEmote = new Emoji(_config["emojis:deny"]);
             _upvoteEmote = new Emoji(_config["emojis:upvote"]);
 
-            _emoteVoteChannel = ulong.Parse(_config["ids:textChannelIds:emoteVoteChannel"]);
-            _ielPollChannel = ulong.Parse(_config["ids:textChannelIds:pollChannel"]);
-            _franchiseContacts = ulong.Parse(_config["ids:textChannelIds:franchiseContactsChannel"]);
+            //_emoteVoteChannel = ulong.Parse(_config["ids:textChannelIds:emoteVoteChannel"]);
+            _emoteVoteChannel = 0;
+            //_ielPollChannel = ulong.Parse(_config["ids:textChannelIds:pollChannel"]);
+            _ielPollChannel = 0;
+            //_franchiseContacts = ulong.Parse(_config["ids:textChannelIds:franchiseContactsChannel"]);
+            _franchiseContacts = 0;
 
             _client.UserJoined += OnUserJoined;
             _client.UserLeft += OnUserLeft;
@@ -66,6 +72,7 @@ namespace IELDiscordBot.Classes.Services
             _client.ReactionAdded += OnReactionAdded;
             _client.ReactionRemoved += OnReactionRemoved;
             _client.GuildAvailable += OnGuildAvailable;
+            _client.UserVoiceStateUpdated += OnUserVoiceStatusChanged;
 
             _staffRoleIDs = new List<ulong>()
             {
@@ -74,6 +81,28 @@ namespace IELDiscordBot.Classes.Services
                 ulong.Parse(_config["ids:staffRoles:IELModerationTeam"]),
                 ulong.Parse(_config["ids:staffRoles:IELSupportTeam"])
             };
+        }
+
+        private async Task OnUserVoiceStatusChanged(SocketUser arg1, SocketVoiceState arg2, SocketVoiceState arg3)
+        {
+            if (arg3.VoiceChannel != null)
+            {
+                if (arg3.VoiceChannel.Id == ulong.Parse(_config["ids:voiceChannelIds:createVoice"]))
+                {
+                    await _voiceService.CreateNewVoiceChannel(
+                        arg3.VoiceChannel.Guild,
+                        arg3.VoiceChannel.Category,
+                        (arg1 as IGuildUser),
+                        arg3.VoiceChannel).ConfigureAwait(false);
+                }
+            }
+            if (arg2.VoiceChannel != null)
+            {
+                if (arg2.VoiceChannel.Users.Count == 0 && _voiceService.IsCustomChannel(arg2.VoiceChannel.Id))
+                {
+                    await _voiceService.DeleteVoiceChannel(arg2.VoiceChannel.Id);
+                }
+            }
         }
 
         internal bool ContainsCommand(string key)
@@ -277,12 +306,6 @@ namespace IELDiscordBot.Classes.Services
             if (message.Channel.Id == _emoteVoteChannel)
             {
                 await HandleEmoteVote(message).ConfigureAwait(false);
-                return;
-            }
-
-            if (message.Channel.Id == _ielPollChannel)
-            {
-                await HandlePollPostedAsync(message).ConfigureAwait(false);
                 return;
             }
 
