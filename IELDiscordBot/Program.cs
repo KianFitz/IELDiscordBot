@@ -32,6 +32,7 @@ namespace IELDiscordBot
                 .AddSingleton<CommandHandler>()
                 .AddSingleton<LoggingService>()
                 .AddSingleton<DSNCalculatorService>()
+                .AddSingleton<VoiceService>()
                 .AddSingleton<DeleteMessageService>()
                 .AddSingleton(_config)
                 .AddDbContext<IELContext>(options => options.UseMySQL(BuildConnectionString()));
@@ -44,6 +45,7 @@ namespace IELDiscordBot
             await provider.GetRequiredService<StartupService>().StartAsync();
             provider.GetRequiredService<CommandHandler>();
             provider.GetRequiredService<DeleteMessageService>();
+            provider.GetRequiredService<VoiceService>();
             provider.GetRequiredService<DSNCalculatorService>();
 
 
