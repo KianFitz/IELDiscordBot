@@ -282,7 +282,7 @@ namespace IELDiscordBot.Classes.Services
 
             if (message.Channel.Id == _ielPollChannel)
             {
-                await HandlePollPostedAsync(message).ConfigureAwait(false);
+                //await HandlePollPostedAsync(message).ConfigureAwait(false);
                 return;
             }
 
