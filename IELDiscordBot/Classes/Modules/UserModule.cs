@@ -185,6 +185,9 @@ namespace IELDiscordBot.Classes.Modules
         [Summary("Runs the DSN calculation process used by the Application Team. Can only be run once per 48 hours.")]
         public async Task RecheckSignup()
         {
+            await Context.Channel.SendMessageAsync("DSN Calculation has not begun, you cannot recheck/recalculate your games/DSN at this time.");
+            return;
+
             await _service.RecheckSignup(Context.User.Id, Context.Channel).ConfigureAwait(false);
         }
 
