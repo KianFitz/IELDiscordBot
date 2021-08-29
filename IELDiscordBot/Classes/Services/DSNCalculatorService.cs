@@ -572,7 +572,7 @@ namespace IELDiscordBot.Classes.Services
                 }
             }
 
-            int peakS = 15;
+            int peakS = 16;
             int sPeakS = 0;
 
             int highestPeak = S16Peak;
@@ -742,18 +742,18 @@ namespace IELDiscordBot.Classes.Services
 
             switch (season)
             {
-                case 15:
+                case 16:
                     {
                         cutOff = cutOffDates[(int)Seasons.S2];
                         break;
                     }
-                case 16:
+                case 17:
                     {
                         cutOff = cutOffDates[(int)Seasons.S3];
                         seasonStartDate = cutOffDates[(int)Seasons.S2].AddDays(1);
                         break;
                     }
-                case 17:
+                case 18:
                     {
                         cutOff = cutOffDates[(int)Seasons.S4];
                         seasonStartDate = cutOffDates[(int)Seasons.S3].AddDays(1);
