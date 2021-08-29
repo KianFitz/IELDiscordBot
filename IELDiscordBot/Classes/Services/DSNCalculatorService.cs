@@ -80,7 +80,7 @@ namespace IELDiscordBot.Classes.Services
             Setup();
              _timer = new Timer(async _ =>
             {
-                //await ProcessNewSignupsAsync().ConfigureAwait(false);
+                await ProcessNewSignupsAsync().ConfigureAwait(false);
             },
             null,
             TimeSpan.FromSeconds(5),
