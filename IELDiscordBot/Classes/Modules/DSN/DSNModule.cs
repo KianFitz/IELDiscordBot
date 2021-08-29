@@ -23,7 +23,7 @@ namespace IELDiscordBot.Classes.Modules
         Logger _log = LogManager.GetCurrentClassLogger();
 
         private readonly List<int> _acceptableSeasons = new List<int>() { 14, 15, 16 };
-        private readonly List<int> _acceptablePlaylists = new List<int>() { 11, 13 };
+        private readonly List<int> _acceptablePlaylists = new List<int>() { 10, 11, 13 };
         public DSNModule(IELContext db, DSNCalculatorService dsn)
         {
             _db = db;
@@ -32,9 +32,9 @@ namespace IELDiscordBot.Classes.Modules
 
         DateTime[] cutOffDates = new DateTime[]
         {
-            new DateTime(2020, 09, 23),
-            new DateTime(2020, 12, 09),
-            new DateTime(2021, 01, 10)
+            new DateTime(2021, 04, 07),
+            new DateTime(2021, 08, 11),
+            new DateTime(2021, 09, 01)
         };
 
         private readonly IELContext _db;

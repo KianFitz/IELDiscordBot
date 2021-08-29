@@ -44,22 +44,23 @@ namespace IELDiscordBot.Classes.Services
 
         public enum Playlist
         {
+            ONES = 10,
             TWOS = 13,
             THREES = 14,
         }
 
         public enum Seasons
         {
-            S15 = 0,
-            S16 = 1,
-            S17 = 2
+            S2 = 0,
+            S3 = 1,
+            S4 = 2
         }
 
         DateTime[] cutOffDates = new DateTime[]
         {
-            new DateTime(2020, 12, 10),
             new DateTime(2021, 04, 07),
-            new DateTime(2021, 05, 03)
+            new DateTime(2021, 08, 11),
+            new DateTime(2021, 09, 01)
         };
 
         internal class DSNCalculationData
@@ -397,7 +398,7 @@ namespace IELDiscordBot.Classes.Services
 
                 remaining--;
 
-                if (row % 10 == 0)
+                if (row % 100 == 0)
                 {
                     await message.ModifyAsync(x =>
                         x.Embed = Embeds.AssigningLeagueRoles(remaining, _assignedCounters)
@@ -536,11 +537,11 @@ namespace IELDiscordBot.Classes.Services
         {
             if (fromCommand) idx -= 1;
 
-            int S15Peak = 0;
             int S16Peak = 0;
             int S17Peak = 0;
+            int S18Peak = 0;
 
-            for (int season = 15; season < 18; season++)
+            for (int season = 16; season < 19; season++)
             {
                 int highestVal = 0;
                 foreach (var y in CalcData)
@@ -553,11 +554,6 @@ namespace IELDiscordBot.Classes.Services
                 }
                 switch (season)
                 {
-                    case 15:
-                        {
-                            S15Peak = highestVal;
-                            break;
-                        }
                     case 16:
                         {
                             S16Peak = highestVal;
@@ -568,61 +564,66 @@ namespace IELDiscordBot.Classes.Services
                             S17Peak = highestVal;
                             break;
                         }
+                    case 18:
+                        {
+                            S18Peak = highestVal;
+                            break;
+                        }
                 }
             }
 
             int peakS = 15;
             int sPeakS = 0;
 
-            int highestPeak = S15Peak;
+            int highestPeak = S16Peak;
             int secondHighestPeak = 0;
-            if (S16Peak > highestPeak)
-            {
-                secondHighestPeak = highestPeak;
-                sPeakS = 15;
-                highestPeak = S15Peak;
-            }
-            else
-            {
-                secondHighestPeak = S16Peak;
-                sPeakS = 16;
-            }
             if (S17Peak > highestPeak)
             {
                 secondHighestPeak = highestPeak;
-                sPeakS = peakS;
-                highestPeak = S17Peak;
-                peakS = 17;
+                sPeakS = 15;
+                highestPeak = S16Peak;
             }
-            else if (S17Peak > secondHighestPeak)
+            else
             {
                 secondHighestPeak = S17Peak;
+                sPeakS = 16;
+            }
+            if (S18Peak > highestPeak)
+            {
+                secondHighestPeak = highestPeak;
+                sPeakS = peakS;
+                highestPeak = S18Peak;
+                peakS = 17;
+            }
+            else if (S18Peak > secondHighestPeak)
+            {
+                secondHighestPeak = S18Peak;
                 sPeakS = 17;
             }
 
             secondHighestPeak = Math.Max(secondHighestPeak, highestPeak - 200);
 
-            if (sPeakS == 15)
-                S15Peak = secondHighestPeak;
-            else if (sPeakS == 16)
+            if (sPeakS == 16)
                 S16Peak = secondHighestPeak;
             else if (sPeakS == 17)
                 S17Peak = secondHighestPeak;
+            else if (sPeakS == 18)
+                S18Peak = secondHighestPeak;
 
-            int s15Games = CalcData.Where(x => x.Season == 15).Sum(x => x.GamesPlayed);
             int s16Games = CalcData.Where(x => x.Season == 16).Sum(x => x.GamesPlayed);
             int s17Games = CalcData.Where(x => x.Season == 17).Select(x => x.GamesPlayed).Distinct().Sum();
+            int s18Games = CalcData.Where(x => x.Season == 18).Select(x => x.GamesPlayed).Distinct().Sum();
 
             IList<object> obj = new List<object>();
             UpdateValuesResponse res = null;
 
-            obj.Add(s15Games);
             obj.Add(s16Games);
             obj.Add(s17Games);
+            obj.Add(s18Games);
             obj.Add(null);
-            obj.Add(S15Peak);
             obj.Add(S16Peak);
             obj.Add(S17Peak);
+            obj.Add(S18Peak);
 
             obj[3] = $"=IFS(ISBLANK(A{idx + 1});;AND(NOT(ISBLANK(A{idx + 1}));ISBLANK(F{idx + 1});ISBLANK(G{idx + 1});ISBLANK(H{idx + 1});ISBLANK(J{idx + 1});ISBLANK(K{idx + 1});ISBLANK(L{idx + 1})); \"Pending\";AND(NOT(ISBLANK(A{idx + 1}));OR(ISBLANK(F{idx + 1});ISBLANK(G{idx + 1});ISBLANK(H{idx + 1});ISBLANK(J{idx + 1});ISBLANK(K{idx + 1});ISBLANK(L{idx + 1}))); \"Missing Data\";OR(H{idx + 1} < DV_MinGAbsolut; G{idx + 1} < DV_MinGAbsolut; F{idx + 1} < DV_MinGAbsolut; L{idx + 1} = 0; K{idx + 1} = 0; J{idx + 1} = 0); \"Investigate App\";AND(H{idx + 1} < DV_MinGCurrent; G{idx + 1} < DV_MinGPrev1; F{idx + 1} < DV_MinGPrev2); \"Min Games not reached\";AND(L{idx + 1} < DV_DSNMin; K{idx + 1} < DV_DSNMin; F{idx + 1} < DV_DSNMin); \"Too Low\";OR(H{idx + 1} >= DV_MinGCurrent; G{idx + 1} >= DV_MinGPrev1; F{idx + 1} >= DV_MinGPrev2); \"Verified\")";
 
@@ -715,20 +716,15 @@ namespace IELDiscordBot.Classes.Services
 
                 List<CalcData> Data = new List<CalcData>();
 
-                if (platform != "epic")
-                {
-                    Data.Add(await GetCalcDataForSegmentAsync(platform, username, 15, Playlist.TWOS, mmrObj));
-                    Data.Add(await GetCalcDataForSegmentAsync(platform, username, 15, Playlist.THREES, mmrObj));
-                    Data.Add(await GetCalcDataForSegmentAsync(platform, username, 16, Playlist.TWOS, mmrObj));
-                    Data.Add(await GetCalcDataForSegmentAsync(platform, username, 16, Playlist.THREES, mmrObj));
-                    Data.Add(await GetCalcDataForSegmentAsync(platform, username, 17, Playlist.TWOS, mmrObj));
-                    Data.Add(await GetCalcDataForSegmentAsync(platform, username, 17, Playlist.THREES, mmrObj));
-                }
-                else
-                {
-                    Data.Add(await GetCalcDataForSegmentAsync(platform, username, 17, Playlist.TWOS, mmrObj));
-                    Data.Add(await GetCalcDataForSegmentAsync(platform, username, 17, Playlist.THREES, mmrObj));
-                }
+                Data.Add(await GetCalcDataForSegmentAsync(platform, username, 16, Playlist.ONES, mmrObj));
+                Data.Add(await GetCalcDataForSegmentAsync(platform, username, 16, Playlist.TWOS, mmrObj));
+                Data.Add(await GetCalcDataForSegmentAsync(platform, username, 16, Playlist.THREES, mmrObj));
+                Data.Add(await GetCalcDataForSegmentAsync(platform, username, 17, Playlist.ONES, mmrObj));
+                Data.Add(await GetCalcDataForSegmentAsync(platform, username, 17, Playlist.TWOS, mmrObj));
+                Data.Add(await GetCalcDataForSegmentAsync(platform, username, 17, Playlist.THREES, mmrObj));
+                Data.Add(await GetCalcDataForSegmentAsync(platform, username, 18, Playlist.ONES, mmrObj));
+                Data.Add(await GetCalcDataForSegmentAsync(platform, username, 18, Playlist.TWOS, mmrObj));
+                Data.Add(await GetCalcDataForSegmentAsync(platform, username, 18, Playlist.THREES, mmrObj));
 
                 return Data;
             }
@@ -742,25 +738,25 @@ namespace IELDiscordBot.Classes.Services
             retVal.Season = season;
 
             DateTime cutOff = DateTime.Now;
-            DateTime seasonStartDate = new DateTime(2020, 09, 23);
+            DateTime seasonStartDate = new DateTime(2020, 12, 09);
 
             switch (season)
             {
                 case 15:
                     {
-                        cutOff = cutOffDates[(int)Seasons.S15];
+                        cutOff = cutOffDates[(int)Seasons.S2];
                         break;
                     }
                 case 16:
                     {
-                        cutOff = cutOffDates[(int)Seasons.S16];
-                        seasonStartDate = cutOffDates[(int)Seasons.S15].AddDays(1);
+                        cutOff = cutOffDates[(int)Seasons.S3];
+                        seasonStartDate = cutOffDates[(int)Seasons.S2].AddDays(1);
                         break;
                     }
                 case 17:
                     {
-                        cutOff = cutOffDates[(int)Seasons.S17];
-                        seasonStartDate = cutOffDates[(int)Seasons.S16].AddDays(1);
+                        cutOff = cutOffDates[(int)Seasons.S4];
+                        seasonStartDate = cutOffDates[(int)Seasons.S3].AddDays(1);
                         break;
                     }
             }
@@ -778,29 +774,36 @@ namespace IELDiscordBot.Classes.Services
                     retVal.GamesPlayed = Datam.Count > 0 ? Datam.Sum(x => x.stats.matchesPlayed.value) : 0;
                 }
 
-
-                if (playlist == Playlist.TWOS)
+                if (playlist == Playlist.ONES)
+                {
+                    if (obj.data.Duel != null)
+                    {
+                        List<Duel> data = new List<Duel>(obj.data.Duel);
+                        data = data.Where(x => x.collectDate < cutOff & x.collectDate > seasonStartDate).ToList();
+                        retVal.Ratings = data.Select(x => Convert.ToInt32(Math.Round(x.rating * 1.35, 0, MidpointRounding.AwayFromZero))).ToList();
+                    }
+                }
+                else if (playlist == Playlist.TWOS)
                 {
                     if (obj.data.Duos != null)
                     {
                         List<Duo> data = new List<Duo>(obj.data.Duos);
                         data = data.Where(x => x.collectDate < cutOff && x.collectDate > seasonStartDate).ToList();
                         retVal.Ratings = data.Select(x => x.rating).ToList();
-                        retVal.GamesPlayed = Datam.Count > 0 ? Datam[0].stats.matchesPlayed.value : 0;
                     }
                 }
-                if (playlist == Playlist.THREES)
+                else if (playlist == Playlist.THREES)
                 {
                     if (obj.data.Standard != null)
                     {
                         List<Standard> data = new List<Standard>(obj.data.Standard);
                         data = data.Where(x => x.collectDate < cutOff && x.collectDate > seasonStartDate).ToList();
                         retVal.Ratings = data.Select(x => x.rating).ToList();
-                        retVal.GamesPlayed = Datam.Count > 0 ? Datam[1].stats.matchesPlayed.value : 0;
                     }
                 }
+                retVal.GamesPlayed = Datam.Count > 0 ? Datam[1].stats.matchesPlayed.value : 0;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 _log.Error(ex);
             }
