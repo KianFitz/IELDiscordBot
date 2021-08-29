@@ -440,9 +440,9 @@ namespace IELDiscordBot.Classes.Services
                 {
                     _log.Info($"Started DSN Calculation for User: {r[(int)ColumnIDs.Name]}");
                     lockedRows.Add(row);
-                    await CalculateDSN(r, service, row);
+                    await CalculateDSN(r, service, row).ConfigureAwait(false);
                     _log.Info($"Completed DSN Calculation for User: {r[(int)ColumnIDs.Name]}");
-                    await Task.Delay(10000);
+                    await Task.Delay(3000);
                     lockedRows.Remove(row);
                 }
             }
