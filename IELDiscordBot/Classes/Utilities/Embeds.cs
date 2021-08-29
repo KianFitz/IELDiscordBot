@@ -154,49 +154,14 @@ namespace IELDiscordBot.Classes.Utilities
                 }
             }
 
-            int peakS = 16;
-            int sPeakS = 0;
-
-            int highestPeak = S16Peak;
-            int secondHighestPeak = 0;
-            if (S17Peak > highestPeak)
-            {
-                secondHighestPeak = highestPeak;
-                sPeakS = 15;
-                highestPeak = S16Peak;
-            }
-            else
-            {
-                secondHighestPeak = S17Peak;
-                sPeakS = 16;
-            }
-            if (S18Peak > highestPeak)
-            {
-                secondHighestPeak = highestPeak;
-                sPeakS = peakS;
-                highestPeak = S18Peak;
-                peakS = 17;
-            }
-            else if (S18Peak > secondHighestPeak)
-            {
-                secondHighestPeak = S18Peak;
-                sPeakS = 17;
-            }
-
-            secondHighestPeak = Math.Max(secondHighestPeak, highestPeak - 200);
-
-            if (sPeakS == 16)
-                S16Peak = secondHighestPeak;
-            else if (sPeakS == 17)
-                S17Peak = secondHighestPeak;
-            else if (sPeakS == 18)
-                S18Peak = secondHighestPeak;
-
             int s16Games = data.Where(x => x.Season == 16).Sum(x => x.GamesPlayed);
             int s17Games = data.Where(x => x.Season == 17).Select(x => x.GamesPlayed).Distinct().Sum();
             int s18Games = data.Where(x => x.Season == 18).Select(x => x.GamesPlayed).Distinct().Sum();
 
-            double dsn = (highestPeak * 0.7) + (secondHighestPeak * 0.3);
+            List<int> peaks = new List<int>() { S16Peak, S17Peak, S18Peak };
+            peaks = peaks.OrderByDescending(x => x).ToList();
+
+            double dsn = (peaks[0] * 0.7) + (peaks[1] * 0.3);
 
             // Dia 1 threshold
 
