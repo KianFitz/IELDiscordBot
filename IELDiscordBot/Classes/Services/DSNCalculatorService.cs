@@ -21,6 +21,8 @@ using System.Security.Cryptography.X509Certificates;
 using IELDiscordBot.Classes.Models.WebAppAPI;
 using Discord;
 using System.IO;
+using System.Net;
+using System.Text;
 
 namespace IELDiscordBot.Classes.Services
 {
@@ -88,7 +90,7 @@ namespace IELDiscordBot.Classes.Services
             _queueTimer = new Timer(async _ =>
             {
                 await GetLatestValues().ConfigureAwait(false);
-                //await ProcessSignupQueueAsync().ConfigureAwait(false);
+                await ProcessSignupQueueAsync().ConfigureAwait(false);
             },
            null,
            TimeSpan.FromSeconds(5),
@@ -160,7 +162,8 @@ namespace IELDiscordBot.Classes.Services
                     {
                         x.Nickname = $"[FA] {(x.Nickname.IsSpecified ? x.Nickname : signup.DiscordUser.Username)}";
                     });
-                await Task.Delay(1500);
+                await SendStatusToWebApp(int.Parse(_latestValues[signup.RowNumber - 1][2].ToString()), signup.Accept).ConfigureAwait(false);
+                await Task.Delay(2000);
             }
         }
 
@@ -280,6 +283,19 @@ namespace IELDiscordBot.Classes.Services
             }
             string content = await request.Content.ReadAsStringAsync().ConfigureAwait(false);
             return JsonConvert.DeserializeObject<Platform[]>(content);
+        }
+
+        public async Task SendStatusToWebApp(int playerId, bool accepted)
+        {
+            var values = new Dictionary<string, string>()
+            {
+                { "userId", playerId.ToString() },
+                { "status", accepted ? "accepted" : "declined" }
+            };
+
+            var content = new FormUrlEncodedContent(values);
+
+            await _webClient.PutAsync("https://webapp.imperialesportsleague.co.uk/api/signup/status", content);
         }
 
         internal async Task QueueAccept(int row, SocketGuild guild, ISocketMessageChannel channel)
