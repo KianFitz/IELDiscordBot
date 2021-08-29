@@ -154,7 +154,7 @@ namespace IELDiscordBot.Classes.Utilities
                 }
             }
 
-            int peakS = 16;
+            int peakS = 15;
             int sPeakS = 0;
 
             int highestPeak = S16Peak;
@@ -162,25 +162,25 @@ namespace IELDiscordBot.Classes.Utilities
             if (S17Peak > highestPeak)
             {
                 secondHighestPeak = highestPeak;
-                sPeakS = 15;
+                sPeakS = 16;
                 highestPeak = S16Peak;
             }
             else
             {
                 secondHighestPeak = S17Peak;
-                sPeakS = 16;
+                sPeakS = 17;
             }
             if (S18Peak > highestPeak)
             {
                 secondHighestPeak = highestPeak;
                 sPeakS = peakS;
                 highestPeak = S18Peak;
-                peakS = 17;
+                peakS = 18;
             }
             else if (S18Peak > secondHighestPeak)
             {
                 secondHighestPeak = S18Peak;
-                sPeakS = 17;
+                sPeakS = 18;
             }
 
             secondHighestPeak = Math.Max(secondHighestPeak, highestPeak - 200);
