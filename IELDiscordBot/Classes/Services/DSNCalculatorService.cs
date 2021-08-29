@@ -587,7 +587,14 @@ namespace IELDiscordBot.Classes.Services
             obj.Add(S17Peak);
             obj.Add(S18Peak);
 
-            obj[3] = $"=IFS(ISBLANK(A{idx + 1});;AND(NOT(ISBLANK(A{idx + 1}));ISBLANK(F{idx + 1});ISBLANK(G{idx + 1});ISBLANK(H{idx + 1});ISBLANK(J{idx + 1});ISBLANK(K{idx + 1});ISBLANK(L{idx + 1})); \"Pending\";AND(NOT(ISBLANK(A{idx + 1}));OR(ISBLANK(F{idx + 1});ISBLANK(G{idx + 1});ISBLANK(H{idx + 1});ISBLANK(J{idx + 1});ISBLANK(K{idx + 1});ISBLANK(L{idx + 1}))); \"Missing Data\";OR(H{idx + 1} < DV_MinGAbsolut; G{idx + 1} < DV_MinGAbsolut; F{idx + 1} < DV_MinGAbsolut; L{idx + 1} = 0; K{idx + 1} = 0; J{idx + 1} = 0); \"Investigate App\";AND(H{idx + 1} < DV_MinGCurrent; G{idx + 1} < DV_MinGPrev1; F{idx + 1} < DV_MinGPrev2); \"Min Games not reached\";AND(L{idx + 1} < DV_DSNMin; K{idx + 1} < DV_DSNMin; F{idx + 1} < DV_DSNMin); \"Too Low\";OR(H{idx + 1} >= DV_MinGCurrent; G{idx + 1} >= DV_MinGPrev1; F{idx + 1} >= DV_MinGPrev2); \"Verified\")";
+            obj[3] = $"=IFS(\n" +
+            $"ISBLANK(A{idx+1});;AND(NOT(ISBLANK(A{idx+1}));ISBLANK(F{idx+1});ISBLANK(G{idx+1});ISBLANK(H{idx+1});ISBLANK(J{idx+1});ISBLANK(K{idx+1});ISBLANK(L{idx+1})); \"Pending\";\n" +
+            $"AND(NOT(ISBLANK(A{idx+1}));OR(ISBLANK(F{idx+1});ISBLANK(G{idx+1});ISBLANK(H{idx+1});ISBLANK(J{idx+1});ISBLANK(K{idx+1});ISBLANK(L{idx+1}))); \"Missing Data\";\n" +
+            $"OR(H{idx+1} < DV_MinGAbsolut; G{idx+1} < DV_MinGAbsolut; F{idx+1} < DV_MinGAbsolut; L{idx+1} = 0; K{idx+1} = 0; J{idx+1} = 0); \"Investigate App\";\n" +
+            $"AND(H{idx+1} < DV_MinGCurrent; G{idx+1} < DV_MinGPrev1; F{idx+1} < DV_MinGPrev2); \"Min Games not reached\";\n" +
+            $"AND(L{idx+1} < DV_DSNMin; K{idx+1} < DV_DSNMin; J{idx+1} < DV_DSNMin); \"Too Low\";\n" +
+            $"OR(H{idx+1} >= DV_MinGCurrent; G{idx+1} >= DV_MinGPrev1; F{idx+1} >= DV_MinGPrev2); \"Verified\")\n";
+
 
             ValueRange v = new ValueRange();
             v.MajorDimension = "ROWS";
