@@ -442,7 +442,7 @@ namespace IELDiscordBot.Classes.Services
                     lockedRows.Add(row);
                     await CalculateDSN(r, service, row).ConfigureAwait(false);
                     _log.Info($"Completed DSN Calculation for User: {r[(int)ColumnIDs.Name]}");
-                    await Task.Delay(3000);
+                    await Task.Delay(new Random().Next(2500, 4000));
                     lockedRows.Remove(row);
                 }
             }
