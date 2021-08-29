@@ -686,7 +686,6 @@ namespace IELDiscordBot.Classes.Services
                 string apistring = string.Format(Constants.TRNAPI, platform, username);
 
                 HttpResponseMessage response = await client.GetAsync(apistring).ConfigureAwait(false);
-                _log.Info($@"Cookies\r\n{ string.Join("\r\n", response.RequestMessage.Content)}");
 
                 string content = await response.Content.ReadAsStringAsync();
 
@@ -801,7 +800,23 @@ namespace IELDiscordBot.Classes.Services
                         retVal.Ratings = data.Select(x => x.rating).ToList();
                     }
                 }
-                retVal.GamesPlayed = (Datam != null && Datam.Count > 1) ? Datam[1].stats.matchesPlayed.value : 0;
+                if (Datam is null || Datam.Count == 0)
+                {
+                    retVal.GamesPlayed = 0;
+                    return retVal;
+                }
+                switch(playlist)
+                {
+                    case Playlist.ONES:
+                        retVal.GamesPlayed = 0;
+                        break;
+                    case Playlist.TWOS:
+                        retVal.GamesPlayed = Datam[0].stats.matchesPlayed.value;
+                        break;
+                    case Playlist.THREES:
+                        retVal.GamesPlayed = Datam[1].stats.matchesPlayed.value;
+                        break;
+                }
             }
             catch (Exception ex)
             {
