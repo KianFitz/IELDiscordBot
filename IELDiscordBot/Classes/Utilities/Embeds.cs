@@ -119,9 +119,9 @@ namespace IELDiscordBot.Classes.Utilities
 
         internal static Embed DSNCalculation(List<CalcData> data, string user, string platform, int row)
         {
-            int S15Peak = 0;
             int S16Peak = 0;
             int S17Peak = 0;
+            int S18Peak = 0;
 
             for (int season = 16; season < 19; season++)
             {
@@ -138,38 +138,63 @@ namespace IELDiscordBot.Classes.Utilities
                 {
                     case 16:
                         {
-                            S15Peak = highestVal;
+                            S16Peak = highestVal;
                             break;
                         }
                     case 17:
                         {
-                            S16Peak = highestVal;
+                            S17Peak = highestVal;
                             break;
                         }
                     case 18:
                         {
-                            S17Peak = highestVal;
+                            S18Peak = highestVal;
                             break;
                         }
                 }
             }
 
-            List<int> peaks = new List<int>();
-            peaks.Add(S15Peak);
-            peaks.Add(S16Peak);
-            peaks.Add(S17Peak);
-            peaks = peaks.OrderByDescending(x => x).ToList();
+            int peakS = 16;
+            int sPeakS = 0;
 
-            int highestPeak = peaks[0];
-            int secondHighestPeak = peaks[1];
+            int highestPeak = S16Peak;
+            int secondHighestPeak = 0;
+            if (S17Peak > highestPeak)
+            {
+                secondHighestPeak = highestPeak;
+                sPeakS = 15;
+                highestPeak = S16Peak;
+            }
+            else
+            {
+                secondHighestPeak = S17Peak;
+                sPeakS = 16;
+            }
+            if (S18Peak > highestPeak)
+            {
+                secondHighestPeak = highestPeak;
+                sPeakS = peakS;
+                highestPeak = S18Peak;
+                peakS = 17;
+            }
+            else if (S18Peak > secondHighestPeak)
+            {
+                secondHighestPeak = S18Peak;
+                sPeakS = 17;
+            }
 
-            if (secondHighestPeak < highestPeak - 200)
-                secondHighestPeak = highestPeak - 200;
+            secondHighestPeak = Math.Max(secondHighestPeak, highestPeak - 200);
 
+            if (sPeakS == 16)
+                S16Peak = secondHighestPeak;
+            else if (sPeakS == 17)
+                S17Peak = secondHighestPeak;
+            else if (sPeakS == 18)
+                S18Peak = secondHighestPeak;
 
-            int s15Games = data.Where(x => x.Season == 16).Sum(x => x.GamesPlayed);
-            int s16Games = data.Where(x => x.Season == 17).Sum(x => x.GamesPlayed);
-            int s17Games = data.Where(x => x.Season == 18).Select(x => x.GamesPlayed).Distinct().Sum();
+            int s16Games = data.Where(x => x.Season == 16).Sum(x => x.GamesPlayed);
+            int s17Games = data.Where(x => x.Season == 17).Select(x => x.GamesPlayed).Distinct().Sum();
+            int s18Games = data.Where(x => x.Season == 18).Select(x => x.GamesPlayed).Distinct().Sum();
 
             double dsn = (highestPeak * 0.7) + (secondHighestPeak * 0.3);
 
@@ -177,13 +202,13 @@ namespace IELDiscordBot.Classes.Utilities
 
             string finalString = $"ID: `{user}`\nPlatform: `{platform}`\n";
             finalString += "\n**Games Played:**\n";
-            finalString += $"\n**Season 4: `{s17Games}`**";
-            finalString += $"\n**Season 3: `{s16Games}`**";
-            finalString += $"\n**Season 2: `{s15Games}`**";
+            finalString += $"\n**Season 4: `{s18Games}`**";
+            finalString += $"\n**Season 3: `{s17Games}`**";
+            finalString += $"\n**Season 2: `{s16Games}`**";
             finalString += $"\n**MMRs:**\n";
-            finalString += $"\n**Season 4: `{S17Peak}`**";
-            finalString += $"\n**Season 3: `{S16Peak}`**";
-            finalString += $"\n**Season 2: `{S15Peak}`**";
+            finalString += $"\n**Season 4: `{S18Peak}`**";
+            finalString += $"\n**Season 3: `{S17Peak}`**";
+            finalString += $"\n**Season 2: `{S16Peak}`**";
             finalString += $"\n**DSN:** `{dsn}`";
 #if RELEASE
             if (row != 0)
