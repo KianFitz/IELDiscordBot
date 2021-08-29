@@ -801,7 +801,7 @@ namespace IELDiscordBot.Classes.Services
                         retVal.Ratings = data.Select(x => x.rating).ToList();
                     }
                 }
-                retVal.GamesPlayed = Datam.Count > 0 ? Datam[1].stats.matchesPlayed.value : 0;
+                retVal.GamesPlayed = (Datam != null && Datam.Count > 1) ? Datam[1].stats.matchesPlayed.value : 0;
             }
             catch (Exception ex)
             {

@@ -119,15 +119,78 @@ namespace IELDiscordBot.Classes.Utilities
 
         internal static Embed DSNCalculation(List<CalcData> data, string user, string platform, int row)
         {
-            int S16Peak = data.Where(x => x.Season == 16).Select(x => x.Ratings).Select(x => x.OrderByDescending(x => x).First()).OrderByDescending(x => x).First();
-            int S17Peak = data.Where(x => x.Season == 17).Select(x => x.Ratings).Select(x => x.OrderByDescending(x => x).First()).OrderByDescending(x => x).First();
-            int S18Peak = data.Where(x => x.Season == 18).Select(x => x.Ratings).Select(x => x.OrderByDescending(x => x).First()).OrderByDescending(x => x).First();
+            int S16Peak = 0;
+            int S17Peak = 0;
+            int S18Peak = 0;
 
-            List<int> peaks = new List<int>() { S16Peak, S17Peak, S18Peak };
-            peaks = peaks.OrderByDescending(x => x).ToList();
+            for (int season = 16; season < 19; season++)
+            {
+                int highestVal = 0;
+                foreach (var y in data)
+                {
+                    if (y.Ratings is null)
+                        continue;
 
-            int highestPeak = peaks[0];
-            int secondHighestPeak = peaks[1];
+                    if (y.Season == season) highestVal = Math.Max(highestVal, y.Ratings.Count > 0 ? y.Ratings.Max() : 0);
+                    else continue;
+                }
+                switch (season)
+                {
+                    case 16:
+                        {
+                            S16Peak = highestVal;
+                            break;
+                        }
+                    case 17:
+                        {
+                            S17Peak = highestVal;
+                            break;
+                        }
+                    case 18:
+                        {
+                            S18Peak = highestVal;
+                            break;
+                        }
+                }
+            }
+
+            int peakS = 16;
+            int sPeakS = 0;
+
+            int highestPeak = S16Peak;
+            int secondHighestPeak = 0;
+            if (S17Peak > highestPeak)
+            {
+                secondHighestPeak = highestPeak;
+                sPeakS = 15;
+                highestPeak = S16Peak;
+            }
+            else
+            {
+                secondHighestPeak = S17Peak;
+                sPeakS = 16;
+            }
+            if (S18Peak > highestPeak)
+            {
+                secondHighestPeak = highestPeak;
+                sPeakS = peakS;
+                highestPeak = S18Peak;
+                peakS = 17;
+            }
+            else if (S18Peak > secondHighestPeak)
+            {
+                secondHighestPeak = S18Peak;
+                sPeakS = 17;
+            }
+
+            secondHighestPeak = Math.Max(secondHighestPeak, highestPeak - 200);
+
+            if (sPeakS == 16)
+                S16Peak = secondHighestPeak;
+            else if (sPeakS == 17)
+                S17Peak = secondHighestPeak;
+            else if (sPeakS == 18)
+                S18Peak = secondHighestPeak;
 
             int s16Games = data.Where(x => x.Season == 16).Sum(x => x.GamesPlayed);
             int s17Games = data.Where(x => x.Season == 17).Select(x => x.GamesPlayed).Distinct().Sum();
