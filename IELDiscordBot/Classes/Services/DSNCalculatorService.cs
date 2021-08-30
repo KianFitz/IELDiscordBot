@@ -855,13 +855,13 @@ namespace IELDiscordBot.Classes.Services
             return "";
         }
 
-        internal int GetRowNumber(string discordUsername)
+        internal int GetRowNumber(ulong discordId)
         {
             for (int row = 0; row < _latestValues.Count; row++)
             {
                 IList<object> r = _latestValues[row];
 
-                if (r[2].ToString().ToLower() == discordUsername.ToLower())
+                if (ulong.Parse(r[3].ToString()) == discordId)
                     return row + 1;
             }
 

@@ -227,6 +227,13 @@ namespace IELDiscordBot.Classes.Utilities
                 case "Missing Data":
                     status = "Missing Data/Information/Signup Incomplete";
                     break;
+                case "Left Discord before Denial":
+                case "Active Player left the IEL discord":
+                    status = "Player Left Discord";
+                    break;
+                default:
+                    status = "Pending Review";
+                    break;
             }
 
 

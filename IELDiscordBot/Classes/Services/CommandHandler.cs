@@ -196,12 +196,11 @@ namespace IELDiscordBot.Classes.Services
 
                 if (req.Type == "spreadsheet" || req.Type == "both")
                 {
-                    string fullName = $"{req.GuildUser.Username}#{req.GuildUser.Discriminator}";
-                    int row = _dsn.GetRowNumber(fullName);
+                    int row = _dsn.GetRowNumber(req.GuildUser.Id);
 
                     if (row != -1)
                     {
-                        string sectionToEdit = $"Player Data!O{row}";
+                        string sectionToEdit = $"Player Data!C{row}";
                         await _dsn.MakeRequest(sectionToEdit, new List<object>() { req.NewName }).ConfigureAwait(false);
                         return;
                     }
