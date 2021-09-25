@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 namespace WebAppAPI.Controllers
 {
     [ApiController]
-    [Route("[controller]")]
+    [Route("api/[controller]")]
     public class ArchiveController : ControllerBase
     {
         private readonly ILogger<ArchiveController> _logger;

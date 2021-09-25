@@ -67,7 +67,7 @@ namespace IELDiscordBot.Classes.Modules
             public string Path;
             public string Name;
             public string Category;
-            public string GetUrl(bool darkMode) { return $"http://{botUrl}/archive?fileName={Name}&category={Category}&darkMode={darkMode}"; }
+            public string GetUrl(bool darkMode) { return $"http://{botUrl}/api/archive?fileName={Name}&category={Category}&darkMode={darkMode}"; }
             public string GetName() { return Name.Remove(Name.IndexOf("html")); }
         }
 
