@@ -48,10 +48,10 @@ namespace IELDiscordBot.Classes.Modules
             ChannelCategory cc = new ChannelCategory(new Snowflake(channel.CategoryId.Value), discordCategory.Name, discordCategory.Position);
             Channel c = new Channel(new Snowflake(channel.Id), ChannelKind.GuildTextChat, g.Id, cc, channel.Name, channel.Position, channel.Topic);
 
-            ExportRequest req = new ExportRequest(g, c, env + $"\\{category}\\Light\\{channel.Name}.html", ExportFormat.HtmlLight,
+            ExportRequest req = new ExportRequest(g, c, env + $"/{category}/Light/{channel.Name}.html", ExportFormat.HtmlLight,
                 null, null, PartitionLimit.Null, MessageFilter.Null, true, true, "yyyy-MM-dd hh:mm:ss");
 
-            ExportRequest req2 = new ExportRequest(g, c, env + $"\\{category}\\Dark\\{channel.Name}.html", ExportFormat.HtmlDark,
+            ExportRequest req2 = new ExportRequest(g, c, env + $"/{category}/Dark/{channel.Name}.html", ExportFormat.HtmlDark,
                 null, null, PartitionLimit.Null, MessageFilter.Null, true, true, "yyyy-MM-dd hh:mm:ss");
 
             var message = await Context.Channel.SendMessageAsync("", false, Embeds.Archiving(Context.User, channel, "Starting")).ConfigureAwait(false);
