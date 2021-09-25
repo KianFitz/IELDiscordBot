@@ -21,6 +21,8 @@ namespace IELDiscordBot.Classes.Modules
     [Group("archive")]
     public class ArchiveModule : ModuleBase<SocketCommandContext>
     {
+        const string HARDCODED_ARCHIVE_PATH = "/home/nellag/bot/IELDiscordBot/WebAppAPI/archive";
+
         private readonly DiscordSocketClient _client;
         private readonly IConfigurationRoot _config;
         private readonly ChannelExporter _exporter;
@@ -39,7 +41,7 @@ namespace IELDiscordBot.Classes.Modules
             if (string.IsNullOrEmpty(category)) return;
 
             category = new CultureInfo("en-GB", false).TextInfo.ToTitleCase(category);
-            string env = Environment.GetEnvironmentVariable("ARCHIVE_EXPORT_PATH", EnvironmentVariableTarget.Machine);
+            string env = HARDCODED_ARCHIVE_PATH;
 
             Guild g = new Guild(new Snowflake(Context.Guild.Id), Context.Guild.Name, Context.Guild.IconUrl);
             var discordCategory = channel.CategoryId.HasValue ? await channel.GetCategoryAsync() : null;
@@ -74,7 +76,7 @@ namespace IELDiscordBot.Classes.Modules
         [Command("search")]
         public async Task HandleArchiveSearchCommand(string name = "")
         {
-            string env = Environment.GetEnvironmentVariable("ARCHIVE_EXPORT_PATH", EnvironmentVariableTarget.Machine);
+            string env = HARDCODED_ARCHIVE_PATH;
             
             DirectoryInfo di = new DirectoryInfo(env);
             var fileInfos = di.GetFiles($"*{name}*.*", SearchOption.AllDirectories);
@@ -99,8 +101,8 @@ namespace IELDiscordBot.Classes.Modules
                 //TODO: Please find a better way to extract from a path.
                 string GetCategory(string diName)
                 {
-                    diName = diName.Substring(diName.IndexOf("archive\\") + 8);
-                    diName = diName.Substring(0, diName.IndexOf("\\"));
+                    diName = diName.Substring(diName.IndexOf("archive/") + 8);
+                    diName = diName.Substring(0, diName.IndexOf("/"));
                     return diName;
                 }
             }

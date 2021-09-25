@@ -18,8 +18,6 @@ namespace WebAppAPI.Controllers
             _logger = logger;
         }
 
-        private readonly string folder = Environment.GetEnvironmentVariable("ARCHIVE_EXPORT_PATH", EnvironmentVariableTarget.Machine);
-
         [HttpGet]
         public async Task GetAsync(string fileName, string category, bool darkMode)
         {
