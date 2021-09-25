@@ -81,7 +81,7 @@ namespace IELDiscordBot.Classes.Modules
             string env = HARDCODED_ARCHIVE_PATH;
             
             DirectoryInfo di = new DirectoryInfo(env);
-            var fileInfos = di.GetFiles($"*{name}*.*", SearchOption.AllDirectories);
+            var fileInfos = di.GetFiles($"*{name}*.html", SearchOption.AllDirectories);
 
             List<Info> infos = new List<Info>();
 
