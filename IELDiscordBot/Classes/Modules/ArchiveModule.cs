@@ -30,7 +30,7 @@ namespace IELDiscordBot.Classes.Modules
         {
             _client = client;
             _config = config;
-            _exporter = new ChannelExporter(new AuthToken(AuthTokenKind.Bot, _config["tokens:dev"].ToString()));
+            _exporter = new ChannelExporter(new AuthToken(AuthTokenKind.Bot, _config["tokens:live"].ToString()));
         }
 
         [Command("create")]
@@ -69,7 +69,7 @@ namespace IELDiscordBot.Classes.Modules
             public string GetName() { return Name.Remove(Name.IndexOf("html")); }
         }
 
-        const string botUrl = "localhost:33188";
+        const string botUrl = "webapp.imperialesportsleague.co.uk:2102";
 
         [Command("search")]
         public async Task HandleArchiveSearchCommand(string name = "")
