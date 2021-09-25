@@ -48,11 +48,11 @@ namespace WebAppAPI
                 RequestPath = "/archive"
             });
 
-            //app.UseDirectoryBrowser(new DirectoryBrowserOptions()
-            //{
-            //    FileProvider = new PhysicalFileProvider(path),
-            //    RequestPath = "/public"
-            //});
+            app.UseDirectoryBrowser(new DirectoryBrowserOptions()
+            {
+                FileProvider = new PhysicalFileProvider(path),
+                RequestPath = "/archiveftp"
+            });
 
             app.UseEndpoints(endpoints =>
             {
