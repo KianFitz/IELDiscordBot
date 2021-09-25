@@ -51,7 +51,7 @@ namespace WebAppAPI
             app.UseDirectoryBrowser(new DirectoryBrowserOptions()
             {
                 FileProvider = new PhysicalFileProvider(path),
-                RequestPath = "/archiveftp"
+                RequestPath = "/archive"
             });
 
             app.UseEndpoints(endpoints =>
