@@ -630,3 +630,4 @@ MigrationBackup/
 FodyWeavers.xsd
 /GoogleSheetsAPIInterface/key.p12
 /IELDiscordBot/key.p12
+/WebAppAPI/archive

@@ -1,4 +1,8 @@
 ﻿using Discord.Commands;
+using Discord.WebSocket;
+using DiscordChatExporter.Core.Exporting;
+using Microsoft.Extensions.Configuration;
+using NLog;
 using System;
 using System.Threading.Tasks;
 
@@ -6,6 +10,7 @@ namespace IELDiscordBot.Classes.Modules
 {
     public class ModModule : ModuleBase<SocketCommandContext>
     {
+
         #region Custom Commands
         [Command("customcommand")]
         [Alias("cc")]
@@ -43,6 +48,9 @@ namespace IELDiscordBot.Classes.Modules
             throw new NotImplementedException();
         }
         #endregion
+
+        
+
 
     }
 }

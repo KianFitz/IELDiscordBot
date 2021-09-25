@@ -41,4 +41,46 @@
     <ProjectReference Include="..\Shared\Shared.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Reference Include="DiscordChatExporter.Core">
+      <HintPath>..\Dependencies\DiscordChatExporter.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="Gress">
+      <HintPath>..\Dependencies\Gress.dll</HintPath>
+    </Reference>
+    <Reference Include="JsonExtensions">
+      <HintPath>..\Dependencies\JsonExtensions.dll</HintPath>
+    </Reference>
+    <Reference Include="MaterialDesignColors">
+      <HintPath>..\Dependencies\MaterialDesignColors.dll</HintPath>
+    </Reference>
+    <Reference Include="MaterialDesignThemes.Wpf">
+      <HintPath>..\Dependencies\MaterialDesignThemes.Wpf.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Xaml.Behaviors">
+      <HintPath>..\Dependencies\Microsoft.Xaml.Behaviors.dll</HintPath>
+    </Reference>
+    <Reference Include="MiniRazor.Runtime">
+      <HintPath>..\Dependencies\MiniRazor.Runtime.dll</HintPath>
+    </Reference>
+    <Reference Include="Onova">
+      <HintPath>..\Dependencies\Onova.dll</HintPath>
+    </Reference>
+    <Reference Include="Polly">
+      <HintPath>..\Dependencies\Polly.dll</HintPath>
+    </Reference>
+    <Reference Include="Stylet">
+      <HintPath>..\Dependencies\Stylet.dll</HintPath>
+    </Reference>
+    <Reference Include="Superpower">
+      <HintPath>..\Dependencies\Superpower.dll</HintPath>
+    </Reference>
+    <Reference Include="Tyrrrz.Extensions">
+      <HintPath>..\Dependencies\Tyrrrz.Extensions.dll</HintPath>
+    </Reference>
+    <Reference Include="Tyrrrz.Settings">
+      <HintPath>..\Dependencies\Tyrrrz.Settings.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
 </Project>

@@ -1,9 +1,11 @@
 ﻿using Discord;
 using Discord.Commands;
+using Discord.WebSocket;
 using IELDiscordBot.Classes.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using static IELDiscordBot.Classes.Modules.ArchiveModule;
 using static IELDiscordBot.Classes.Modules.DSNModule;
 using static IELDiscordBot.Classes.Services.DSNCalculatorService;
 
@@ -105,6 +107,20 @@ namespace IELDiscordBot.Classes.Utilities
             return builder.Build();
         }
 
+        internal static Embed Archiving(SocketUser user, ITextChannel channel, string status)
+        {
+            EmbedBuilder builder = new EmbedBuilder()
+            {
+                Color = Constants.SuccessColor
+            };
+
+            builder.AddField(new EmbedFieldBuilder() { Name = $"User", Value = user.Mention });
+            builder.AddField(new EmbedFieldBuilder() { Name = $"Channel", Value = channel.Mention });
+            builder.AddField(new EmbedFieldBuilder() { Name = $"Status", Value = status });
+
+            return builder.Build();
+        }
+
         internal static Embed RequestRename(IUser user, string type, string newNickname, bool accepted, string mention)
         {
             EmbedBuilder builder = new EmbedBuilder()
@@ -115,6 +131,27 @@ namespace IELDiscordBot.Classes.Utilities
             builder.AddField(new EmbedFieldBuilder() { Name = "Status", Value = $"{(accepted ? "Accepted" : "Denied")} by {mention}", IsInline = true });
 
             return builder.Build();
+        }
+
+        internal static Embed ArchiveSearch(List<Info> infos)
+        {
+            EmbedBuilder emb = new EmbedBuilder()
+            {
+                Color = Constants.SuccessColor
+            };
+            string desc = "";
+
+            foreach (var i in infos)
+                desc += $"**Category**: {i.Category} - **Name**: {i.Name} - **Links**: [Dark]({i.GetUrl(true)}) [Light]({i.GetUrl(false)}) \n";
+
+            if (desc == "")
+                desc = "No archives with that name.";
+
+            desc = desc.Replace(".html", "");
+
+            emb.Description = desc;
+
+            return emb.Build();
         }
 
         internal static Embed DSNCalculation(List<CalcData> data, string user, string platform, int row)
