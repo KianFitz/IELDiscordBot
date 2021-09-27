@@ -73,7 +73,7 @@ namespace IELDiscordBot.Classes.Modules
         const string botUrl = "webapp.imperialesportsleague.co.uk:2102";
 
         [Command("web")]
-        public async Task HandleArchiveWebCommand() => await Context.Channel.SendFileAsync($"URL to Archive Browser is: http://{botUrl}/archive/");
+        public async Task HandleArchiveWebCommand() => await Context.Channel.SendMessageAsync($"URL to Archive Browser is: http://{botUrl}/archive/");
 
         [Command("search")]
         public async Task HandleArchiveSearchCommand(string name = "")
