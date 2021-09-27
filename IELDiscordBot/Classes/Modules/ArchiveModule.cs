@@ -61,7 +61,7 @@ namespace IELDiscordBot.Classes.Modules
 
 
             var message = await Context.Channel.SendMessageAsync("", false, Embeds.Archiving(Context.User, channel, "Starting")).ConfigureAwait(false);
-            Timer _timer = new Timer(async _ => await OnTick(), null, TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(10));
+            //Timer _timer = new Timer(async _ => await OnTick(), null, TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(10));
 
 
             try
@@ -82,10 +82,10 @@ namespace IELDiscordBot.Classes.Modules
                 });
             }
 
-            async Task OnTick()
-            {
-                await message.ModifyAsync(x => x.Content = $"Exported: {Directory.GetFiles(path, "*.*").Length} files.");
-            }
+            //async Task OnTick()
+            //{
+            //    await message.ModifyAsync(x => x.Content = $"Exported: {Directory.GetFiles(path, "*.*").Length} files.");
+            //}
 
         }
 
