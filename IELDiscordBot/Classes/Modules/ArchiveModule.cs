@@ -15,6 +15,7 @@ using Microsoft.Extensions.Logging;
 using NLog;
 using System.IO;
 using System.Collections.Generic;
+using System.Web;
 
 namespace IELDiscordBot.Classes.Modules
 {
@@ -54,12 +55,32 @@ namespace IELDiscordBot.Classes.Modules
             ExportRequest req2 = new ExportRequest(g, c, env + $"/{category}/Dark/{channel.Name}.html", ExportFormat.HtmlDark,
                 null, null, PartitionLimit.Null, MessageFilter.Null, true, true, "yyyy-MM-dd hh:mm:ss");
 
+
             var message = await Context.Channel.SendMessageAsync("", false, Embeds.Archiving(Context.User, channel, "Starting")).ConfigureAwait(false);
-            await message.ModifyAsync(x => x.Embed = Embeds.Archiving(Context.User, channel, "Exporting Light Mode")).ConfigureAwait(false);
-            await _exporter.ExportChannelAsync(req).ConfigureAwait(false);
-            await message.ModifyAsync(x => x.Embed = Embeds.Archiving(Context.User, channel, "Exporting Dark Mode")).ConfigureAwait(false);
-            await _exporter.ExportChannelAsync(req2).ConfigureAwait(false);
-            await message.ModifyAsync(x => x.Embed = Embeds.Archiving(Context.User, channel, "Done"));
+            Progress<int> progress = new Progress<int>();
+            progress.ProgressChanged += OnUpdate;
+
+            try
+            {
+                await message.ModifyAsync(x => x.Embed = Embeds.Archiving(Context.User, channel, "Exporting Light Mode")).ConfigureAwait(false);
+                await _exporter.ExportChannelAsync(req).ConfigureAwait(false);
+                await message.ModifyAsync(x => x.Embed = Embeds.Archiving(Context.User, channel, "Exporting Dark Mode")).ConfigureAwait(false);
+                await _exporter.ExportChannelAsync(req2).ConfigureAwait(false);
+                await message.ModifyAsync(x => x.Embed = Embeds.Archiving(Context.User, channel, "Done"));
+            }
+            catch (Exception ex)
+            {
+                await message.ModifyAsync(x =>
+                {
+                    x.Content = $"Error occured: {ex}";
+                    x.Embed = null;
+                });
+            }
+
+            async void OnUpdate(object sender, int e)
+            {
+                await message.ModifyAsync(x => x.Content = $"Progress: {e}%").ConfigureAwait(false);
+            }
         }
 
         public struct Info
@@ -67,7 +88,7 @@ namespace IELDiscordBot.Classes.Modules
             public string Path;
             public string Name;
             public string Category;
-            public string GetUrl(bool darkMode) { return $"http://{botUrl}/api/archive?fileName={Name}&category={Category}&darkMode={darkMode}"; }
+            public string GetUrl(bool darkMode) { return HttpUtility.UrlEncode($"http://{botUrl}/api/archive?fileName={Name}&category={Category}&darkMode={darkMode}"); }
         }
 
         const string botUrl = "webapp.imperialesportsleague.co.uk:2102";
