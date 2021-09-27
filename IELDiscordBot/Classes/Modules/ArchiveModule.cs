@@ -16,6 +16,7 @@ using NLog;
 using System.IO;
 using System.Collections.Generic;
 using System.Web;
+using System.Threading;
 
 namespace IELDiscordBot.Classes.Modules
 {
@@ -33,7 +34,7 @@ namespace IELDiscordBot.Classes.Modules
         {
             _client = client;
             _config = config;
-            _exporter = new ChannelExporter(new AuthToken(AuthTokenKind.Bot, _config["tokens:live"].ToString()));
+            _exporter = new ChannelExporter(new AuthToken(AuthTokenKind.Bot, _config["tokens:dev"].ToString()));
         }
 
         [Command("create")]
@@ -55,16 +56,20 @@ namespace IELDiscordBot.Classes.Modules
             ExportRequest req2 = new ExportRequest(g, c, env + $"/{category}/Dark/{channel.Name}.html", ExportFormat.HtmlDark,
                 null, null, PartitionLimit.Null, MessageFilter.Null, true, true, "yyyy-MM-dd hh:mm:ss");
 
+            bool isLight = true;
+            string path = env + $"/{category}/{(isLight ? "Light" : "Dark")}/{channel.Name}.html_Files/";
+
 
             var message = await Context.Channel.SendMessageAsync("", false, Embeds.Archiving(Context.User, channel, "Starting")).ConfigureAwait(false);
-            Progress<int> progress = new Progress<int>();
-            progress.ProgressChanged += OnUpdate;
+            Timer _timer = new Timer(async _ => await OnTick(), null, TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(10));
+
 
             try
             {
                 await message.ModifyAsync(x => x.Embed = Embeds.Archiving(Context.User, channel, "Exporting Light Mode")).ConfigureAwait(false);
                 await _exporter.ExportChannelAsync(req).ConfigureAwait(false);
                 await message.ModifyAsync(x => x.Embed = Embeds.Archiving(Context.User, channel, "Exporting Dark Mode")).ConfigureAwait(false);
+                isLight = false;
                 await _exporter.ExportChannelAsync(req2).ConfigureAwait(false);
                 await message.ModifyAsync(x => x.Embed = Embeds.Archiving(Context.User, channel, "Done"));
             }
@@ -77,10 +82,11 @@ namespace IELDiscordBot.Classes.Modules
                 });
             }
 
-            async void OnUpdate(object sender, int e)
+            async Task OnTick()
             {
-                await message.ModifyAsync(x => x.Content = $"Progress: {e}%").ConfigureAwait(false);
+                await message.ModifyAsync(x => x.Content = $"Exported: {Directory.GetFiles(path, "*.*").Length} files.");
             }
+
         }
 
         public struct Info
@@ -88,7 +94,10 @@ namespace IELDiscordBot.Classes.Modules
             public string Path;
             public string Name;
             public string Category;
-            public string GetUrl(bool darkMode) { return HttpUtility.UrlEncode($"http://{botUrl}/api/archive?fileName={Name}&category={Category}&darkMode={darkMode}"); }
+
+            private string UrlName () { return HttpUtility.UrlEncode(Name); }
+            private string UrlCategory() { return HttpUtility.UrlEncode(Category); }
+            public string GetUrl(bool darkMode) { return $"http://{botUrl}/api/archive?fileName={UrlName()}&category={UrlCategory()}&darkMode={darkMode}"; }
         }
 
         const string botUrl = "webapp.imperialesportsleague.co.uk:2102";
