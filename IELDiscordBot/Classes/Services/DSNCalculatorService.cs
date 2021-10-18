@@ -7,6 +7,7 @@ using Google.Apis.Sheets.v4.Data;
 using IELDiscordBot.Classes.Models;
 using IELDiscordBot.Classes.Models.DSN;
 using IELDiscordBot.Classes.Models.DSN.Segments;
+using IELDiscordBot.Classes.Models.TRN;
 using IELDiscordBot.Classes.Models.WebAppAPI;
 using IELDiscordBot.Classes.Utilities;
 using Microsoft.Extensions.Configuration;
@@ -60,7 +61,7 @@ namespace IELDiscordBot.Classes.Services
         {
             new DateTime(2021, 04, 07),
             new DateTime(2021, 08, 11),
-            new DateTime(2021, 09, 01)
+            new DateTime(2021, 10, 17)
         };
 
         internal class DSNCalculationData
@@ -78,6 +79,7 @@ namespace IELDiscordBot.Classes.Services
             _webClient = new HttpClient();
             _signupStatus = new List<StatusClass>();
             Setup();
+            LoadDistributions();
             _timer = new Timer(async _ =>
            {
                await ProcessNewSignupsAsync().ConfigureAwait(false);
@@ -431,8 +433,8 @@ namespace IELDiscordBot.Classes.Services
 
             if (errorLog.Length > 2000)
             {
-                File.WriteAllText(@"C:\Temp\DiscordErrorLog.log", errorLog);
-                await channel.SendFileAsync(@"C:\Temp\DiscordErrorLog.log", "");
+                File.WriteAllText(@"./DiscordErrorLog.log", errorLog);
+                await channel.SendFileAsync(@"./DiscordErrorLog.log", "");
             }
             else
                 await channel.SendMessageAsync("", false, Embeds.ErrorLog(errorLog)).ConfigureAwait(false);
@@ -770,7 +772,9 @@ namespace IELDiscordBot.Classes.Services
                     {
                         List<Duel> data = new List<Duel>(obj.data.Duel);
                         data = data.Where(x => x.collectDate < cutOff & x.collectDate > seasonStartDate).ToList();
-                        retVal.Ratings = data.Select(x => Convert.ToInt32(Math.Round(x.rating * 1.35, 0, MidpointRounding.AwayFromZero))).ToList();
+                        retVal.Ratings = data.Select(x => x.rating).ToList();
+
+                        HandleOnesRatings(ref retVal);
                     }
                 }
                 else if (playlist == Playlist.TWOS)
@@ -815,6 +819,70 @@ namespace IELDiscordBot.Classes.Services
             }
 
             return retVal;
+        }
+
+        private void HandleOnesRatings(ref CalcData retVal)
+        {
+            var copy = new List<int>(retVal.Ratings);
+            var newValues = new List<int>();
+
+            foreach (var val in copy)
+                newValues.Add(ConvertValue(val));
+
+            retVal.Ratings = newValues;
+        }
+
+        class Distribution
+        {
+            public int MinValue;
+            public int MaxValue;
+
+            public Distribution(int min, int max)
+            {
+                MinValue = min;
+                MaxValue = max;
+            }
+        }
+
+        private int ConvertValue(int val)
+        {
+            for (int i = 0; i < _onesDistributions.GetLength(0); i++)
+            {
+                for (int j = 0; j < _onesDistributions.GetLength(1); j++)
+                {
+                    Distribution ones = _onesDistributions[i, j];
+                    if (ones is null) continue;
+
+                    if (val > ones.MinValue && val <= ones.MaxValue)
+                    {
+                        Distribution threes = _threesDistribution[i, j];
+
+                        return Convert.ToInt32((val - ones.MinValue) * (threes.MaxValue - threes.MinValue) / (ones.MaxValue - ones.MinValue) + threes.MinValue);
+                    }
+                }
+            }
+
+            throw new ArgumentException($"Value {val} does not fall into any of the brackets");
+        }
+
+        private static Distribution[,] _onesDistributions;
+        private static Distribution[,] _threesDistribution;
+
+        async Task LoadDistributions()
+        {
+            _onesDistributions = new Distribution[,]
+            {
+                {new Distribution(995, 1052), new Distribution(1053, 1106), new Distribution(1107, 1171)},
+                {new Distribution(1172, 1225), new Distribution(1226, 1290), new Distribution(1291, 1347)},
+                {new Distribution(1348, 1503), null, null }
+            };
+
+            _threesDistribution = new Distribution[,]
+            {
+                {new Distribution(1075, 1187), new Distribution(1188, 1307), new Distribution(1308, 1427)},
+                {new Distribution(1428, 1566), new Distribution(1567, 1707), new Distribution(1708, 1862)},
+                {new Distribution(1863, 2001), null, null },
+            };
         }
 
         private async Task<TRNSegment> GetSeasonSegment(int season, string platform, string user)

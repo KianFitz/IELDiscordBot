@@ -19,7 +19,8 @@ namespace IELDiscordBot.Classes.Modules
 
     public class UserModule : ModuleBase<SocketCommandContext>
     {
-        private readonly ulong AppsTeamID = 472298606259339267;
+        private readonly ulong MainServerPlayerDataTeam= 472298606259339267;
+        private readonly ulong StaffServerPlayerDataTeam = 597041608768094210;
 
         private readonly CommandHandler _commands;
         private readonly DSNCalculatorService _service;
@@ -45,7 +46,7 @@ namespace IELDiscordBot.Classes.Modules
         )
         {
             // Hardcoded to #request-name-change channel
-            if (Context.Channel.Id != 530861574689259526)
+            if (Context.Channel.Id != 841778660246945902)
                 return;
 
             IGuildUser user = Context.User as IGuildUser;
@@ -140,7 +141,7 @@ namespace IELDiscordBot.Classes.Modules
         {
             IUser user = Context.User;
             IGuildUser caller = Context.Guild.GetUser(user.Id);
-            if (caller.RoleIds.Contains(AppsTeamID) == false)
+            if (caller.RoleIds.Contains(MainServerPlayerDataTeam) == false && caller.RoleIds.Contains(StaffServerPlayerDataTeam) == false)
             {
                 await Context.Channel.SendMessageAsync($"You do not have permission to run this command.");
                 return;
@@ -154,8 +155,8 @@ namespace IELDiscordBot.Classes.Modules
         {
             IUser user = Context.User;
             IGuildUser caller = Context.Guild.GetUser(user.Id);
-            if (caller.RoleIds.Contains(AppsTeamID) == false)
-            {
+            if (caller.RoleIds.Contains(MainServerPlayerDataTeam) == false && caller.RoleIds.Contains(StaffServerPlayerDataTeam) == false)
+             {
                 await Context.Channel.SendMessageAsync($"You do not have permission to run this command.");
                 return;
             }
