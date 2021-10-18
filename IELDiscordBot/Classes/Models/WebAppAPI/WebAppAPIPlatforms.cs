@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace IELDiscordBot.Classes.Models.WebAppAPI
+﻿namespace IELDiscordBot.Classes.Models.WebAppAPI
 {
-
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
     public class PlatformsAPIResponse
     {
         public Platform[] Platforms { get; set; }
@@ -12,12 +8,14 @@ namespace IELDiscordBot.Classes.Models.WebAppAPI
 
     public class Platform
     {
-        public int internal_id { get; set; }
+#nullable enable
         public string? id { get; set; }
+        public object? activeUntil { get; set; }
+#nullable disable
+        public int internal_id { get; set; }
         public string name { get; set; }
         public string type { get; set; }
         public bool active { get; set; }
-        public object? activeUntil { get; set; }
     }
 
 
@@ -37,3 +35,5 @@ namespace IELDiscordBot.Classes.Models.WebAppAPI
     }
 
 }
+#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
+

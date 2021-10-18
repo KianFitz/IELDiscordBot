@@ -3,21 +3,18 @@ using Discord.WebSocket;
 using IELDiscordBot.Classes.Database;
 using IELDiscordBot.Classes.Models;
 using NLog;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace IELDiscordBot.Classes.Services
 {
     public class VoiceService
     {
-        List<PublicVoiceChannel> _customVoiceChannels;
+        private readonly List<PublicVoiceChannel> _customVoiceChannels;
 
         private readonly Logger _log = LogManager.GetCurrentClassLogger();
-
-        IELContext _db;
+        private readonly IELContext _db;
 
         public VoiceService(IELContext db)
         {
@@ -25,7 +22,10 @@ namespace IELDiscordBot.Classes.Services
             _customVoiceChannels = new List<PublicVoiceChannel>();
         }
 
-        public bool IsCustomChannel(ulong id) => _customVoiceChannels.Any(x => x.voiceChannel.Id == id);
+        public bool IsCustomChannel(ulong id)
+        {
+            return _customVoiceChannels.Any(x => x.voiceChannel.Id == id);
+        }
 
         public async Task DeleteVoiceChannel(ulong channelId)
         {
@@ -42,8 +42,10 @@ namespace IELDiscordBot.Classes.Services
 
         public async Task CreateNewVoiceChannel(IGuild guild, ICategoryChannel category, IGuildUser creator, IVoiceChannel initial)
         {
-            PublicVoiceChannel newChannel = new PublicVoiceChannel();
-            newChannel.moderators = new List<IGuildUser>() { creator };
+            PublicVoiceChannel newChannel = new PublicVoiceChannel
+            {
+                moderators = new List<IGuildUser>() { creator }
+            };
 
             _log.Info($"Creating new Voice Channel for user {creator.Id}");
             var voiceChannel = await guild.CreateVoiceChannelAsync($"{creator.Username}#{creator.Discriminator}",

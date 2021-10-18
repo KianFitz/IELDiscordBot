@@ -1,5 +1,3 @@
-using Discord.Commands;
-using IELDiscordBot.Classes.Models;
 using IELDiscordBot.Classes.Models;
 using Microsoft.EntityFrameworkCore;
 

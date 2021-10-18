@@ -1,29 +1,27 @@
 ﻿using Discord;
 using Discord.Commands;
-using System;
-using System.Threading.Tasks;
-using DiscordChatExporter.Core.Exporting;
+using Discord.WebSocket;
 using DiscordChatExporter.Core.Discord;
 using DiscordChatExporter.Core.Discord.Data;
-using DiscordChatExporter.Core.Exporting.Partitioning;
+using DiscordChatExporter.Core.Exporting;
 using DiscordChatExporter.Core.Exporting.Filtering;
+using DiscordChatExporter.Core.Exporting.Partitioning;
 using IELDiscordBot.Classes.Utilities;
-using System.Globalization;
-using Discord.WebSocket;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
 using NLog;
-using System.IO;
+using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
+using System.Threading.Tasks;
 using System.Web;
-using System.Threading;
 
 namespace IELDiscordBot.Classes.Modules
 {
     [Group("archive")]
     public class ArchiveModule : ModuleBase<SocketCommandContext>
     {
-        const string HARDCODED_ARCHIVE_PATH = "/home/nellag/bot/IELDiscordBot/WebAppAPI/archive";
+        private const string HARDCODED_ARCHIVE_PATH = "/home/nellag/bot/IELDiscordBot/WebAppAPI/archive";
 
         private readonly DiscordSocketClient _client;
         private readonly IConfigurationRoot _config;
@@ -95,21 +93,24 @@ namespace IELDiscordBot.Classes.Modules
             public string Name;
             public string Category;
 
-            private string UrlName () { return HttpUtility.UrlEncode(Name); }
+            private string UrlName() { return HttpUtility.UrlEncode(Name); }
             private string UrlCategory() { return HttpUtility.UrlEncode(Category); }
             public string GetUrl(bool darkMode) { return $"http://{botUrl}/api/archive?fileName={UrlName()}&category={UrlCategory()}&darkMode={darkMode}"; }
         }
 
-        const string botUrl = "webapp.imperialesportsleague.co.uk:2102";
+        private const string botUrl = "webapp.imperialesportsleague.co.uk:2102";
 
         [Command("web")]
-        public async Task HandleArchiveWebCommand() => await Context.Channel.SendMessageAsync($"URL to Archive Browser is: http://{botUrl}/archive/");
+        public async Task HandleArchiveWebCommand()
+        {
+            await Context.Channel.SendMessageAsync($"URL to Archive Browser is: http://{botUrl}/archive/");
+        }
 
         [Command("search")]
         public async Task HandleArchiveSearchCommand(string name = "")
         {
             string env = HARDCODED_ARCHIVE_PATH;
-            
+
             DirectoryInfo di = new DirectoryInfo(env);
             var fileInfos = di.GetFiles($"*{name}*.html", SearchOption.AllDirectories);
 
@@ -123,10 +124,12 @@ namespace IELDiscordBot.Classes.Modules
                 var diName = fileInfo.Directory.FullName;
                 var directory = diName.Substring(diName.IndexOf("archive"));
 
-                Info info = new Info();
-                info.Category = GetCategory(diName);
-                info.Name = fileName;
-                info.Path = directory;
+                Info info = new Info
+                {
+                    Category = GetCategory(diName),
+                    Name = fileName,
+                    Path = directory
+                };
 
                 infos.Add(info);
 

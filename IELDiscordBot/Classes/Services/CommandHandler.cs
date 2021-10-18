@@ -1,19 +1,17 @@
 ﻿using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
-using IELDiscordBot.Classes.Models;
 using IELDiscordBot.Classes.Database;
+using IELDiscordBot.Classes.Models;
 using IELDiscordBot.Classes.Modules;
 using IELDiscordBot.Classes.Utilities;
 using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.Extensions.Configuration;
 using NLog;
-using Shared;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Text.RegularExpressions;
 
 namespace IELDiscordBot.Classes.Services
 {
@@ -65,13 +63,9 @@ namespace IELDiscordBot.Classes.Services
             //_franchiseContacts = ulong.Parse(_config["ids:textChannelIds:franchiseContactsChannel"]);
             _franchiseContacts = 0;
 
-            _client.UserJoined += OnUserJoined;
-            _client.UserLeft += OnUserLeft;
             _client.MessageReceived += OnMessageReceieved;
-            _client.GuildMemberUpdated += OnUserUpdated;
             _client.ReactionAdded += OnReactionAdded;
             _client.ReactionRemoved += OnReactionRemoved;
-            _client.GuildAvailable += OnGuildAvailable;
             _client.UserVoiceStateUpdated += OnUserVoiceStatusChanged;
 
             _staffRoleIDs = new List<ulong>()
@@ -110,7 +104,7 @@ namespace IELDiscordBot.Classes.Services
             return (_commands.Commands.Any(x => x.Name == key));
         }
 
-        struct Franchise
+        private struct Franchise
         {
             internal string Name;
             internal IGuildUser GM;
@@ -118,12 +112,6 @@ namespace IELDiscordBot.Classes.Services
             internal IGuildUser MasterCaptain;
             internal IGuildUser ChallengerCaptain;
             internal IGuildUser ProspectCaptain;
-        }
-
-
-        private async Task OnGuildAvailable(SocketGuild arg)
-        {
-
         }
 
         private bool IsStaffMember(IGuildUser user)
@@ -201,7 +189,7 @@ namespace IELDiscordBot.Classes.Services
                     if (row != -1)
                     {
                         string sectionToEdit = $"Player Data!C{row}";
-                        await _dsn.MakeRequest(sectionToEdit, new List<object>() { req.NewName }).ConfigureAwait(false);
+                        _dsn.MakeRequest(sectionToEdit, new List<object>() { req.NewName });
                         return;
                     }
                 }
@@ -260,36 +248,6 @@ namespace IELDiscordBot.Classes.Services
             return ulong.Parse(retVal);
         }
 
-        private async Task OnUserJoined(SocketGuildUser user)
-        {
-            //await user.SendMessageAsync("", false, Embeds.WelcomeToIEL()).ConfigureAwait(false);
-
-            DBConfigSettings config = _db.ConfigSettings.Find("Channels", "Log");
-            if (config != null)
-            {
-                IGuild guild = user.Guild;
-                ITextChannel logChannel = user.Guild.GetTextChannel(MakeNumeric(config.Value));
-            }
-        }
-
-        private async Task OnUserLeft(SocketGuildUser arg)
-        {
-        }
-
-        private async Task OnUserUpdated(SocketUser oldUser, SocketUser newUser)
-        {
-            var oldGuildUser = (oldUser as SocketGuildUser);
-            var newGuildUser = (newUser as SocketGuildUser);
-
-            var oldRoles = (oldGuildUser.Roles);
-            var newRoles = (newGuildUser.Roles);
-
-            // TODO: if oldRoles does not contain Free Agent and newRoles does not contain Free Agent, send them a message in DMs.
-            // Ask Tutan for the cooldown
-
-            //await newUser.SendMessageAsync("", false, Embeds.NewFreeAgent()).ConfigureAwait(false);
-        }
-
         private async Task OnMessageReceieved(SocketMessage message)
         {
             var msg = message as SocketUserMessage;
@@ -335,7 +293,7 @@ namespace IELDiscordBot.Classes.Services
             }
         }
 
-        struct PollEntry
+        private struct PollEntry
         {
             internal string League;
             internal string Team1;

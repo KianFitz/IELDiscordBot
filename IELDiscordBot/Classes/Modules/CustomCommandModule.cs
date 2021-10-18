@@ -1,21 +1,16 @@
 ﻿using Discord.Commands;
-using IELDiscordBot.Classes.Models;
 using IELDiscordBot.Classes.Database;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using System.Reflection.Metadata.Ecma335;
-using System.Text;
-using System.Threading.Tasks;
+using IELDiscordBot.Classes.Models;
 using IELDiscordBot.Classes.Services;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace IELDiscordBot.Classes.Modules
 {
     public class CustomCommandModule : ModuleBase<SocketCommandContext>
     {
-        private IELContext _db;
-        private CommandHandler _commandHandler;
+        private readonly IELContext _db;
+        private readonly CommandHandler _commandHandler;
         public CustomCommandModule(IELContext db, CommandHandler handler)
         {
             _db = db;

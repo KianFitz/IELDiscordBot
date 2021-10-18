@@ -1,7 +1,6 @@
 ﻿using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
-using IELDiscordBot.Classes.Utilities;
 using NLog;
 using NLog.Conditions;
 using NLog.Config;

@@ -1,19 +1,15 @@
 ﻿using Discord;
 using Discord.Commands;
-using Discord.WebSocket;
-using IELDiscordBot.Classes.Services;
 using IELDiscordBot.Classes.Services;
 using IELDiscordBot.Classes.Utilities;
-using Shared;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace IELDiscordBot.Classes.Modules
 {
-    class RenameRequest
+    internal class RenameRequest
     {
         public IGuildUser GuildUser;
         public ulong MessageId;
@@ -23,10 +19,10 @@ namespace IELDiscordBot.Classes.Modules
 
     public class UserModule : ModuleBase<SocketCommandContext>
     {
-        ulong AppsTeamID = 472298606259339267;
+        private readonly ulong AppsTeamID = 472298606259339267;
 
-        private CommandHandler _commands;
-        private DSNCalculatorService _service;
+        private readonly CommandHandler _commands;
+        private readonly DSNCalculatorService _service;
 
         public UserModule(CommandHandler commands, DSNCalculatorService service)
         {
@@ -48,6 +44,7 @@ namespace IELDiscordBot.Classes.Modules
             [Remainder] string newName
         )
         {
+            // Hardcoded to #request-name-change channel
             if (Context.Channel.Id != 530861574689259526)
                 return;
 
@@ -82,11 +79,14 @@ namespace IELDiscordBot.Classes.Modules
 
             await message.AddReactionsAsync(new IEmote[] { new Emoji("✅"), new Emoji("❎") }).ConfigureAwait(false);
 
-            RenameRequest req = new RenameRequest();
-            req.Type = type;
-            req.NewName = newName;
-            req.MessageId = messageId;
-            req.GuildUser = user;
+            // Create rename request
+            RenameRequest req = new RenameRequest
+            {
+                Type = type,
+                NewName = newName,
+                MessageId = messageId,
+                GuildUser = user
+            };
             _commands.AddRenameRequest(req);
         }
 
@@ -121,7 +121,7 @@ namespace IELDiscordBot.Classes.Modules
                             amountUpdated++;
                         }
                     }
-                    catch (Exception ex)
+                    catch (Exception)
                     {
                         errorsCounted++;
                     }
@@ -172,7 +172,7 @@ namespace IELDiscordBot.Classes.Modules
         [Command("signup")]
         [Name("signup")]
         [Summary("Check the signup status for the provided Discord Id. If no ID is provided, checks the signup for the calling user.")]
-        public async Task CheckCurrentSignup([Name("discordId")][Summary("The Discord ID of the user to lookup")]ulong discordId = 0)
+        public async Task CheckCurrentSignup([Name("discordId")][Summary("The Discord ID of the user to lookup")] ulong discordId = 0)
         {
             if (discordId == 0)
                 discordId = Context.User.Id;
@@ -195,7 +195,7 @@ namespace IELDiscordBot.Classes.Modules
         [Summary("Nice, I suppose someone had to try it. " +
             "It searches the internal command database and uses a summary that I have written for the commands/parameters to let you know how to use the bot. " +
             "You're welcome :)")]
-        public async Task GetHelpForCommand([Name("command")][Summary("The name of the command to get the documentation for")]string command)
+        public async Task GetHelpForCommand([Name("command")][Summary("The name of the command to get the documentation for")] string command)
         {
             await _commands.SendHelpForCommand(command, Context);
         }

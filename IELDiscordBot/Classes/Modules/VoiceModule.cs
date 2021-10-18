@@ -1,13 +1,7 @@
 ﻿using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
-using IELDiscordBot.Classes.Database;
 using IELDiscordBot.Classes.Services;
-using NLog;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace IELDiscordBot.Classes.Modules
@@ -15,7 +9,7 @@ namespace IELDiscordBot.Classes.Modules
     [Group("voice")]
     public class VoiceModule : ModuleBase<SocketCommandContext>
     {
-        VoiceService _service;
+        private readonly VoiceService _service;
         public VoiceModule(VoiceService service)
         {
             _service = service;

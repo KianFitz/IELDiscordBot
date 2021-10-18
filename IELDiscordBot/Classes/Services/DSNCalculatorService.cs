@@ -1,28 +1,26 @@
-﻿using Discord.WebSocket;
+﻿using Discord;
+using Discord.WebSocket;
+using Google.Apis.Auth.OAuth2;
+using Google.Apis.Services;
+using Google.Apis.Sheets.v4;
+using Google.Apis.Sheets.v4.Data;
+using IELDiscordBot.Classes.Models;
+using IELDiscordBot.Classes.Models.DSN;
+using IELDiscordBot.Classes.Models.DSN.Segments;
+using IELDiscordBot.Classes.Models.WebAppAPI;
+using IELDiscordBot.Classes.Utilities;
 using Microsoft.Extensions.Configuration;
+using Newtonsoft.Json;
 using NLog;
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Net.Http;
+using System.Security.Cryptography.X509Certificates;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
-using Google.Apis.Auth.OAuth2;
-using Google.Apis.Sheets.v4.Data;
-using Google.Apis.Sheets.v4;
-using Google.Apis.Services;
-using System.Net.Http;
-using IELDiscordBot.Classes.Utilities;
-using IELDiscordBot.Classes.Models;
-using Newtonsoft.Json;
-using IELDiscordBot.Classes.Models.DSN.Segments;
-using System.Text.RegularExpressions;
-using IELDiscordBot.Classes.Models.DSN;
-using System.Linq;
-using System.Security.Cryptography.X509Certificates;
-using IELDiscordBot.Classes.Models.WebAppAPI;
-using Discord;
-using System.IO;
-using System.Net;
-using System.Text;
 
 namespace IELDiscordBot.Classes.Services
 {
@@ -36,13 +34,13 @@ namespace IELDiscordBot.Classes.Services
         private readonly Timer _queueTimer;
         private readonly List<int> _acceptablePlaylists = new List<int>() { 11, 13 };
         private readonly List<StatusClass> _signupStatus;
-        private static string ErrorLog = "";
-        private static string AccountsChecked = "Accounts Checked: ";
-        ServiceAccountCredential _sheetsCredential;
-        string[] Scopes = { SheetsService.Scope.Spreadsheets };
-        const string ApplicationName = "IEL Discord Bot .NET Application";
-        const string SpreadsheetID = "1QyixxLA2jl1p_K1TlL5mp9Fsa8xsVa402iwSXo4rvMQ";
-        const string ServiceAccountEmail = "ieldiscordbot@inspired-rock-284217.iam.gserviceaccount.com";
+        private static readonly string ErrorLog = "";
+        private static readonly string AccountsChecked = "Accounts Checked: ";
+        private ServiceAccountCredential _sheetsCredential;
+        private readonly string[] Scopes = { SheetsService.Scope.Spreadsheets };
+        private const string ApplicationName = "IEL Discord Bot .NET Application";
+        private const string SpreadsheetID = "1QyixxLA2jl1p_K1TlL5mp9Fsa8xsVa402iwSXo4rvMQ";
+        private const string ServiceAccountEmail = "ieldiscordbot@inspired-rock-284217.iam.gserviceaccount.com";
 
         public enum Playlist
         {
@@ -58,7 +56,7 @@ namespace IELDiscordBot.Classes.Services
             S4 = 2
         }
 
-        DateTime[] cutOffDates = new DateTime[]
+        private readonly DateTime[] cutOffDates = new DateTime[]
         {
             new DateTime(2021, 04, 07),
             new DateTime(2021, 08, 11),
@@ -80,13 +78,13 @@ namespace IELDiscordBot.Classes.Services
             _webClient = new HttpClient();
             _signupStatus = new List<StatusClass>();
             Setup();
-             _timer = new Timer(async _ =>
-            {
-                await ProcessNewSignupsAsync().ConfigureAwait(false);
-            },
-            null,
-            TimeSpan.FromSeconds(5),
-            TimeSpan.FromMinutes(5));
+            _timer = new Timer(async _ =>
+           {
+               await ProcessNewSignupsAsync().ConfigureAwait(false);
+           },
+           null,
+           TimeSpan.FromSeconds(5),
+           TimeSpan.FromMinutes(5));
             _queueTimer = new Timer(async _ =>
             {
                 await GetLatestValues().ConfigureAwait(false);
@@ -114,18 +112,20 @@ namespace IELDiscordBot.Classes.Services
 
             foreach (var signup in toProcess)
             {
-                List<object> obj = new List<object>();
-                obj.Add(true);
-                obj.Add(true);
-                obj.Add("");
-                obj.Add(true);
+                List<object> obj = new List<object>
+                {
+                    true,
+                    true,
+                    "",
+                    true
+                };
 
                 if (signup.DiscordUser is null)
                 {
                     obj[0] = false;
                     obj[1] = false;
                     obj[2] = "Player not in Discord";
-                    await MakeRequest($"DSN Hub!P{signup.RowNumber}", obj);
+                    MakeRequest($"DSN Hub!P{signup.RowNumber}", obj);
                     await signup.StaffChannel.SendMessageAsync($"Unable to process signup for row: {signup.RowNumber}, Player not in Discord");
                     continue;
                 }
@@ -153,7 +153,7 @@ namespace IELDiscordBot.Classes.Services
                     obj[2] = _latestValues[signup.RowNumber - 1][17].ToString();
                     await textChannel.SendMessageAsync($"{signup.DiscordUser.Mention} {_denySentences[signup.DenyReason]}");
                 }
-                await MakeRequest($"DSN Hub!P{signup.RowNumber}", obj);
+                MakeRequest($"DSN Hub!P{signup.RowNumber}", obj);
                 if (signup.Accept == false) continue;
 
                 if (signup.DiscordUser.Roles.Any(x => x.Id == GMRole)) continue;
@@ -228,7 +228,7 @@ namespace IELDiscordBot.Classes.Services
             return bool.Parse(_latestValues[row - 1][16].ToString());
         }
 
-        enum ColumnIDs : int
+        private enum ColumnIDs : int
         {
             Name = 0,
             Discord = 1,
@@ -258,8 +258,8 @@ namespace IELDiscordBot.Classes.Services
 
         private SheetsService service;
         private IList<IList<object>> _latestValues = null;
-        private IList<IList<object>> _oldValues = null;
-        private Queue<SpreadsheetUpdate> _updates = new Queue<SpreadsheetUpdate>();
+        private readonly IList<IList<object>> _oldValues = null;
+        private readonly Queue<SpreadsheetUpdate> _updates = new Queue<SpreadsheetUpdate>();
 
         private async Task GetLatestValues()
         {
@@ -309,7 +309,7 @@ namespace IELDiscordBot.Classes.Services
             }
 
             _signupStatus.Add(new StatusClass()
-            { 
+            {
                 Accept = true,
                 DenyReason = "",
                 DiscordUser = guild.GetUser(GetDiscordID(row)),
@@ -404,7 +404,7 @@ namespace IELDiscordBot.Classes.Services
                 try
                 {
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
                     if (ex.Message.ToLower().Contains("forbidden"))
                         errorLog += $"{signup[(int)ColumnIDs.Name]}: Permission Error\r\n";
@@ -485,7 +485,7 @@ namespace IELDiscordBot.Classes.Services
             await channel.SendMessageAsync($"Row {row} added to accept/deny queue. Queue will be ran in ~30 seconds");
         }
 
-        Dictionary<string, string> _denySentences = new Dictionary<string, string>()
+        private readonly Dictionary<string, string> _denySentences = new Dictionary<string, string>()
         {
             { "Not enough data on Tracker"          , "You've been declined due to not having enough data (games played) in one of the seasons." },
             { "Tracker broken"                      , "You've been declined due to the given main account not linking to a valid profile." },
@@ -501,7 +501,7 @@ namespace IELDiscordBot.Classes.Services
         }
 
         internal readonly string[] _allowedPlatforms = { "steam", "xbl", "psn", "xbox", "ps", "epic" };
-        private List<int> lockedRows = new List<int>();
+        private readonly List<int> lockedRows = new List<int>();
 
         private async Task CalculateDSN(IList<object> row, SheetsService service, int idx)
         {
@@ -541,9 +541,11 @@ namespace IELDiscordBot.Classes.Services
 
         private async Task InsertDSNCommand(string dsnCommand, int row)
         {
-            ValueRange v = new ValueRange();
-            v.MajorDimension = "ROWS";
-            v.Values = new List<IList<object>> { new List<object>() { dsnCommand } };
+            ValueRange v = new ValueRange
+            {
+                MajorDimension = "ROWS",
+                Values = new List<IList<object>> { new List<object>() { dsnCommand } }
+            };
             SpreadsheetsResource.ValuesResource.UpdateRequest u = service.Spreadsheets.Values.Update(v, SpreadsheetID, $"DSN Hub!AB{row}");//:O{idx+1}");
             u.ValueInputOption = SpreadsheetsResource.ValuesResource.UpdateRequest.ValueInputOptionEnum.USERENTERED;
             await u.ExecuteAsync();
@@ -604,17 +606,19 @@ namespace IELDiscordBot.Classes.Services
             obj.Add(S18Peak);
 
             obj[3] = $"=IFS(\n" +
-            $"ISBLANK(A{idx+1});;AND(NOT(ISBLANK(A{idx+1}));ISBLANK(F{idx+1});ISBLANK(G{idx+1});ISBLANK(H{idx+1});ISBLANK(J{idx+1});ISBLANK(K{idx+1});ISBLANK(L{idx+1})); \"Pending\";\n" +
-            $"AND(NOT(ISBLANK(A{idx+1}));OR(ISBLANK(F{idx+1});ISBLANK(G{idx+1});ISBLANK(H{idx+1});ISBLANK(J{idx+1});ISBLANK(K{idx+1});ISBLANK(L{idx+1}))); \"Missing Data\";\n" +
-            $"OR(H{idx+1} < DV_MinGAbsolut; G{idx+1} < DV_MinGAbsolut; F{idx+1} < DV_MinGAbsolut; L{idx+1} = 0; K{idx+1} = 0; J{idx+1} = 0); \"Investigate App\";\n" +
-            $"AND(H{idx+1} < DV_MinGCurrent; G{idx+1} < DV_MinGPrev1; F{idx+1} < DV_MinGPrev2); \"Min Games not reached\";\n" +
-            $"AND(L{idx+1} < DV_DSNMin; K{idx+1} < DV_DSNMin; J{idx+1} < DV_DSNMin); \"Too Low\";\n" +
-            $"OR(H{idx+1} >= DV_MinGCurrent; G{idx+1} >= DV_MinGPrev1; F{idx+1} >= DV_MinGPrev2); \"Verified\")\n";
+            $"ISBLANK(A{idx + 1});;AND(NOT(ISBLANK(A{idx + 1}));ISBLANK(F{idx + 1});ISBLANK(G{idx + 1});ISBLANK(H{idx + 1});ISBLANK(J{idx + 1});ISBLANK(K{idx + 1});ISBLANK(L{idx + 1})); \"Pending\";\n" +
+            $"AND(NOT(ISBLANK(A{idx + 1}));OR(ISBLANK(F{idx + 1});ISBLANK(G{idx + 1});ISBLANK(H{idx + 1});ISBLANK(J{idx + 1});ISBLANK(K{idx + 1});ISBLANK(L{idx + 1}))); \"Missing Data\";\n" +
+            $"OR(H{idx + 1} < DV_MinGAbsolut; G{idx + 1} < DV_MinGAbsolut; F{idx + 1} < DV_MinGAbsolut; L{idx + 1} = 0; K{idx + 1} = 0; J{idx + 1} = 0); \"Investigate App\";\n" +
+            $"AND(H{idx + 1} < DV_MinGCurrent; G{idx + 1} < DV_MinGPrev1; F{idx + 1} < DV_MinGPrev2); \"Min Games not reached\";\n" +
+            $"AND(L{idx + 1} < DV_DSNMin; K{idx + 1} < DV_DSNMin; J{idx + 1} < DV_DSNMin); \"Too Low\";\n" +
+            $"OR(H{idx + 1} >= DV_MinGCurrent; G{idx + 1} >= DV_MinGPrev1; F{idx + 1} >= DV_MinGPrev2); \"Verified\")\n";
 
 
-            ValueRange v = new ValueRange();
-            v.MajorDimension = "ROWS";
-            v.Values = new List<IList<object>> { obj };
+            ValueRange v = new ValueRange
+            {
+                MajorDimension = "ROWS",
+                Values = new List<IList<object>> { obj }
+            };
             SpreadsheetsResource.ValuesResource.UpdateRequest u = service.Spreadsheets.Values.Update(v, SpreadsheetID, $"DSN Hub!F{idx + 1}");//:O{idx+1}");
             u.ValueInputOption = SpreadsheetsResource.ValuesResource.UpdateRequest.ValueInputOptionEnum.USERENTERED;
             res = await u.ExecuteAsync();
@@ -698,28 +702,30 @@ namespace IELDiscordBot.Classes.Services
 
                 TRNMMRObject mmrObj = JsonConvert.DeserializeObject<TRNMMRObject>(content);
 
-                List<CalcData> Data = new List<CalcData>();
-
-                Data.Add(await GetCalcDataForSegmentAsync(platform, username, 16, Playlist.ONES, mmrObj));
-                Data.Add(await GetCalcDataForSegmentAsync(platform, username, 16, Playlist.TWOS, mmrObj));
-                Data.Add(await GetCalcDataForSegmentAsync(platform, username, 16, Playlist.THREES, mmrObj));
-                Data.Add(await GetCalcDataForSegmentAsync(platform, username, 17, Playlist.ONES, mmrObj));
-                Data.Add(await GetCalcDataForSegmentAsync(platform, username, 17, Playlist.TWOS, mmrObj));
-                Data.Add(await GetCalcDataForSegmentAsync(platform, username, 17, Playlist.THREES, mmrObj));
-                Data.Add(await GetCalcDataForSegmentAsync(platform, username, 18, Playlist.ONES, mmrObj));
-                Data.Add(await GetCalcDataForSegmentAsync(platform, username, 18, Playlist.TWOS, mmrObj));
-                Data.Add(await GetCalcDataForSegmentAsync(platform, username, 18, Playlist.THREES, mmrObj));
+                List<CalcData> Data = new List<CalcData>
+                {
+                    await GetCalcDataForSegmentAsync(platform, username, 16, Playlist.ONES, mmrObj),
+                    await GetCalcDataForSegmentAsync(platform, username, 16, Playlist.TWOS, mmrObj),
+                    await GetCalcDataForSegmentAsync(platform, username, 16, Playlist.THREES, mmrObj),
+                    await GetCalcDataForSegmentAsync(platform, username, 17, Playlist.ONES, mmrObj),
+                    await GetCalcDataForSegmentAsync(platform, username, 17, Playlist.TWOS, mmrObj),
+                    await GetCalcDataForSegmentAsync(platform, username, 17, Playlist.THREES, mmrObj),
+                    await GetCalcDataForSegmentAsync(platform, username, 18, Playlist.ONES, mmrObj),
+                    await GetCalcDataForSegmentAsync(platform, username, 18, Playlist.TWOS, mmrObj),
+                    await GetCalcDataForSegmentAsync(platform, username, 18, Playlist.THREES, mmrObj)
+                };
 
                 return Data;
             }
         }
 
-        async Task<CalcData> GetCalcDataForSegmentAsync(string platform, string username, int season, Playlist playlist, TRNMMRObject obj)
+        private async Task<CalcData> GetCalcDataForSegmentAsync(string platform, string username, int season, Playlist playlist, TRNMMRObject obj)
         {
-            CalcData retVal = new CalcData();
-
-            retVal.Playlist = playlist;
-            retVal.Season = season;
+            CalcData retVal = new CalcData
+            {
+                Playlist = playlist,
+                Season = season
+            };
 
             DateTime cutOff = DateTime.Now;
             DateTime seasonStartDate = new DateTime(2020, 12, 09);
@@ -790,7 +796,7 @@ namespace IELDiscordBot.Classes.Services
                     retVal.GamesPlayed = 0;
                     return retVal;
                 }
-                switch(playlist)
+                switch (playlist)
                 {
                     case Playlist.ONES:
                         retVal.GamesPlayed = 0;
@@ -830,16 +836,29 @@ namespace IELDiscordBot.Classes.Services
             internal int GamesPlayed;
         }
 
-        public async Task MakeRequest(string sectionToEdit, List<object> obj)
+        /// <summary>
+        /// Execute a request on the Google Spreadsheet API
+        /// </summary>
+        /// <param name="sectionToEdit">The cell(s) to edit. Example: Sheet1!A1:A1</param>
+        /// <param name="listOfValues">List of values in order to put into the request.</param>
+        /// <returns></returns>
+        public void MakeRequest(string sectionToEdit, List<object> listOfValues)
         {
-            ValueRange v = new ValueRange();
-            v.MajorDimension = "ROWS";
-            v.Values = new List<IList<object>> { obj };
+            ValueRange v = new ValueRange
+            {
+                MajorDimension = "ROWS",
+                Values = new List<IList<object>> { listOfValues }
+            };
             SpreadsheetsResource.ValuesResource.UpdateRequest u = service.Spreadsheets.Values.Update(v, SpreadsheetID, sectionToEdit);//:O{idx+1}");
             u.ValueInputOption = SpreadsheetsResource.ValuesResource.UpdateRequest.ValueInputOptionEnum.USERENTERED;
             UpdateValuesResponse res = u.Execute();
         }
 
+        /// <summary>
+        /// Searches the latest values that were grabbed from the Google Spreadsheet and finds the league of user with the given username.
+        /// </summary>
+        /// <param name="discordUsername">Discord Username in format [Username#Discriminator]</param>
+        /// <returns></returns>
         internal string GetLeague(string discordUsername)
         {
             for (int row = 0; row < _latestValues.Count; row++)
@@ -855,6 +874,11 @@ namespace IELDiscordBot.Classes.Services
             return "";
         }
 
+        /// <summary>
+        /// Searches the latest values that were grabbed from the Google Spreadsheet and finds the user with the given ID
+        /// </summary>
+        /// <param name="discordId">Discord ID of the user</param>
+        /// <returns></returns>
         internal int GetRowNumber(ulong discordId)
         {
             for (int row = 0; row < _latestValues.Count; row++)

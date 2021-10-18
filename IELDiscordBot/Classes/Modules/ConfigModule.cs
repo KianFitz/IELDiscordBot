@@ -8,7 +8,7 @@ namespace IELDiscordBot.Classes.Modules
 {
     public class ConfigModule : ModuleBase<SocketCommandContext>
     {
-        private IELContext _db;
+        private readonly IELContext _db;
         public ConfigModule(IELContext db) : base()
         {
             _db = db;
@@ -54,10 +54,12 @@ namespace IELDiscordBot.Classes.Modules
                     return;
                 }
 
-                config = new DBConfigSettings();
-                config.Subsection = sub;
-                config.Key = key;
-                config.Value = value;
+                config = new DBConfigSettings
+                {
+                    Subsection = sub,
+                    Key = key,
+                    Value = value
+                };
 
                 _db.ConfigSettings.Add(config);
             }

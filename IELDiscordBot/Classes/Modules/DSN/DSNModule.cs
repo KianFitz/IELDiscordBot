@@ -1,18 +1,13 @@
 ﻿using Discord.Commands;
+using IELDiscordBot.Classes.Database;
 using IELDiscordBot.Classes.Models;
-using IELDiscordBot.Classes.Models.DSN;
-using IELDiscordBot.Classes.Models.DSN.Segments;
 using IELDiscordBot.Classes.Models.TRN;
 using IELDiscordBot.Classes.Services;
-using IELDiscordBot.Classes.Database;
 using IELDiscordBot.Classes.Utilities;
-using Newtonsoft.Json;
 using NLog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using static IELDiscordBot.Classes.Services.DSNCalculatorService;
 
@@ -20,7 +15,7 @@ namespace IELDiscordBot.Classes.Modules
 {
     public class DSNModule : ModuleBase<SocketCommandContext>
     {
-        Logger _log = LogManager.GetCurrentClassLogger();
+        private readonly Logger _log = LogManager.GetCurrentClassLogger();
 
         private readonly List<int> _acceptableSeasons = new List<int>() { 14, 15, 16 };
         private readonly List<int> _acceptablePlaylists = new List<int>() { 10, 11, 13 };
@@ -30,7 +25,7 @@ namespace IELDiscordBot.Classes.Modules
             _dsn = dsn;
         }
 
-        DateTime[] cutOffDates = new DateTime[]
+        private readonly DateTime[] cutOffDates = new DateTime[]
         {
             new DateTime(2021, 04, 07),
             new DateTime(2021, 08, 11),
@@ -46,11 +41,13 @@ namespace IELDiscordBot.Classes.Modules
             ManualPeakOverride manual = _db.ManualPeakOverrides.Find(platform, user, season);
             if (manual is null)
             {
-                manual = new ManualPeakOverride();
-                manual.Platform = platform;
-                manual.User = user;
-                manual.Season = season;
-                manual.Peak = peak;
+                manual = new ManualPeakOverride
+                {
+                    Platform = platform,
+                    User = user,
+                    Season = season,
+                    Peak = peak
+                };
 
                 _db.Add(manual);
                 await _db.SaveChangesAsync().ConfigureAwait(false);
@@ -126,7 +123,7 @@ namespace IELDiscordBot.Classes.Modules
 
                 platformString += account.type + ",";
                 accountString += username + ",";
-                
+
                 var trnResponse = await _dsn.TRNRequest(account.type, username);
                 if (trnResponse is null) continue;
                 CalcData.AddRange(trnResponse);
@@ -150,8 +147,8 @@ namespace IELDiscordBot.Classes.Modules
         [Name("dsn")]
         [Summary("Checks the provided accounts on the TRN API, calculates the users DSN, and inputs all information onto the Application & Data Spreadsheet")]
         public async Task HandleDSNCommandAsync(
-            [Name("row")][Summary("The row in the spreadsheet to update. Will not update if the value is 0")] int row, 
-            [Name("args")][Summary("The list of platform/account names to check against on the TRN API.")]params string[] args)
+            [Name("row")][Summary("The row in the spreadsheet to update. Will not update if the value is 0")] int row,
+            [Name("args")][Summary("The list of platform/account names to check against on the TRN API.")] params string[] args)
         {
             if (args.Length % 2 != 0)
             {

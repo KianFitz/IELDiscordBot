@@ -1,7 +1,6 @@
 ﻿using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
-using IELDiscordBot.Classes.Services;
 using IELDiscordBot.Classes.Database;
 using IELDiscordBot.Classes.Services;
 using Microsoft.EntityFrameworkCore;
@@ -14,10 +13,13 @@ namespace IELDiscordBot
 {
     public class Program
     {
-        private DiscordSocketClient _client;
-        private IConfigurationRoot _config = ConfigService.GetConfiguration();
+        private readonly DiscordSocketClient _client;
+        private readonly IConfigurationRoot _config = ConfigService.GetConfiguration();
 
-        public static void Main(string[] args) => new Program().StartAsync(args).GetAwaiter().GetResult();
+        public static void Main(string[] args)
+        {
+            new Program().StartAsync(args).GetAwaiter().GetResult();
+        }
 
         public async Task StartAsync(string[] args)
         {

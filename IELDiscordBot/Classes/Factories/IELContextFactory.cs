@@ -5,7 +5,7 @@ using MySql.Data.MySqlClient;
 
 namespace IELDiscordBot.Classes.Factories
 {
-    class IELContextFactory : IDesignTimeDbContextFactory<IELContext>
+    internal class IELContextFactory : IDesignTimeDbContextFactory<IELContext>
     {
         public IELContext CreateDbContext(string[] args)
         {

@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace IELDiscordBot.Classes.Models
+﻿namespace IELDiscordBot.Classes.Models
 {
     public class CustomCommand
     {

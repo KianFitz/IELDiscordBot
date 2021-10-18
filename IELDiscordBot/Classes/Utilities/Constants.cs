@@ -2,7 +2,7 @@
 
 namespace IELDiscordBot.Classes.Utilities
 {
-    class Constants
+    internal class Constants
     {
         public const string ConfigFileName = "config.json";
         public const string TRNREDUNDANT = "https://rocketleague.tracker.network/profile/";

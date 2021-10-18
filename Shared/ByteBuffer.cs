@@ -1,16 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Text;
 
 namespace Shared
 {
     public class ByteBuffer
     {
-        List<byte> buffer = new List<byte>();
-        byte[] readBuffer = new byte[4096];
-
-        int readPos = 0;
+        private readonly List<byte> buffer = new List<byte>();
+        private readonly byte[] readBuffer = new byte[4096];
+        private int readPos = 0;
 
         public ByteBuffer(int opcode, int length)
         {

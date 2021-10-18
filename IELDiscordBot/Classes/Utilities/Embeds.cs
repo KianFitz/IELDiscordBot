@@ -1,17 +1,15 @@
 ﻿using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
-using IELDiscordBot.Classes.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using static IELDiscordBot.Classes.Modules.ArchiveModule;
-using static IELDiscordBot.Classes.Modules.DSNModule;
 using static IELDiscordBot.Classes.Services.DSNCalculatorService;
 
 namespace IELDiscordBot.Classes.Utilities
 {
-    class Embeds
+    internal class Embeds
     {
         internal static Embed NewFreeAgent()
         {
@@ -81,7 +79,7 @@ namespace IELDiscordBot.Classes.Utilities
         internal static Embed RequestRename(IUser user, string type, string newNickname)
         {
             EmbedBuilder builder = new EmbedBuilder()
-            { 
+            {
                 Color = Constants.SuccessColor,
                 Description = $"{user.Mention} has requested to be renamed to {newNickname} on {type}."
             };
@@ -276,9 +274,9 @@ namespace IELDiscordBot.Classes.Utilities
 
             builder.AddField(new EmbedFieldBuilder() { Name = "Profile Name", Value = profileName });
             builder.AddField(new EmbedFieldBuilder() { Name = "Discord Id", Value = id });
-            builder.AddField(new EmbedFieldBuilder() { Name = "Profile Link", Value = profileLink});
+            builder.AddField(new EmbedFieldBuilder() { Name = "Profile Link", Value = profileLink });
             builder.AddField(new EmbedFieldBuilder() { Name = "Application Status", Value = status });
-            builder.AddField(new EmbedFieldBuilder() { Name = "Accounts Linked", Value = platformLinks});
+            builder.AddField(new EmbedFieldBuilder() { Name = "Accounts Linked", Value = platformLinks });
 
             builder.Description = "Here are the details of your application. If you have any questions please ask a member of the Support or Applications teams.";
             if (status == "Missing Data/Information/Signup Incomplete" && id == requestor.ToString())
@@ -351,7 +349,7 @@ namespace IELDiscordBot.Classes.Utilities
                 Color = Constants.SuccessColor,
                 Description = $"There are {remaining} players left to assign. \r\n" +
                 $"Current Stats:" +
-                string.Join("\r\n", _assignedCounters.Select(x => x.Key +": "+ x.Value))
+                string.Join("\r\n", _assignedCounters.Select(x => x.Key + ": " + x.Value))
                 + $"\r\n\r\nETA: {remaining * 1.5} seconds."
             };
             return builder.Build();

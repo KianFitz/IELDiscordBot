@@ -4,9 +4,12 @@ using System.Collections.Generic;
 
 namespace IELDiscordBot.Classes.Utilities
 {
-    class Utilities
+    internal class Utilities
     {
-        public static string GetBasePath() => AppContext.BaseDirectory;
+        public static string GetBasePath()
+        {
+            return AppContext.BaseDirectory;
+        }
 
         public static List<TeamRequest> OutstandingTeamRequests = new List<TeamRequest>();
     }

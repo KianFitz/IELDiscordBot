@@ -4,7 +4,6 @@ using Microsoft.Extensions.Configuration;
 using NLog;
 using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Threading;
 
 namespace IELDiscordBot.Classes.Services
@@ -16,8 +15,8 @@ namespace IELDiscordBot.Classes.Services
         private readonly IConfigurationRoot _config;
         private readonly Timer _timer;
 
-        private Dictionary<IMessage, int> _scheduledMessages;
-        
+        private readonly Dictionary<IMessage, int> _scheduledMessages;
+
         public DeleteMessageService(DiscordSocketClient client, IConfigurationRoot config)
         {
             _client = client;
@@ -30,14 +29,14 @@ namespace IELDiscordBot.Classes.Services
 
                 foreach (var pair in tmp)
                 {
-                    _scheduledMessages[pair.Key]-= 3;
+                    _scheduledMessages[pair.Key] -= 3;
                     if (pair.Value <= 0)
                     {
                         await pair.Key.DeleteAsync().ConfigureAwait(false);
                         _scheduledMessages.Remove(pair.Key);
                     }
                 }
-            }, 
+            },
             null,
             TimeSpan.Zero,
             TimeSpan.FromSeconds(3));
