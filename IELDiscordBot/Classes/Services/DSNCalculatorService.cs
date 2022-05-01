@@ -40,7 +40,7 @@ namespace IELDiscordBot.Classes.Services
         private ServiceAccountCredential _sheetsCredential;
         private readonly string[] Scopes = { SheetsService.Scope.Spreadsheets };
         private const string ApplicationName = "IEL Discord Bot .NET Application";
-        private const string SpreadsheetID = "1QyixxLA2jl1p_K1TlL5mp9Fsa8xsVa402iwSXo4rvMQ";
+        private const string SpreadsheetID = "13bG8ZQX4DsgcsIWgnh3uJRpxsrhbtu0UtH94WQ_hixk";
         private const string ServiceAccountEmail = "ieldiscordbot@inspired-rock-284217.iam.gserviceaccount.com";
 
         public enum Playlist
