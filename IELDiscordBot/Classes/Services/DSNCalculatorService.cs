@@ -54,14 +54,18 @@ namespace IELDiscordBot.Classes.Services
         {
             S2 = 0,
             S3 = 1,
-            S4 = 2
+            S4 = 2,
+            S5 = 3, 
+            S6 = 4
         }
 
         private readonly DateTime[] cutOffDates = new DateTime[]
         {
-            new DateTime(2021, 04, 07),
+            new DateTime(2020, 12, 9),
+            new DateTime(2021, 04, 7),
             new DateTime(2021, 08, 11),
-            new DateTime(2021, 10, 17)
+            new DateTime(2021, 11, 17),
+            new DateTime(2022, 03, 9),
         };
 
         internal class DSNCalculationData
@@ -89,8 +93,8 @@ namespace IELDiscordBot.Classes.Services
            TimeSpan.FromMinutes(5));
             _queueTimer = new Timer(async _ =>
             {
-                await GetLatestValues().ConfigureAwait(false);
-                await ProcessSignupQueueAsync().ConfigureAwait(false);
+                //await GetLatestValues().ConfigureAwait(false);
+                //await ProcessSignupQueueAsync().ConfigureAwait(false);
             },
            null,
            TimeSpan.FromSeconds(5),
@@ -102,7 +106,6 @@ namespace IELDiscordBot.Classes.Services
             List<StatusClass> toProcess = new List<StatusClass>(_signupStatus);
             _signupStatus.Clear();
             ulong channelID = 665242755731030045;
-            //ulong faRoleID = 743591049670164620;
             ulong GuildID = 468918204362653696;
             ulong GMRole = 472145107056066580;
             if (toProcess.Count == 0)
@@ -557,55 +560,66 @@ namespace IELDiscordBot.Classes.Services
         {
             if (fromCommand) idx -= 1;
 
-            int S16Peak = 0;
-            int S17Peak = 0;
-            int S18Peak = 0;
+            int highestSeason = 0;
+            int highestPeak = 0;
 
-            for (int season = 16; season < 19; season++)
+
+            // Highest Season
+            for (int i = 0; i < CalcData.Count; i++)
             {
-                int highestVal = 0;
-                foreach (var y in CalcData)
+                int maxPeakFromSeason = CalcData[i].Ratings.Max();
+                if (maxPeakFromSeason > highestPeak)
                 {
-                    if (y.Ratings is null)
-                        continue;
-
-                    if (y.Season == season) highestVal = Math.Max(highestVal, y.Ratings.Count > 0 ? y.Ratings.Max() : 0);
-                    else continue;
-                }
-                switch (season)
-                {
-                    case 16:
-                        {
-                            S16Peak = highestVal;
-                            break;
-                        }
-                    case 17:
-                        {
-                            S17Peak = highestVal;
-                            break;
-                        }
-                    case 18:
-                        {
-                            S18Peak = highestVal;
-                            break;
-                        }
+                    highestSeason = i;
                 }
             }
 
-            int s16Games = CalcData.Where(x => x.Season == 16).Sum(x => x.GamesPlayed);
-            int s17Games = CalcData.Where(x => x.Season == 17).Select(x => x.GamesPlayed).Distinct().Sum();
-            int s18Games = CalcData.Where(x => x.Season == 18).Select(x => x.GamesPlayed).Distinct().Sum();
+            int secondHighestPeak = 0;
+            int secondHighestSeason = 0;
+
+            // Second Highest Season
+            var tmp = CalcData.Except(CalcData.Where(x => x.Season == highestSeason));
+            for (int i = 0; i < CalcData.Count; i++)
+            {
+                int maxPeakFromSeason = CalcData[i].Ratings.Max();
+                if (maxPeakFromSeason > secondHighestPeak)
+                {
+                    secondHighestSeason = i;
+                }
+            }
+
+            int dsn = 0;
+
+            if (highestPeak - secondHighestPeak > 100)
+            {
+                dsn = (int)Math.Round((highestPeak * 0.9) + (secondHighestPeak * 0.1));
+            }
+            else
+            {
+                List<int> ratings = new List<int>();
+
+                for (int i = Constants.START_SEASON; i < Constants.END_SEASON; ++i)
+                {
+                    ratings.AddRange(CalcData[i].Ratings.Where(x => highestPeak - x <= 100));
+                }
+            }
+
+            int s2games = CalcData.Where(x => x.Season == 2).Sum(x => x.GamesPlayed);
+            int s3games = CalcData.Where(x => x.Season == 3).Select(x => x.GamesPlayed).Distinct().Sum();
+            int s4games = CalcData.Where(x => x.Season == 4).Select(x => x.GamesPlayed).Distinct().Sum();
+            int s5games = CalcData.Where(x => x.Season == 5).Select(x => x.GamesPlayed).Distinct().Sum();
+            int s6games = CalcData.Where(x => x.Season == 6).Select(x => x.GamesPlayed).Distinct().Sum();
 
             IList<object> obj = new List<object>();
             UpdateValuesResponse res = null;
 
-            obj.Add(s16Games);
-            obj.Add(s17Games);
-            obj.Add(s18Games);
-            obj.Add(null);
-            obj.Add(S16Peak);
-            obj.Add(S17Peak);
-            obj.Add(S18Peak);
+            //obj.Add(s16Games);
+            //obj.Add(s17Games);
+            //obj.Add(s18Games);
+            //obj.Add(null);
+            //obj.Add(S16Peak);
+            //obj.Add(S17Peak);
+            //obj.Add(S18Peak);
 
             obj[3] = $"=IFS(\n" +
             $"ISBLANK(A{idx + 1});;AND(NOT(ISBLANK(A{idx + 1}));ISBLANK(F{idx + 1});ISBLANK(G{idx + 1});ISBLANK(H{idx + 1});ISBLANK(J{idx + 1});ISBLANK(K{idx + 1});ISBLANK(L{idx + 1})); \"Pending\";\n" +
@@ -704,18 +718,13 @@ namespace IELDiscordBot.Classes.Services
 
                 TRNMMRObject mmrObj = JsonConvert.DeserializeObject<TRNMMRObject>(content);
 
-                List<CalcData> Data = new List<CalcData>
+                List<CalcData> Data = new List<CalcData>();
+                for (int i = Constants.START_SEASON; i <= Constants.END_SEASON; i++)
                 {
-                    await GetCalcDataForSegmentAsync(platform, username, 16, Playlist.ONES, mmrObj),
-                    await GetCalcDataForSegmentAsync(platform, username, 16, Playlist.TWOS, mmrObj),
-                    await GetCalcDataForSegmentAsync(platform, username, 16, Playlist.THREES, mmrObj),
-                    await GetCalcDataForSegmentAsync(platform, username, 17, Playlist.ONES, mmrObj),
-                    await GetCalcDataForSegmentAsync(platform, username, 17, Playlist.TWOS, mmrObj),
-                    await GetCalcDataForSegmentAsync(platform, username, 17, Playlist.THREES, mmrObj),
-                    await GetCalcDataForSegmentAsync(platform, username, 18, Playlist.ONES, mmrObj),
-                    await GetCalcDataForSegmentAsync(platform, username, 18, Playlist.TWOS, mmrObj),
-                    await GetCalcDataForSegmentAsync(platform, username, 18, Playlist.THREES, mmrObj)
-                };
+                    Data.Add(await GetCalcDataForSegmentAsync(platform, username, i, Playlist.ONES, mmrObj));
+                    Data.Add(await GetCalcDataForSegmentAsync(platform, username, i, Playlist.TWOS, mmrObj));
+                    Data.Add(await GetCalcDataForSegmentAsync(platform, username, i, Playlist.THREES, mmrObj));
+                } 
 
                 return Data;
             }
@@ -734,21 +743,33 @@ namespace IELDiscordBot.Classes.Services
 
             switch (season)
             {
-                case 16:
+                case 2:
                     {
                         cutOff = cutOffDates[(int)Seasons.S2];
                         break;
                     }
-                case 17:
+                case 3:
                     {
                         cutOff = cutOffDates[(int)Seasons.S3];
                         seasonStartDate = cutOffDates[(int)Seasons.S2].AddDays(1);
                         break;
                     }
-                case 18:
+                case 4:
                     {
                         cutOff = cutOffDates[(int)Seasons.S4];
                         seasonStartDate = cutOffDates[(int)Seasons.S3].AddDays(1);
+                        break;
+                    }
+                case 5:
+                    {
+                        cutOff = cutOffDates[(int)Seasons.S5];
+                        seasonStartDate = cutOffDates[(int)Seasons.S4].AddDays(1);
+                        break;
+                    }
+                case 6:
+                    {
+                        cutOff = cutOffDates[(int)Seasons.S6];
+                        seasonStartDate = cutOffDates[(int)Seasons.S5].AddDays(1);
                         break;
                     }
             }
@@ -774,7 +795,7 @@ namespace IELDiscordBot.Classes.Services
                         data = data.Where(x => x.collectDate < cutOff & x.collectDate > seasonStartDate).ToList();
                         retVal.Ratings = data.Select(x => x.rating).ToList();
 
-                        HandleOnesRatings(ref retVal);
+                        //HandleOnesRatings(ref retVal);
                     }
                 }
                 else if (playlist == Playlist.TWOS)

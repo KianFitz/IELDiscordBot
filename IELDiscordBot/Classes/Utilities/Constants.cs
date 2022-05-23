@@ -14,5 +14,8 @@ namespace IELDiscordBot.Classes.Utilities
 
         public static Color SuccessColor = new Color(127, 255, 0);
         public static Color FailureColor = new Color(220, 20, 60);
+
+        public const int START_SEASON = 2;
+        public const int END_SEASON = 6;
     }
 }

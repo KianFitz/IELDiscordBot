@@ -154,61 +154,103 @@ namespace IELDiscordBot.Classes.Utilities
 
         internal static Embed DSNCalculation(List<CalcData> data, string user, string platform, int row)
         {
-            int S16Peak = 0;
-            int S17Peak = 0;
-            int S18Peak = 0;
+            int highestSeason = 0;
+            int highestPeak = 0;
 
-            for (int season = 16; season < 19; season++)
+            // Highest Season
+            for (int i = 0; i < data.Count; i++)
             {
-                int highestVal = 0;
-                foreach (var y in data)
+                int maxPeakFromSeason = data[i].Ratings.Max();
+                if (maxPeakFromSeason > highestPeak)
                 {
-                    if (y.Ratings is null)
-                        continue;
-
-                    if (y.Season == season) highestVal = Math.Max(highestVal, y.Ratings.Count > 0 ? y.Ratings.Max() : 0);
-                    else continue;
-                }
-                switch (season)
-                {
-                    case 16:
-                        {
-                            S16Peak = highestVal;
-                            break;
-                        }
-                    case 17:
-                        {
-                            S17Peak = highestVal;
-                            break;
-                        }
-                    case 18:
-                        {
-                            S18Peak = highestVal;
-                            break;
-                        }
+                    highestSeason = i;
                 }
             }
 
-            int s16Games = data.Where(x => x.Season == 16).Sum(x => x.GamesPlayed);
-            int s17Games = data.Where(x => x.Season == 17).Select(x => x.GamesPlayed).Distinct().Sum();
-            int s18Games = data.Where(x => x.Season == 18).Select(x => x.GamesPlayed).Distinct().Sum();
+            int secondHighestPeak = 0;
+            int secondHighestSeason = 0;
 
-            List<int> peaks = new List<int>() { S16Peak, S17Peak, S18Peak };
-            peaks = peaks.OrderByDescending(x => x).ToList();
+            // Second Highest Season
+            var tmp = data.Except(data.Where(x => x.Season == highestSeason));
+            for (int i = 0; i < data.Count; i++)
+            {
+                int maxPeakFromSeason = data[i].Ratings.Max();
+                if (maxPeakFromSeason > secondHighestPeak)
+                {
+                    secondHighestSeason = i;
+                }
+            }
 
-            double dsn = (peaks[0] * 0.7) + (peaks[1] * 0.3);
+            int dsn = 0;
 
-            // Dia 1 threshold
+            if (highestPeak - secondHighestPeak > 100)
+            {
+                dsn = (int)Math.Round((highestPeak * 0.9) + (secondHighestPeak * 0.1));
+            }
+            else
+            {
+                List<int> ratings = new List<int>();
+
+                for (int i = Constants.START_SEASON; i <= Constants.END_SEASON; ++i)
+                {
+                    foreach (var section in data)
+                    {
+                        if (section.Ratings is null) continue;
+                        if (section.Season == i)
+                        {
+                            var x = section.Ratings.Where(x => highestPeak - x <= 100);
+                            if (x.Count() > 0)
+                                ratings.AddRange(x);
+                        }
+                    }
+                }
+
+                int average = 0;
+                if (ratings.Count() != 0)
+                    average = (int)Math.Round(ratings.Average());
+
+                dsn = (int)Math.Round((highestSeason * 0.7) + (secondHighestPeak * 0.1) + (average * 0.2));
+            }
+
+            List<int> peaks = new List<int>();
+
+            for (int season = Constants.START_SEASON; season <= Constants.END_SEASON; season++)
+            {
+                int peak = 0;
+
+                foreach (var section in data)
+                {
+                    if (section.Ratings is null) continue;
+
+                    if (section.Season == season)
+                    {
+                        var i = section.Ratings.Max();
+                        if (i > peak) peak = i;
+                    }
+                }
+
+                peaks.Add(peak);
+            }
+
+            int s2games = data.Where(x => x.Season == 2).Sum(x => x.GamesPlayed);
+            int s3games = data.Where(x => x.Season == 3).Select(x => x.GamesPlayed).Distinct().Sum();
+            int s4games = data.Where(x => x.Season == 4).Select(x => x.GamesPlayed).Distinct().Sum();
+            int s5games = data.Where(x => x.Season == 5).Select(x => x.GamesPlayed).Distinct().Sum();
+            int s6games = data.Where(x => x.Season == 6).Select(x => x.GamesPlayed).Distinct().Sum();
 
             string finalString = $"ID: `{user}`\nPlatform: `{platform}`\n";
             finalString += "\n**Games Played:**\n";
-            finalString += $"\n**Season 4: `{s18Games}`**";
-            finalString += $"\n**Season 3: `{s17Games}`**";
-            finalString += $"\n**Season 2: `{s16Games}`**";
+            finalString += $"\n**Season 6: `{peaks[4]}`**";
+            finalString += $"\n**Season 5: `{peaks[3]}`**";
+            finalString += $"\n**Season 4: `{peaks[2]}`**";
+            finalString += $"\n**Season 3: `{peaks[1]}`**";
+            finalString += $"\n**Season 2: `{peaks[0]}`**";
             finalString += $"\n**MMRs:**\n";
-            finalString += $"\n**Season 4: `{S18Peak}`**";
-            finalString += $"\n**Season 3: `{S17Peak}`**";
-            finalString += $"\n**Season 2: `{S16Peak}`**";
+            finalString += $"\n**Season 6: `{s6games}`**";
+            finalString += $"\n**Season 5: `{s5games}`**";
+            finalString += $"\n**Season 4: `{s4games}`**";
+            finalString += $"\n**Season 3: `{s3games}`**";
+            finalString += $"\n**Season 2: `{s2games}`**";
             finalString += $"\n**DSN:** `{dsn}`";
 #if RELEASE
             if (row != 0)
