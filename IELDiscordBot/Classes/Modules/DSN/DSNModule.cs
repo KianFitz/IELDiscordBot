@@ -5,6 +5,7 @@ using IELDiscordBot.Classes.Models.TRN;
 using IELDiscordBot.Classes.Services;
 using IELDiscordBot.Classes.Utilities;
 using NLog;
+using OpenQA.Selenium.Chrome;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -88,6 +89,12 @@ namespace IELDiscordBot.Classes.Modules
         [Name("dsn")]
         private async Task HandleDSNCommand(int row, int profileId)
         {
+            ChromeOptions options = new ChromeOptions();
+            options.AddArgument("headless");
+            options.AddArgument("user-agent=Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.125 Safari/537.36");
+
+            ChromeDriver driver = new ChromeDriver(options);
+
             //Get Accounts from WebApp
             var r = await _dsn.GetAccountsFromWebApp(profileId);
             //Filter Accounts
@@ -124,7 +131,7 @@ namespace IELDiscordBot.Classes.Modules
                 platformString += account.type + ",";
                 accountString += username + ",";
 
-                var trnResponse = await _dsn.TRNRequest(account.type, username);
+                var trnResponse = await _dsn.TRNRequest(account.type, username, driver);
                 if (trnResponse is null) continue;
                 CalcData.AddRange(trnResponse);
             }
@@ -159,6 +166,12 @@ namespace IELDiscordBot.Classes.Modules
 
             var message = await Context.Channel.SendMessageAsync("Loading...");
 
+            ChromeOptions options = new ChromeOptions();
+            options.AddArgument("headless");
+            options.AddArgument("user-agent=Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.125 Safari/537.36");
+
+            ChromeDriver driver = new ChromeDriver(options);
+
             List<TRNAccount> accounts = new List<TRNAccount>();
             for (int i = 0; i < args.Length; i += 2)
                 accounts.Add(new TRNAccount() { Platform = args[i], User = args[i + 1] });
@@ -187,7 +200,7 @@ namespace IELDiscordBot.Classes.Modules
                     x.Embed = Embeds.DSNStatus(accIdx, accountsLength, "Getting Account Stats from TRN API");
                 });
 
-                var data = await _dsn.TRNRequest(platform, username);
+                var data = await _dsn.TRNRequest(platform, username, driver);
                 calcData.AddRange(data);
             }
 

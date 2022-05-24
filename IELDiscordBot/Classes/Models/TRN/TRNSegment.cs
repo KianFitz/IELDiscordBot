@@ -98,7 +98,7 @@ namespace IELDiscordBot.Classes.Models.DSN.Segments
         public string displayCategory { get; set; }
         public string category { get; set; }
         public Metadata4 metadata { get; set; }
-        public int value { get; set; }
+        public int? value { get; set; }
         public string displayValue { get; set; }
         public string displayType { get; set; }
     }

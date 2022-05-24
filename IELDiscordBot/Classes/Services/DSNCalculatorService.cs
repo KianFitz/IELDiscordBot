@@ -7,12 +7,12 @@ using Google.Apis.Sheets.v4.Data;
 using IELDiscordBot.Classes.Models;
 using IELDiscordBot.Classes.Models.DSN;
 using IELDiscordBot.Classes.Models.DSN.Segments;
-using IELDiscordBot.Classes.Models.TRN;
 using IELDiscordBot.Classes.Models.WebAppAPI;
 using IELDiscordBot.Classes.Utilities;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using NLog;
+using OpenQA.Selenium.Chrome;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -33,7 +33,7 @@ namespace IELDiscordBot.Classes.Services
         private readonly IConfigurationRoot _config;
         private readonly Timer _timer;
         private readonly Timer _queueTimer;
-        private readonly List<int> _acceptablePlaylists = new List<int>() { 11, 13 };
+        private readonly List<int> _acceptablePlaylists = new List<int>() { 10, 11, 13 };
         private readonly List<StatusClass> _signupStatus;
         private static readonly string ErrorLog = "";
         private static readonly string AccountsChecked = "Accounts Checked: ";
@@ -61,11 +61,11 @@ namespace IELDiscordBot.Classes.Services
 
         private readonly DateTime[] cutOffDates = new DateTime[]
         {
-            new DateTime(2020, 12, 9),
             new DateTime(2021, 04, 7),
             new DateTime(2021, 08, 11),
             new DateTime(2021, 11, 17),
             new DateTime(2022, 03, 9),
+            new DateTime(2022, 06, 15)
         };
 
         internal class DSNCalculationData
@@ -86,7 +86,7 @@ namespace IELDiscordBot.Classes.Services
             LoadDistributions();
             _timer = new Timer(async _ =>
            {
-               //await ProcessNewSignupsAsync().ConfigureAwait(false);
+               await ProcessNewSignupsAsync().ConfigureAwait(false);
            },
            null,
            TimeSpan.FromSeconds(5),
@@ -238,10 +238,8 @@ namespace IELDiscordBot.Classes.Services
             Name = 0,
             Discord = 1,
             PlayerID = 2,
-            ProfileLink = 3,
-            DSN = 19,
-            League = 20,
-            ApplicationStatus = 24
+            ProfileLink = 7,
+            DSN = 26,
         }
 
 
@@ -303,150 +301,150 @@ namespace IELDiscordBot.Classes.Services
             await _webClient.PutAsync("https://webapp.imperialesportsleague.co.uk/api/signup/status", content);
         }
 
-        internal async Task QueueAccept(int row, SocketGuild guild, ISocketMessageChannel channel)
-        {
-            var roles = GetRoles(guild, row);
+        //internal async Task QueueAccept(int row, SocketGuild guild, ISocketMessageChannel channel)
+        //{
+        //    var roles = GetRoles(guild, row);
 
-            if (roles is null)
-            {
-                await channel.SendMessageAsync($"Row {row} could not be added to accept/deny queue, user left Discord server.");
-                return;
-            }
+        //    if (roles is null)
+        //    {
+        //        await channel.SendMessageAsync($"Row {row} could not be added to accept/deny queue, user left Discord server.");
+        //        return;
+        //    }
 
-            _signupStatus.Add(new StatusClass()
-            {
-                Accept = true,
-                DenyReason = "",
-                DiscordUser = guild.GetUser(GetDiscordID(row)),
-                RolesToAdd = roles,
-                StaffChannel = channel,
-                RowNumber = row
-            });
+        //    _signupStatus.Add(new StatusClass()
+        //    {
+        //        Accept = true,
+        //        DenyReason = "",
+        //        DiscordUser = guild.GetUser(GetDiscordID(row)),
+        //        RolesToAdd = roles,
+        //        StaffChannel = channel,
+        //        RowNumber = row
+        //    });
 
-            await channel.SendMessageAsync($"Row {row} added to accept/deny queue. Queue will be ran in ~30 seconds");
-        }
+        //    await channel.SendMessageAsync($"Row {row} added to accept/deny queue. Queue will be ran in ~30 seconds");
+        //}
 
-        public IRole[] GetRoles(SocketGuild guild, int row)
-        {
-            IRole gmRole = guild.GetRole(472145107056066580);
+        //public IRole[] GetRoles(SocketGuild guild, int row)
+        //{
+        //    IRole gmRole = guild.GetRole(472145107056066580);
 
-            IGuildUser guildUser = guild.GetUser(GetDiscordID(row));
+        //    IGuildUser guildUser = guild.GetUser(GetDiscordID(row));
 
-            if (guildUser is null)
-            {
-                return null;
-            }
+        //    if (guildUser is null)
+        //    {
+        //        return null;
+        //    }
 
-            if ((guildUser as SocketGuildUser).Roles.Any(x => x.Id == 472145107056066580)) return new IRole[] { };
+        //    if ((guildUser as SocketGuildUser).Roles.Any(x => x.Id == 472145107056066580)) return new IRole[] { };
 
-            Dictionary<string, IRole> faRoles = new Dictionary<string, IRole>()
-            {
-                { "Academy", guild.GetRole(797537384022409256) },
-                { "Prospect", guild.GetRole(670231374896168960) },
-                { "Challenger", guild.GetRole(670230994627854347) },
-                { "Master", guild.GetRole(671808027313045544) }
-            };
+        //    Dictionary<string, IRole> faRoles = new Dictionary<string, IRole>()
+        //    {
+        //        { "Academy", guild.GetRole(797537384022409256) },
+        //        { "Prospect", guild.GetRole(670231374896168960) },
+        //        { "Challenger", guild.GetRole(670230994627854347) },
+        //        { "Master", guild.GetRole(671808027313045544) }
+        //    };
 
-            Dictionary<string, IRole> playerRoles = new Dictionary<string, IRole>()
-            {
-                { "Academy", guild.GetRole(797537428696989767) },
-                { "Prospect", guild.GetRole(712599931382136842) },
-                { "Challenger", guild.GetRole(712599930866237531) },
-                { "Master", guild.GetRole(712599928890720284) }
-            };
+        //    Dictionary<string, IRole> playerRoles = new Dictionary<string, IRole>()
+        //    {
+        //        { "Academy", guild.GetRole(797537428696989767) },
+        //        { "Prospect", guild.GetRole(712599931382136842) },
+        //        { "Challenger", guild.GetRole(712599930866237531) },
+        //        { "Master", guild.GetRole(712599928890720284) }
+        //    };
 
-            string league = _latestValues[row - 1][(int)ColumnIDs.League].ToString();
+        //    //string league = _latestValues[row - 1][(int)ColumnIDs.League].ToString();
 
-            IRole faRole = faRoles[league];
-            IRole playerRoleToAssigned = playerRoles[league];
+        //    //IRole faRole = faRoles[league];
+        //    //IRole playerRoleToAssigned = playerRoles[league];
 
-            return new IRole[] { faRole, playerRoleToAssigned };
-        }
+        //    //return new IRole[] { faRole, playerRoleToAssigned };
+        //}
 
         internal ulong GetDiscordID(int row)
         {
             return ulong.Parse(_latestValues[row - 1][(int)ColumnIDs.Discord].ToString());
         }
 
-        public async Task AssignLeagueFARoles(ISocketMessageChannel channel, IGuild guild)
-        {
-            int remaining = _latestValues.Where(x => x[0].ToString() != "").Count();
-            Dictionary<string, int> _assignedCounters = new Dictionary<string, int>();
-            var message = await channel.SendMessageAsync("", false, Embeds.AssigningLeagueRoles(remaining, _assignedCounters));
+        //public async Task AssignLeagueFARoles(ISocketMessageChannel channel, IGuild guild)
+        //{
+        //    int remaining = _latestValues.Where(x => x[0].ToString() != "").Count();
+        //    Dictionary<string, int> _assignedCounters = new Dictionary<string, int>();
+        //    var message = await channel.SendMessageAsync("", false, Embeds.AssigningLeagueRoles(remaining, _assignedCounters));
 
-            await GetLatestValues().ConfigureAwait(false);
+        //    await GetLatestValues().ConfigureAwait(false);
 
-            string errorLog = "";
+        //    string errorLog = "";
 
-            for (int row = 1; row < _latestValues.Count; row++)
-            {
-                var signup = _latestValues[row];
-                if (signup[(int)ColumnIDs.Discord].ToString() == "") continue;
+        //    for (int row = 1; row < _latestValues.Count; row++)
+        //    {
+        //        var signup = _latestValues[row];
+        //        if (signup[(int)ColumnIDs.Discord].ToString() == "") continue;
 
-                ulong discordId = ulong.Parse(signup[(int)ColumnIDs.Discord].ToString());
-                if (signup[(int)ColumnIDs.ApplicationStatus].ToString() != "Approved and Notified") continue;
-                string league = signup[(int)ColumnIDs.League].ToString();
-
-
-
-                var user = await guild.GetUserAsync(discordId);
-                if (user is null)
-                {
-                    errorLog += $"{signup[(int)ColumnIDs.Name]}: User left Discord\r\n";
-                    continue;
-                }
-                if (user.RoleIds.Any(x => x == 472145107056066580))
-                {
-                    league = "GM (Skipped)";
-                }
-
-                if (_assignedCounters.ContainsKey(league)) _assignedCounters[league]++;
-                else _assignedCounters.Add(league, 1);
-
-                if (league == "GM (Skipped)")
-                    continue;
-
-                try
-                {
-                }
-                catch (Exception ex)
-                {
-                    if (ex.Message.ToLower().Contains("forbidden"))
-                        errorLog += $"{signup[(int)ColumnIDs.Name]}: Permission Error\r\n";
-                    else
-                        errorLog += $"{signup[(int)ColumnIDs.Name]}: {ex.Message}\r\n";
-                }
-
-                remaining--;
-
-                if (row % 100 == 0)
-                {
-                    await message.ModifyAsync(x =>
-                        x.Embed = Embeds.AssigningLeagueRoles(remaining, _assignedCounters)
-                    );
-                }
-
-                await Task.Delay(1500);
-            }
-
-            await message.ModifyAsync(
-                x => x.Embed = Embeds.AssigningLeagueRoles(remaining, _assignedCounters)
-                );
+        //        ulong discordId = ulong.Parse(signup[(int)ColumnIDs.Discord].ToString());
+        //        if (signup[(int)ColumnIDs.ApplicationStatus].ToString() != "Approved and Notified") continue;
+        //        string league = signup[(int)ColumnIDs.League].ToString();
 
 
-            if (errorLog.Length > 2000)
-            {
-                File.WriteAllText(@"./DiscordErrorLog.log", errorLog);
-                await channel.SendFileAsync(@"./DiscordErrorLog.log", "");
-            }
-            else
-                await channel.SendMessageAsync("", false, Embeds.ErrorLog(errorLog)).ConfigureAwait(false);
-        }
+
+        //        var user = await guild.GetUserAsync(discordId);
+        //        if (user is null)
+        //        {
+        //            errorLog += $"{signup[(int)ColumnIDs.Name]}: User left Discord\r\n";
+        //            continue;
+        //        }
+        //        if (user.RoleIds.Any(x => x == 472145107056066580))
+        //        {
+        //            league = "GM (Skipped)";
+        //        }
+
+        //        if (_assignedCounters.ContainsKey(league)) _assignedCounters[league]++;
+        //        else _assignedCounters.Add(league, 1);
+
+        //        if (league == "GM (Skipped)")
+        //            continue;
+
+        //        try
+        //        {
+        //        }
+        //        catch (Exception ex)
+        //        {
+        //            if (ex.Message.ToLower().Contains("forbidden"))
+        //                errorLog += $"{signup[(int)ColumnIDs.Name]}: Permission Error\r\n";
+        //            else
+        //                errorLog += $"{signup[(int)ColumnIDs.Name]}: {ex.Message}\r\n";
+        //        }
+
+        //        remaining--;
+
+        //        if (row % 100 == 0)
+        //        {
+        //            await message.ModifyAsync(x =>
+        //                x.Embed = Embeds.AssigningLeagueRoles(remaining, _assignedCounters)
+        //            );
+        //        }
+
+        //        await Task.Delay(1500);
+        //    }
+
+        //    await message.ModifyAsync(
+        //        x => x.Embed = Embeds.AssigningLeagueRoles(remaining, _assignedCounters)
+        //        );
+
+
+        //    if (errorLog.Length > 2000)
+        //    {
+        //        File.WriteAllText(@"./DiscordErrorLog.log", errorLog);
+        //        await channel.SendFileAsync(@"./DiscordErrorLog.log", "");
+        //    }
+        //    else
+        //        await channel.SendMessageAsync("", false, Embeds.ErrorLog(errorLog)).ConfigureAwait(false);
+        //}
 
         private async Task ProcessNewSignupsAsync()
         {
             SpreadsheetsResource.ValuesResource.GetRequest request =
-                service.Spreadsheets.Values.Get(SpreadsheetID, "DSN Hub!A:AA");
+                service.Spreadsheets.Values.Get(SpreadsheetID, "Player Data Hub!A:AK");
 
             ValueRange response = await request.ExecuteAsync().ConfigureAwait(false);
 
@@ -510,6 +508,12 @@ namespace IELDiscordBot.Classes.Services
 
         private async Task CalculateDSN(IList<object> row, SheetsService service, int idx)
         {
+            ChromeOptions options = new ChromeOptions();
+            options.AddArgument("headless");
+            options.AddArgument("user-agent=Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.125 Safari/537.36");
+
+            ChromeDriver driver = new ChromeDriver(options);
+
             //Get Accounts from WebApp
             var r = await GetAccountsFromWebApp(int.Parse(row[(int)ColumnIDs.PlayerID].ToString()));
             //Filter Accounts
@@ -534,7 +538,7 @@ namespace IELDiscordBot.Classes.Services
                 }
                 if (account.type == "xbl" || account.type == "psn" || account.type == "epic") username = account.name;
 
-                var trnResponse = await TRNRequest(account.type, username);
+                var trnResponse = await TRNRequest(account.type, username, driver);
                 dsnCommand += $"{account.type} {username} ";
                 if (trnResponse is null) continue;
                 CalcData.AddRange(trnResponse);
@@ -551,7 +555,7 @@ namespace IELDiscordBot.Classes.Services
                 MajorDimension = "ROWS",
                 Values = new List<IList<object>> { new List<object>() { dsnCommand } }
             };
-            SpreadsheetsResource.ValuesResource.UpdateRequest u = service.Spreadsheets.Values.Update(v, SpreadsheetID, $"DSN Hub!AB{row}");//:O{idx+1}");
+            SpreadsheetsResource.ValuesResource.UpdateRequest u = service.Spreadsheets.Values.Update(v, SpreadsheetID, $"Player Data Hub!AK{row}");//:O{idx+1}");
             u.ValueInputOption = SpreadsheetsResource.ValuesResource.UpdateRequest.ValueInputOptionEnum.USERENTERED;
             await u.ExecuteAsync();
         }
@@ -563,14 +567,15 @@ namespace IELDiscordBot.Classes.Services
             int highestSeason = 0;
             int highestPeak = 0;
 
-
             // Highest Season
             for (int i = 0; i < CalcData.Count; i++)
             {
+                if (CalcData[i].Ratings == null || CalcData[i].Ratings.Count == 0) continue;
                 int maxPeakFromSeason = CalcData[i].Ratings.Max();
                 if (maxPeakFromSeason > highestPeak)
                 {
-                    highestSeason = i;
+                    highestSeason = CalcData[i].Season;
+                    highestPeak = maxPeakFromSeason;
                 }
             }
 
@@ -581,10 +586,12 @@ namespace IELDiscordBot.Classes.Services
             var tmp = CalcData.Except(CalcData.Where(x => x.Season == highestSeason));
             for (int i = 0; i < CalcData.Count; i++)
             {
+                if (CalcData[i].Ratings == null || CalcData[i].Ratings.Count == 0) continue;
                 int maxPeakFromSeason = CalcData[i].Ratings.Max();
                 if (maxPeakFromSeason > secondHighestPeak)
                 {
-                    secondHighestSeason = i;
+                    secondHighestSeason = CalcData[i].Season;
+                    secondHighestPeak = maxPeakFromSeason;
                 }
             }
 
@@ -594,50 +601,84 @@ namespace IELDiscordBot.Classes.Services
             {
                 dsn = (int)Math.Round((highestPeak * 0.9) + (secondHighestPeak * 0.1));
             }
-            else
-            {
-                List<int> ratings = new List<int>();
 
-                for (int i = Constants.START_SEASON; i < Constants.END_SEASON; ++i)
+            List<int> peaks = new List<int>();
+
+            for (int season = Constants.START_SEASON; season <= Constants.END_SEASON; season++)
+            {
+                int peak = 0;
+
+                foreach (var section in CalcData)
                 {
-                    ratings.AddRange(CalcData[i].Ratings.Where(x => highestPeak - x <= 100));
+                    if (section.Ratings is null || section.Ratings.Count == 0) continue;
+
+                    if (section.Season == season)
+                    {
+                        var i = section.Ratings.Max();
+                        if (i > peak) peak = i;
+                    }
                 }
+
+                peaks.Add(peak);
             }
 
-            int s2games = CalcData.Where(x => x.Season == 2).Sum(x => x.GamesPlayed);
-            int s3games = CalcData.Where(x => x.Season == 3).Select(x => x.GamesPlayed).Distinct().Sum();
-            int s4games = CalcData.Where(x => x.Season == 4).Select(x => x.GamesPlayed).Distinct().Sum();
-            int s5games = CalcData.Where(x => x.Season == 5).Select(x => x.GamesPlayed).Distinct().Sum();
-            int s6games = CalcData.Where(x => x.Season == 6).Select(x => x.GamesPlayed).Distinct().Sum();
+            int average = 0;
+            if (peaks.Count() != 0)
+            {
+                //peaks.RemoveAll(x => x == 0);
+                average = (int)Math.Round(peaks.Average());
+            }
 
-            IList<object> obj = new List<object>();
-            UpdateValuesResponse res = null;
+            if (dsn == 0)
+            {
+                dsn = (int)Math.Round((highestPeak * 0.7) + (secondHighestPeak * 0.1) + (average * 0.2));
+            }
 
-            //obj.Add(s16Games);
-            //obj.Add(s17Games);
-            //obj.Add(s18Games);
-            //obj.Add(null);
-            //obj.Add(S16Peak);
-            //obj.Add(S17Peak);
-            //obj.Add(S18Peak);
+            int s2games = CalcData.Where(x => x.Season == 16).Sum(x => x.GamesPlayed);
+            int s3games = CalcData.Where(x => x.Season == 17).Select(x => x.GamesPlayed).Distinct().Sum();
+            int s4games = CalcData.Where(x => x.Season == 18).Select(x => x.GamesPlayed).Distinct().Sum();
+            int s5games = CalcData.Where(x => x.Season == 19).Select(x => x.GamesPlayed).Distinct().Sum();
+            int s6games = CalcData.Where(x => x.Season == 20).Select(x => x.GamesPlayed).Distinct().Sum();
 
-            obj[3] = $"=IFS(\n" +
-            $"ISBLANK(A{idx + 1});;AND(NOT(ISBLANK(A{idx + 1}));ISBLANK(F{idx + 1});ISBLANK(G{idx + 1});ISBLANK(H{idx + 1});ISBLANK(J{idx + 1});ISBLANK(K{idx + 1});ISBLANK(L{idx + 1})); \"Pending\";\n" +
-            $"AND(NOT(ISBLANK(A{idx + 1}));OR(ISBLANK(F{idx + 1});ISBLANK(G{idx + 1});ISBLANK(H{idx + 1});ISBLANK(J{idx + 1});ISBLANK(K{idx + 1});ISBLANK(L{idx + 1}))); \"Missing Data\";\n" +
-            $"OR(H{idx + 1} < DV_MinGAbsolut; G{idx + 1} < DV_MinGAbsolut; F{idx + 1} < DV_MinGAbsolut; L{idx + 1} = 0; K{idx + 1} = 0; J{idx + 1} = 0); \"Investigate App\";\n" +
-            $"AND(H{idx + 1} < DV_MinGCurrent; G{idx + 1} < DV_MinGPrev1; F{idx + 1} < DV_MinGPrev2); \"Min Games not reached\";\n" +
-            $"AND(L{idx + 1} < DV_DSNMin; K{idx + 1} < DV_DSNMin; J{idx + 1} < DV_DSNMin); \"Too Low\";\n" +
-            $"OR(H{idx + 1} >= DV_MinGCurrent; G{idx + 1} >= DV_MinGPrev1; F{idx + 1} >= DV_MinGPrev2); \"Verified\")\n";
+            int totalGames = s2games + s3games + s4games + s5games + s6games;
+            int totalOnes = CalcData.Where(x => x.Playlist == Playlist.ONES).Distinct().Count();
+            int totalGamesNoOnes = totalGames - totalOnes;
 
+            List<object> obj = new List<object>();
+            obj.Add(s2games);
+            obj.Add(s3games);
+            obj.Add(s4games);
+            obj.Add(s5games);
+            obj.Add(s6games);
+            obj.Add(totalGamesNoOnes);
+            obj.Add(totalGames);
 
             ValueRange v = new ValueRange
             {
                 MajorDimension = "ROWS",
                 Values = new List<IList<object>> { obj }
             };
-            SpreadsheetsResource.ValuesResource.UpdateRequest u = service.Spreadsheets.Values.Update(v, SpreadsheetID, $"DSN Hub!F{idx + 1}");//:O{idx+1}");
+
+            SpreadsheetsResource.ValuesResource.UpdateRequest u = service.Spreadsheets.Values.Update(v, SpreadsheetID, $"Player Data Hub!G{idx + 1}");//:O{idx+1}");
             u.ValueInputOption = SpreadsheetsResource.ValuesResource.UpdateRequest.ValueInputOptionEnum.USERENTERED;
-            res = await u.ExecuteAsync();
+            await u.ExecuteAsync();
+
+            obj = new List<object>();
+            obj.Add(peaks[0]);
+            obj.Add(peaks[1]);
+            obj.Add(peaks[2]);
+            obj.Add(peaks[3]);
+            obj.Add(peaks[4]);
+
+            v = new ValueRange
+            {
+                MajorDimension = "ROWS",
+                Values = new List<IList<object>> { obj }
+            };
+
+            u = service.Spreadsheets.Values.Update(v, SpreadsheetID, $"Player Data Hub!O{idx + 1}");//:O{idx+1}");
+            u.ValueInputOption = SpreadsheetsResource.ValuesResource.UpdateRequest.ValueInputOptionEnum.USERENTERED;
+            await u.ExecuteAsync();
         }
 
         private string MakeJSONFriendly(string content)
@@ -676,7 +717,7 @@ namespace IELDiscordBot.Classes.Services
             return input;
         }
 
-        public async Task<List<CalcData>> TRNRequest(string platform, string username)
+        public async Task<List<CalcData>> TRNRequest(string platform, string username, ChromeDriver driver)
         {
             platform = ConvertPlatform(platform);
             if (platform == "steam")
@@ -686,51 +727,53 @@ namespace IELDiscordBot.Classes.Services
                     username.Remove(username.Length - 1);
             }
 
-            using (HttpClient client = new HttpClient())
+            string apistring = string.Format(Constants.TRNAPI, platform, username);
+
+            driver.Navigate().GoToUrl(apistring);
+            string content = driver.PageSource;
+
+            if (string.IsNullOrEmpty(content)) return null;
+            if (content.ToLower().Contains("we could not find the player"))
+                return null;
+
+            content = content.Replace("<html><head><meta name=\"color-scheme\" content=\"light dark\"></head><body><pre style=\"word-wrap: break-word; white-space: pre-wrap;\">", "");
+            content = content.Replace("</pre></body></html>", "");
+
+            TRNObject obj = null;
+            try
             {
-                string apistring = string.Format(Constants.TRNAPI, platform, username);
-
-                HttpResponseMessage response = await client.GetAsync(apistring).ConfigureAwait(false);
-
-                string content = await response.Content.ReadAsStringAsync();
-
-                if (string.IsNullOrEmpty(content)) return null;
-                if (content.ToLower().Contains("we could not find the player"))
-                    return null;
-
-                TRNObject obj = null;
-                try
-                {
-                    obj = JsonConvert.DeserializeObject<TRNObject>(content);
-                }
-                catch (Exception ex)
-                {
-                    _log.Error(ex);
-                    return null;
-                }
-
-                int playerId = obj.data.metadata.playerId;
-
-                apistring = string.Format(Constants.TRNMMRAPI, playerId);
-                response = await client.GetAsync(apistring);
-                content = await response.Content.ReadAsStringAsync();
-                content = MakeJSONFriendly(content);
-
-                TRNMMRObject mmrObj = JsonConvert.DeserializeObject<TRNMMRObject>(content);
-
-                List<CalcData> Data = new List<CalcData>();
-                for (int i = Constants.START_SEASON; i <= Constants.END_SEASON; i++)
-                {
-                    Data.Add(await GetCalcDataForSegmentAsync(platform, username, i, Playlist.ONES, mmrObj));
-                    Data.Add(await GetCalcDataForSegmentAsync(platform, username, i, Playlist.TWOS, mmrObj));
-                    Data.Add(await GetCalcDataForSegmentAsync(platform, username, i, Playlist.THREES, mmrObj));
-                } 
-
-                return Data;
+                obj = JsonConvert.DeserializeObject<TRNObject>(content);
             }
+            catch (Exception ex)
+            {
+                _log.Error(ex);
+                return null;
+            }
+
+            int playerId = obj.data.metadata.playerId;
+
+            apistring = string.Format(Constants.TRNMMRAPI, playerId);
+            driver.Navigate().GoToUrl(apistring);
+            content = driver.PageSource;
+            content = content.Replace("<html><head><meta name=\"color-scheme\" content=\"light dark\"></head><body><pre style=\"word-wrap: break-word; white-space: pre-wrap;\">", "");
+            content = content.Replace("</pre></body></html>", "");
+
+            content = MakeJSONFriendly(content);
+
+            TRNMMRObject mmrObj = JsonConvert.DeserializeObject<TRNMMRObject>(content);
+
+            List<CalcData> Data = new List<CalcData>();
+            for (int i = Constants.START_SEASON; i <= Constants.END_SEASON; i++)
+            {
+                Data.Add(await GetCalcDataForSegmentAsync(platform, username, i, Playlist.ONES, mmrObj, driver));
+                Data.Add(await GetCalcDataForSegmentAsync(platform, username, i, Playlist.TWOS, mmrObj, driver));
+                Data.Add(await GetCalcDataForSegmentAsync(platform, username, i, Playlist.THREES, mmrObj, driver));
+            }
+
+            return Data;
         }
 
-        private async Task<CalcData> GetCalcDataForSegmentAsync(string platform, string username, int season, Playlist playlist, TRNMMRObject obj)
+        private async Task<CalcData> GetCalcDataForSegmentAsync(string platform, string username, int season, Playlist playlist, TRNMMRObject obj, ChromeDriver driver)
         {
             CalcData retVal = new CalcData
             {
@@ -743,30 +786,30 @@ namespace IELDiscordBot.Classes.Services
 
             switch (season)
             {
-                case 2:
+                case 16:
                     {
                         cutOff = cutOffDates[(int)Seasons.S2];
                         break;
                     }
-                case 3:
+                case 17:
                     {
                         cutOff = cutOffDates[(int)Seasons.S3];
                         seasonStartDate = cutOffDates[(int)Seasons.S2].AddDays(1);
                         break;
                     }
-                case 4:
+                case 18:
                     {
                         cutOff = cutOffDates[(int)Seasons.S4];
                         seasonStartDate = cutOffDates[(int)Seasons.S3].AddDays(1);
                         break;
                     }
-                case 5:
+                case 19:
                     {
                         cutOff = cutOffDates[(int)Seasons.S5];
                         seasonStartDate = cutOffDates[(int)Seasons.S4].AddDays(1);
                         break;
                     }
-                case 6:
+                case 20:
                     {
                         cutOff = cutOffDates[(int)Seasons.S6];
                         seasonStartDate = cutOffDates[(int)Seasons.S5].AddDays(1);
@@ -777,7 +820,7 @@ namespace IELDiscordBot.Classes.Services
             try
             {
                 List<Datum> Datam = new List<Datum>();
-                var segment = await GetSeasonSegment(season, platform, username);
+                var segment = await GetSeasonSegment(season, platform, username, driver);
                 if (segment == null)
                     retVal.GamesPlayed = 0;
                 else
@@ -797,6 +840,12 @@ namespace IELDiscordBot.Classes.Services
 
                         //HandleOnesRatings(ref retVal);
                     }
+                    if (season == 16)
+                    {
+                        var ones = Datam.Find(x => x.attributes.playlistId == 10);
+                        retVal.Ratings.Add(ones.stats.rating.value);
+                    }
+
                 }
                 else if (playlist == Playlist.TWOS)
                 {
@@ -805,6 +854,12 @@ namespace IELDiscordBot.Classes.Services
                         List<Duo> data = new List<Duo>(obj.data.Duos);
                         data = data.Where(x => x.collectDate < cutOff && x.collectDate > seasonStartDate).ToList();
                         retVal.Ratings = data.Select(x => x.rating).ToList();
+                    }
+
+                    if (season == 16)
+                    {
+                        var twos = Datam.Find(x => x.attributes.playlistId == 11);
+                        retVal.Ratings.Add(twos.stats.rating.value);
                     }
                 }
                 else if (playlist == Playlist.THREES)
@@ -815,6 +870,12 @@ namespace IELDiscordBot.Classes.Services
                         data = data.Where(x => x.collectDate < cutOff && x.collectDate > seasonStartDate).ToList();
                         retVal.Ratings = data.Select(x => x.rating).ToList();
                     }
+
+                    if (season == 16)
+                    {
+                        var threes = Datam.Find(x => x.attributes.playlistId == 13);
+                        retVal.Ratings.Add(threes.stats.rating.value);
+                    }
                 }
                 if (Datam is null || Datam.Count == 0)
                 {
@@ -824,13 +885,13 @@ namespace IELDiscordBot.Classes.Services
                 switch (playlist)
                 {
                     case Playlist.ONES:
-                        retVal.GamesPlayed = 0;
+                        //retVal.GamesPlayed = 0;
                         break;
                     case Playlist.TWOS:
-                        retVal.GamesPlayed = Datam[0].stats.matchesPlayed.value;
+                        retVal.GamesPlayed = Datam[1].stats.matchesPlayed.value;
                         break;
                     case Playlist.THREES:
-                        retVal.GamesPlayed = Datam[1].stats.matchesPlayed.value;
+                        retVal.GamesPlayed = Datam[2].stats.matchesPlayed.value;
                         break;
                 }
             }
@@ -838,6 +899,8 @@ namespace IELDiscordBot.Classes.Services
             {
                 _log.Error(ex);
             }
+
+            _log.Info($"{platform}-{username}: {season} {playlist} START:{seasonStartDate} END:{cutOff} GAMES:{retVal.GamesPlayed} RATINGS:{retVal.Ratings?.Count}");
 
             return retVal;
         }
@@ -906,16 +969,14 @@ namespace IELDiscordBot.Classes.Services
             };
         }
 
-        private async Task<TRNSegment> GetSeasonSegment(int season, string platform, string user)
+        private async Task<TRNSegment> GetSeasonSegment(int season, string platform, string user, ChromeDriver driver)
         {
-            using (HttpClient client = new HttpClient())
-            {
-                string apiString = string.Format(Constants.TRNSEGMENTAPI, platform, user, season);
-                var response = await client.GetAsync(apiString);
-
-                var responseString = await response.Content.ReadAsStringAsync();
-                return JsonConvert.DeserializeObject<TRNSegment>(responseString);
-            }
+            string apiString = string.Format(Constants.TRNSEGMENTAPI, platform, user, season);
+            driver.Navigate().GoToUrl(apiString);
+            string responseString = driver.PageSource;
+            responseString = responseString.Replace("<html><head><meta name=\"color-scheme\" content=\"light dark\"></head><body><pre style=\"word-wrap: break-word; white-space: pre-wrap;\">", "");
+            responseString = responseString.Replace("</pre></body></html>", "");
+            return JsonConvert.DeserializeObject<TRNSegment>(responseString);
         }
         public struct CalcData
         {
@@ -948,20 +1009,20 @@ namespace IELDiscordBot.Classes.Services
         /// </summary>
         /// <param name="discordUsername">Discord Username in format [Username#Discriminator]</param>
         /// <returns></returns>
-        internal string GetLeague(string discordUsername)
-        {
-            for (int row = 0; row < _latestValues.Count; row++)
-            {
-                IList<object> r = _latestValues[row];
+        //internal string GetLeague(string discordUsername)
+        //{
+        //    for (int row = 0; row < _latestValues.Count; row++)
+        //    {
+        //        IList<object> r = _latestValues[row];
 
-                if (r[(int)ColumnIDs.Discord].ToString().ToLower() == discordUsername.ToLower())
-                {
-                    return r[(int)ColumnIDs.League].ToString();
-                }
-            }
+        //        if (r[(int)ColumnIDs.Discord].ToString().ToLower() == discordUsername.ToLower())
+        //        {
+        //            return r[(int)ColumnIDs.League].ToString();
+        //        }
+        //    }
 
-            return "";
-        }
+        //    return "";
+        //}
 
         /// <summary>
         /// Searches the latest values that were grabbed from the Google Spreadsheet and finds the user with the given ID

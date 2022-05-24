@@ -147,7 +147,7 @@ namespace IELDiscordBot.Classes.Modules
                 return;
             }
 
-            await _service.QueueAccept(row, Context.Guild, Context.Channel);
+            //await _service.QueueAccept(row, Context.Guild, Context.Channel);
         }
 
         [Command("deny")]
@@ -167,7 +167,7 @@ namespace IELDiscordBot.Classes.Modules
         [Command("assignleagueroles")]
         public async Task AssignLeagueFARoles()
         {
-            await _service.AssignLeagueFARoles(Context.Channel, Context.Guild);
+            //await _service.AssignLeagueFARoles(Context.Channel, Context.Guild);
         }
 
         [Command("signup")]
