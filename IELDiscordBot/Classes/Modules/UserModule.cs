@@ -147,7 +147,7 @@ namespace IELDiscordBot.Classes.Modules
                 return;
             }
 
-            //await _service.QueueAccept(row, Context.Guild, Context.Channel);
+            await _service.QueueAccept(row, Context.Guild, Context.Channel);
         }
 
         [Command("deny")]
