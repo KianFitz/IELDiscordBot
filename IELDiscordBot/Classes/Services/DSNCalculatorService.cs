@@ -175,7 +175,7 @@ namespace IELDiscordBot.Classes.Services
             var profileName = signup[0].ToString();
             var id = signup[1].ToString();
             var profileLink = signup[4].ToString();
-            var status = signup[24].ToString();
+            var status = signup[30].ToString();
             var r = await GetAccountsFromWebApp(int.Parse(signup[(int)ColumnIDs.PlayerID].ToString()));
             r = r.Where(x => _allowedPlatforms.Contains(x.type)).ToArray();
             var platformLinks = string.Join("\r\n", r.Select(x => x.type + ": " + (x.type == "steam" ? x.id : x.name)));
