@@ -147,8 +147,6 @@ namespace IELDiscordBot.Classes.Services
                         continue;
                     }
 
-                    obj[1] = false;
-                    obj[2] = _latestValues[signup.RowNumber - 1][17].ToString();
                     await textChannel.SendMessageAsync($"{signup.DiscordUser.Mention} {_denySentences[signup.DenyReason]}");
                 }
                 MakeRequest($"Player Data Hub!AF{signup.RowNumber}", obj);
@@ -482,17 +480,17 @@ namespace IELDiscordBot.Classes.Services
 
         private readonly Dictionary<string, string> _denySentences = new Dictionary<string, string>()
         {
-            { "Bot has not recorded all data"       , "You've been declined due to not having enough data (games played) in one of the seasons." },
-            { "Tracker broken"                      , "You've been declined due to the given main account not linking to a valid profile." },
-            { "Not All Accounts Accessible"         , "You've been declined due to the given alt account not linking to a valid profile."},
-            { "Not enough games"                    , "You've been declined due to not having enough games in the current season. Please notify an application member once you have enough games played. "},
-            { "Too low rank"                        , "You've been declined due to your ranks being too low to join the league. "},
-            { "Tracker Inconsistencies"             , "You've been declined due to your account showing too many irregularities. Please contact an application team member if you want a further explanation."}
+            { "Tracker Brocken"                     , "You have been denied because the account(s) you have given do not link to a valid tracker. Check your accounts using the !signup command." },
+            { "Tracker Inconsistencies"             , "You have been denied because your account is showing too many irregularities. Please open a modmail for a further explanation."},
+            { "Games Required"                      , "You have been denied because you do no meet the minimum games requirement for the current season, you need 150 games played in Season 6. Once you have reached this requirement please head to #bot-commands and run the !rechecksignup command."},
+            { "Games Required NOT reachable"        , "You have been denied because there is not enough data available on your tracker to reach the minimum game requirement. Check that all your accounts are on your signup using the !signup command. After updating your accounts run the !rechecksignup command. Or open a modmail for more information."},
+            { "Not enough Games total"              , "You have been denied because you have not reached the required amount of total games over the past 5 seasons, we require 500 games played in total in the past 5 seasons."},
+            { "Not enough Games in 2s and 3s"       , "You have been denied because not enough of your total games have been played in 2s and 3s, we require 450/500 over the past 5 seasons."},
         };
 
         private string GetDenyReason(int row)
         {
-            return _latestValues[row - 1][17].ToString();
+            return _latestValues[row - 1][30].ToString();
         }
 
         internal readonly string[] _allowedPlatforms = { "steam", "xbl", "psn", "xbox", "ps", "epic" };
