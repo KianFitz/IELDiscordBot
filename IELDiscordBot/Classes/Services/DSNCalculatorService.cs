@@ -199,8 +199,9 @@ namespace IELDiscordBot.Classes.Services
             if (signup is null)
                 return;
 
-            if (signup[24].ToString() != "Investigate App" && signup[24].ToString() != "Requirements not reached")
+            if (!_denySentences.ContainsKey(signup[24].ToString())) {
                 return;
+            }
 
             var message = await channel.SendMessageAsync("Loading..");
             await CalculateDSN(signup, service, i);
