@@ -277,32 +277,23 @@ namespace IELDiscordBot.Classes.Utilities
 
             switch (status)
             {
-                case "Notify of Approval":
+                case "Notify of Acceptance":
                     status = "Awaiting Acceptance";
                     break;
                 case "Pending":
                     status = "Awaiting Calculation";
                     break;
-                case "Requirements not reached":
-                    status = "Denied";
+                case "Notify of Denial":
+                    status = "Under Investigation";
                     break;
-                case "Notify of Denied Signup":
-                    status = "Awaiting Denial";
-                    break;
-                case "Approved and Notified":
+                case "Application Accepted":
                     status = "Accepted";
                     break;
-                case "Investigate App":
-                case "Issue":
-                case "Missing Data":
-                    status = "Missing Data/Information/Signup Incomplete";
-                    break;
-                case "Left Discord before Denial":
-                case "Active Player left the IEL discord":
-                    status = "Player Left Discord";
+                case "Retired Application":
+                    status = "Retired";
                     break;
                 default:
-                    status = "Pending Review";
+                    status = "Unknown";
                     break;
             }
 
