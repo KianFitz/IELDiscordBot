@@ -86,7 +86,7 @@ namespace IELDiscordBot.Classes.Services
             LoadDistributions();
             _timer = new Timer(async _ =>
            {
-                //await ProcessNewSignupsAsync().ConfigureAwait(false);
+                await ProcessNewSignupsAsync().ConfigureAwait(false);
            },
            null,
            TimeSpan.FromSeconds(5),
@@ -197,11 +197,16 @@ namespace IELDiscordBot.Classes.Services
             }
 
             if (signup is null)
-                return;
-
-            if (!_denySentences.ContainsKey(signup[24].ToString())) {
+            {
+                await channel.SendMessageAsync("Unable to find your signup.");
                 return;
             }
+
+            if (!_denySentences.ContainsKey(signup[30].ToString())) {
+                return;
+            }
+
+            MakeRequest($"Player Data Hub!AF{i+1}", new List<object>() { false });
 
             var message = await channel.SendMessageAsync("Loading..");
             await CalculateDSN(signup, service, i);
@@ -467,21 +472,30 @@ namespace IELDiscordBot.Classes.Services
                 return;
             }
 
-            _signupStatus.Add(new StatusClass()
+            var newStatus = new StatusClass()
             {
                 Accept = false,
                 DenyReason = GetDenyReason(row),
                 DiscordUser = discordUser as SocketGuildUser,
                 StaffChannel = channel,
                 RowNumber = row
-            });
+            };
+
+            if (string.IsNullOrEmpty(newStatus.DenyReason))
+            {
+                await channel.SendMessageAsync($"I do not know a deny message for the status of application on row {row}");
+                return;
+            }
+
+            _signupStatus.Add(newStatus);
 
             await channel.SendMessageAsync($"Row {row} added to accept/deny queue. Queue will be ran in ~30 seconds");
         }
 
         private readonly Dictionary<string, string> _denySentences = new Dictionary<string, string>()
         {
-            { "Tracker Brocken"                     , "You have been denied because the account(s) you have given do not link to a valid tracker. Check your accounts using the !signup command." },
+            { "Tracker Broken"                      , "You have been denied because the account(s) you have given do not link to a valid tracker. Check your accounts using the !signup command." },
+            { "Not All Accounts Accessible"         , "You have been denied because the account(s) you have given do not link to a valid tracker. Check your accounts using the !signup command." },
             { "Tracker Inconsistencies"             , "You have been denied because your account is showing too many irregularities. Please open a modmail for a further explanation."},
             { "Games Required"                      , "You have been denied because you do no meet the minimum games requirement for the current season, you need 150 games played in Season 6. Once you have reached this requirement please head to #bot-commands and run the !rechecksignup command."},
             { "Games Required NOT reachable"        , "You have been denied because there is not enough data available on your tracker to reach the minimum game requirement. Check that all your accounts are on your signup using the !signup command. After updating your accounts run the !rechecksignup command. Or open a modmail for more information."},
@@ -491,7 +505,10 @@ namespace IELDiscordBot.Classes.Services
 
         private string GetDenyReason(int row)
         {
-            return _latestValues[row - 1][30].ToString();
+            if (_denySentences.ContainsKey(_latestValues[row - 1][30].ToString())) {
+                return _latestValues[row - 1][30].ToString();
+            }
+            return String.Empty;
         }
 
         internal readonly string[] _allowedPlatforms = { "steam", "xbl", "psn", "xbox", "ps", "epic" };
@@ -531,7 +548,11 @@ namespace IELDiscordBot.Classes.Services
 
                 var trnResponse = await TRNRequest(account.type, username, driver);
                 dsnCommand += $"{account.type} {username} ";
-                if (trnResponse is null) continue;
+                if (trnResponse is null)
+                {
+                    MakeRequest($"Player Data Hub!AB{idx + 1}", new List<object>() { false });
+                    continue;
+                }
                 CalcData.AddRange(trnResponse);
             }
 
@@ -901,8 +922,6 @@ namespace IELDiscordBot.Classes.Services
             {
                 _log.Error(ex);
             }
-
-            _log.Info($"{platform}-{username}: {season} {playlist} START:{seasonStartDate} END:{cutOff} GAMES:{retVal.GamesPlayed} RATINGS:{retVal.Ratings?.Count}");
 
             return retVal;
         }

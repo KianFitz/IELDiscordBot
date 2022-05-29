@@ -232,19 +232,19 @@ namespace IELDiscordBot.Classes.Utilities
 
             string finalString = $"ID: `{user}`\nPlatform: `{platform}`\n";
             finalString += "\n**Games Played:**\n";
-            finalString += $"\n**Season 6: `{s6games}`**";
-            finalString += $"\n**Season 5: `{s5games}`**";
-            finalString += $"\n**Season 4: `{s4games}`**";
+            finalString += $"\n**Season 2: `{s2games}`**";
             finalString += $"\n**Season 3: `{s3games}`**";
-            finalString += $"\n**Season 2: `{s2games}`**\n";
+            finalString += $"\n**Season 4: `{s4games}`**";
+            finalString += $"\n**Season 5: `{s5games}`**";
+            finalString += $"\n**Season 6: `{s6games}`**\n";
 
             finalString += $"\n**MMRs:**\n";
-            finalString += $"\n**Season 6: `{peaks[4]}`**";
-            finalString += $"\n**Season 5: `{peaks[3]}`**";
-            finalString += $"\n**Season 4: `{peaks[2]}`**";
-            finalString += $"\n**Season 3: `{peaks[1]}`**";
             finalString += $"\n**Season 2: `{peaks[0]}`**";
-            finalString += $"\n**DSN:** `{dsn}`";
+            finalString += $"\n**Season 3: `{peaks[1]}`**";
+            finalString += $"\n**Season 4: `{peaks[2]}`**";
+            finalString += $"\n**Season 5: `{peaks[3]}`**";
+            finalString += $"\n**Season 6: `{peaks[4]}`**\n";
+            //finalString += $"\n**DSN:** `{dsn}`";
 #if RELEASE
             if (row != 0)
                 finalString += $"\n\n\n**Sheet has been updated.**";

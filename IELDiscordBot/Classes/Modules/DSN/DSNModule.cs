@@ -91,6 +91,9 @@ namespace IELDiscordBot.Classes.Modules
         {
             ChromeOptions options = new ChromeOptions();
             options.AddArgument("headless");
+            options.AddArgument("no-sandbox");
+            options.AddArgument("disable-extensions");
+            options.AddArgument("disable-gpu");
             options.AddArgument("user-agent=Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.125 Safari/537.36");
 
             ChromeDriver driver = new ChromeDriver(options);
@@ -110,7 +113,6 @@ namespace IELDiscordBot.Classes.Modules
             //Check data for each account.
             foreach (var account in r)
             {
-                i++;
                 string username = "";
                 await message.ModifyAsync(x =>
                 {
@@ -132,8 +134,13 @@ namespace IELDiscordBot.Classes.Modules
                 accountString += username + ",";
 
                 var trnResponse = await _dsn.TRNRequest(account.type, username, driver);
-                if (trnResponse is null) continue;
+                if (trnResponse is null)
+                {
+                    _dsn.MakeRequest($"Player Data Hub!AB{row}", new List<object>() { false });
+                    continue;
+                }
                 CalcData.AddRange(trnResponse);
+                i++;
             }
 
             CalcData = CalcData.Distinct().ToList();
@@ -201,6 +208,11 @@ namespace IELDiscordBot.Classes.Modules
                 });
 
                 var data = await _dsn.TRNRequest(platform, username, driver);
+                if (data is null)
+                {
+                    _dsn.MakeRequest($"Player Data Hub!AB{row}", new List<object>() { false });
+                    continue;
+                }
                 calcData.AddRange(data);
             }
 
