@@ -153,6 +153,8 @@ namespace IELDiscordBot.Classes.Modules
 
             }).ConfigureAwait(false);
 
+            driver.Quit();
+
             if (row == 0) return;
             await _dsn.CalcAndSendResponse(row, CalcData, true);
         }
@@ -175,6 +177,9 @@ namespace IELDiscordBot.Classes.Modules
 
             ChromeOptions options = new ChromeOptions();
             options.AddArgument("headless");
+            options.AddArgument("no-sandbox");
+            options.AddArgument("disable-extensions");
+            options.AddArgument("disable-gpu");
             options.AddArgument("user-agent=Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.125 Safari/537.36");
 
             ChromeDriver driver = new ChromeDriver(options);
