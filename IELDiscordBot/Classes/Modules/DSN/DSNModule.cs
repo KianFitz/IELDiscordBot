@@ -8,6 +8,7 @@ using NLog;
 using OpenQA.Selenium.Chrome;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using static IELDiscordBot.Classes.Services.DSNCalculatorService;
@@ -169,14 +170,17 @@ namespace IELDiscordBot.Classes.Modules
             int currentRow = 2;
             var message = await Context.Channel.SendMessageAsync("", false, Embeds.MassCalcSignup()).ConfigureAwait(false);
 
-            DateTime startTime = DateTime.Now;
+            Stopwatch sw = new Stopwatch();
+            sw.Start();
             for (currentRow = 2; currentRow < rowsToCalculate + 1; currentRow++)
             {
                 await _dsn.ForceRecalcRow(currentRow).ConfigureAwait(false);
 
-                TimeSpan timeRemaining = TimeSpan.FromTicks(DateTime.Now.Subtract(startTime).Ticks * (rowsToCalculate - (currentRow + 1)) / (currentRow + 1));
-
+                var timeRemaining = sw.GetEta(currentRow, rowsToCalculate);
                 await message.ModifyAsync(x => x.Embed = Embeds.MassCalcSignup(currentRow, rowsToCalculate, timeRemaining));
+
+                // Wait 10 seconds
+                await Task.Delay(10000);
             }
         }
 
