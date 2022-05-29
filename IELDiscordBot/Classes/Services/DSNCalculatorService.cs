@@ -162,6 +162,27 @@ namespace IELDiscordBot.Classes.Services
             }
         }
 
+        internal int GetRowsToRecalculate()
+        {
+            int retVal = 0;
+            for (int row = 1; row < _latestValues.Count; row++)
+            {
+                IList<object> r = _latestValues[row];
+                if (string.IsNullOrEmpty(r[(int)ColumnIDs.Name].ToString())) continue;
+                if (!string.IsNullOrEmpty(r[(int)ColumnIDs.DSN].ToString()))
+                {
+                    retVal++;
+                }
+            }
+            return retVal;
+        }
+
+        internal async Task ForceRecalcRow(int currentRow)
+        {
+            IList<object> signup = _latestValues[currentRow - 1];
+            await CalculateDSN(signup, service, currentRow - 1);
+        }
+
         internal async Task GetSignupDetails(ulong discordId, ISocketMessageChannel channel, ulong requestor)
         {
             var signup = GetSignupByDiscordId(discordId);
@@ -855,7 +876,7 @@ namespace IELDiscordBot.Classes.Services
                         data = data.Where(x => x.collectDate < cutOff & x.collectDate > seasonStartDate).ToList();
                         retVal.Ratings = data.Select(x => x.rating).ToList();
 
-                        //HandleOnesRatings(ref retVal);
+                        HandleOnesRatings(ref retVal);
                     }
                     if (season == 16)
                     {

@@ -258,6 +258,29 @@ namespace IELDiscordBot.Classes.Utilities
             return builder.Build();
         }
 
+        internal static Optional<Embed> MassCalcSignup(int currentRow, int rowsToCalculate, TimeSpan timeRemaining)
+        {
+            EmbedBuilder builder = new EmbedBuilder()
+            {
+                Color = Constants.SuccessColor,
+                Description = "Current Process: Mass Recalculation of Spreadsheet",
+            };
+            builder.AddField(new EmbedFieldBuilder() { Name = "Current Row", Value = currentRow, IsInline = true });
+            builder.AddField(new EmbedFieldBuilder() { Name = "Total Rows", Value = rowsToCalculate, IsInline = true });
+            builder.AddField(new EmbedFieldBuilder() { Name = "Time Remaining", Value = $"H: {timeRemaining.Hours} M: {timeRemaining.Minutes} S: {timeRemaining.Seconds}", IsInline = true });
+            return builder.Build();
+        }
+
+        internal static Embed MassCalcSignup()
+        {
+            EmbedBuilder builder = new EmbedBuilder()
+            {
+                Color = Constants.SuccessColor,
+                Description = "Starting Process: Mass Recalculation of Spreadsheet"
+            };
+            return builder.Build();
+        }
+
         internal static Embed NoSignup(ulong discordId)
         {
             EmbedBuilder builder = new EmbedBuilder()

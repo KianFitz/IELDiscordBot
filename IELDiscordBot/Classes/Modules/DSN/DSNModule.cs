@@ -159,6 +159,24 @@ namespace IELDiscordBot.Classes.Modules
             await _dsn.CalcAndSendResponse(row, CalcData, true);
         }
 
+        [Command("recalcsheet")]
+        public async Task HandleRecalcSheetCommand()
+        {
+            int rowsToCalculate = _dsn.GetRowsToRecalculate();
+            int currentRow = 2;
+            var message = await Context.Channel.SendMessageAsync("", false, Embeds.MassCalcSignup()).ConfigureAwait(false);
+
+            DateTime startTime = DateTime.Now;
+            for (currentRow = 2; currentRow < rowsToCalculate + 1; currentRow++)
+            {
+                await _dsn.ForceRecalcRow(currentRow).ConfigureAwait(false);
+
+                TimeSpan timeRemaining = TimeSpan.FromTicks(DateTime.Now.Subtract(startTime).Ticks * (rowsToCalculate - (currentRow + 1)) / (currentRow + 1));
+
+                await message.ModifyAsync(x => x.Embed = Embeds.MassCalcSignup(currentRow, rowsToCalculate, timeRemaining));
+            }
+        }
+
         [Command("dsn")]
         [Name("dsn")]
         [Summary("Checks the provided accounts on the TRN API, calculates the users DSN, and inputs all information onto the Application & Data Spreadsheet")]
