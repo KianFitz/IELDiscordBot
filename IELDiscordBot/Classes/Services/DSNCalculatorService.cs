@@ -991,7 +991,8 @@ namespace IELDiscordBot.Classes.Services
                 }
             }
 
-            throw new ArgumentException($"Value {val} does not fall into any of the brackets");
+            return val;
+            //throw new ArgumentException($"Value {val} does not fall into any of the brackets");
         }
 
         private static Distribution[,] _onesDistributions;
@@ -1003,7 +1004,7 @@ namespace IELDiscordBot.Classes.Services
             {
                 {new Distribution(995, 1052), new Distribution(1053, 1106), new Distribution(1107, 1171)},
                 {new Distribution(1172, 1225), new Distribution(1226, 1290), new Distribution(1291, 1347)},
-                {new Distribution(1348, 1503), null, null }
+                {new Distribution(1348, 1535), null, null }
             };
 
             _threesDistribution = new Distribution[,]
