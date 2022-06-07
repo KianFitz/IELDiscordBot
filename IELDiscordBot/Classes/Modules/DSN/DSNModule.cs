@@ -161,13 +161,17 @@ namespace IELDiscordBot.Classes.Modules
         }
 
         [Command("recalcsheet")]
-        public async Task HandleRecalcSheetCommand()
+        public async Task HandleRecalcSheetCommand(int currentRow = 2)
+        {
+            await RecalcSheet(currentRow).ConfigureAwait(false);
+        }
+
+        public async Task RecalcSheet(int currentRow = 2)
         {
             if (Context.User.Id != 260887004005400576 && Context.User.Id != 184340563611353089 && Context.User.Id != 301876830737006593)
                 return;
 
             int rowsToCalculate = _dsn.GetRowsToRecalculate();
-            int currentRow = 2;
             var message = await Context.Channel.SendMessageAsync("", false, Embeds.MassCalcSignup()).ConfigureAwait(false);
 
             Stopwatch sw = new Stopwatch();

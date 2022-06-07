@@ -198,7 +198,7 @@ namespace IELDiscordBot.Classes.Services
             var profileLink = signup[4].ToString();
             var status = signup[34].ToString();
             var r = await GetAccountsFromWebApp(int.Parse(signup[(int)ColumnIDs.PlayerID].ToString()));
-            r = r.Where(x => _allowedPlatforms.Contains(x.type)).ToArray();
+            r = r.Where(x => _allowedPlatforms.Contains(x.type) && x.active).ToArray();
             var platformLinks = string.Join("\r\n", r.Select(x => x.type + ": " + (x.type == "steam" ? x.id : x.name)));
 
             var message = await channel.SendMessageAsync("", false, Embeds.SignupDetails(profileName, id, profileLink, status, platformLinks, requestor)).ConfigureAwait(false);
