@@ -167,7 +167,7 @@ namespace IELDiscordBot.Classes.Modules
         [Command("assignleagueroles")]
         public async Task AssignLeagueFARoles()
         {
-            //await _service.AssignLeagueFARoles(Context.Channel, Context.Guild);
+            await _service.AssignLeagueFARoles(Context.Channel, Context.Guild);
         }
 
         [Command("signup")]

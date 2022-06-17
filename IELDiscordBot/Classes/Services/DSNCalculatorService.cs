@@ -40,7 +40,8 @@ namespace IELDiscordBot.Classes.Services
         private ServiceAccountCredential _sheetsCredential;
         private readonly string[] Scopes = { SheetsService.Scope.Spreadsheets };
         private const string ApplicationName = "IEL Discord Bot .NET Application";
-        private const string SpreadsheetID = "13bG8ZQX4DsgcsIWgnh3uJRpxsrhbtu0UtH94WQ_hixk";
+        private const string PlayerDataSpreadsheetID = "13bG8ZQX4DsgcsIWgnh3uJRpxsrhbtu0UtH94WQ_hixk";
+        private const string GameAdminSpreadsheetID = "1TC0Z_n3uaAq1DIsrTunH3xrJwqBE9wZxMVrND18RnOM";
         private const string ServiceAccountEmail = "ieldiscordbot@inspired-rock-284217.iam.gserviceaccount.com";
 
         public enum Playlist
@@ -157,7 +158,7 @@ namespace IELDiscordBot.Classes.Services
                     {
                         x.Nickname = $"[FA] {(x.Nickname.IsSpecified ? x.Nickname : signup.DiscordUser.Username)}";
                     });
-                await SendStatusToWebApp(int.Parse(_latestValues[signup.RowNumber - 1][2].ToString()), signup.Accept).ConfigureAwait(false);
+                await SendStatusToWebApp(int.Parse(_playerDataLatestValues[signup.RowNumber - 1][2].ToString()), signup.Accept).ConfigureAwait(false);
                 await Task.Delay(2000);
             }
         }
@@ -165,9 +166,9 @@ namespace IELDiscordBot.Classes.Services
         internal int GetRowsToRecalculate()
         {
             int retVal = 0;
-            for (int row = 1; row < _latestValues.Count; row++)
+            for (int row = 1; row < _playerDataLatestValues.Count; row++)
             {
-                IList<object> r = _latestValues[row];
+                IList<object> r = _playerDataLatestValues[row];
                 if (string.IsNullOrEmpty(r[(int)ColumnIDs.Name].ToString())) continue;
                 if (!string.IsNullOrEmpty(r[(int)ColumnIDs.DSN].ToString()))
                 {
@@ -179,7 +180,7 @@ namespace IELDiscordBot.Classes.Services
 
         internal async Task ForceRecalcRow(int currentRow)
         {
-            IList<object> signup = _latestValues[currentRow - 1];
+            IList<object> signup = _playerDataLatestValues[currentRow - 1];
             await CalculateDSN(signup, service, currentRow - 1);
         }
 
@@ -208,11 +209,11 @@ namespace IELDiscordBot.Classes.Services
         {
             IList<object> signup = null;
             int i = 0;
-            for (i = 0; i < _latestValues.Count; i++)
+            for (i = 0; i < _playerDataLatestValues.Count; i++)
             {
-                if (_latestValues[i][(int)ColumnIDs.Discord].ToString() == discordId.ToString())
+                if (_playerDataLatestValues[i][(int)ColumnIDs.Discord].ToString() == discordId.ToString())
                 {
-                    signup = _latestValues[i];
+                    signup = _playerDataLatestValues[i];
                     break;
                 }
             }
@@ -241,13 +242,13 @@ namespace IELDiscordBot.Classes.Services
 
         public IList<object> GetSignupByDiscordId(ulong discordId)
         {
-            var retVal = _latestValues.FirstOrDefault(x => x[(int)ColumnIDs.Discord].ToString() == discordId.ToString());
+            var retVal = _playerDataLatestValues.FirstOrDefault(x => x[(int)ColumnIDs.Discord].ToString() == discordId.ToString());
             return retVal;
         }
 
         private bool GetVerifiedByRow(int row)
         {
-            return bool.Parse(_latestValues[row - 1][29].ToString());
+            return bool.Parse(_playerDataLatestValues[row - 1][29].ToString());
         }
 
         private enum ColumnIDs : int
@@ -257,6 +258,8 @@ namespace IELDiscordBot.Classes.Services
             PlayerID = 2,
             ProfileLink = 7,
             DSN = 14,
+            ApplicationStatus = 23,
+            League = 27,
         }
 
 
@@ -277,18 +280,22 @@ namespace IELDiscordBot.Classes.Services
         }
 
         private SheetsService service;
-        private IList<IList<object>> _latestValues = null;
-        private readonly IList<IList<object>> _oldValues = null;
-        private readonly Queue<SpreadsheetUpdate> _updates = new Queue<SpreadsheetUpdate>();
+        private IList<IList<object>> _playerDataLatestValues = null;
+        private IList<IList<object>> _gameAdminLatestValues = null;
 
         private async Task GetLatestValues()
         {
             SpreadsheetsResource.ValuesResource.GetRequest request =
-    service.Spreadsheets.Values.Get(SpreadsheetID, "Player Data Hub!A:AQ");
+    service.Spreadsheets.Values.Get(PlayerDataSpreadsheetID, "Player Data Hub!A:AQ");
 
             ValueRange response = await request.ExecuteAsync().ConfigureAwait(false);
 
-            _latestValues = response.Values;
+            _playerDataLatestValues = response.Values;
+
+            request = service.Spreadsheets.Values.Get(GameAdminSpreadsheetID, "");
+            response = await request.ExecuteAsync().ConfigureAwait(false);
+
+            _gameAdminLatestValues = response.Values;
         }
 
         public async Task<Platform[]> GetAccountsFromWebApp(int playerId)
@@ -320,20 +327,20 @@ namespace IELDiscordBot.Classes.Services
 
         internal async Task QueueAccept(int row, SocketGuild guild, ISocketMessageChannel channel)
         {
-            //var roles = GetRoles(guild, row);
+            var roles = GetRoles(guild, row);
 
-            //if (roles is null)
-            //{
-            //    await channel.SendMessageAsync($"Row {row} could not be added to accept/deny queue, user left Discord server.");
-            //    return;
-            //}
+            if (roles is null)
+            {
+                await channel.SendMessageAsync($"Row {row} could not be added to accept/deny queue, user left Discord server.");
+                return;
+            }
 
             _signupStatus.Add(new StatusClass()
             {
                 Accept = true,
                 DenyReason = "",
                 DiscordUser = guild.GetUser(GetDiscordID(row)),
-                RolesToAdd = new IRole[] { guild.GetRole(978785891487191061) },
+                RolesToAdd = roles,
                 StaffChannel = channel,
                 RowNumber = row
             });
@@ -341,127 +348,124 @@ namespace IELDiscordBot.Classes.Services
             await channel.SendMessageAsync($"Row {row} added to accept/deny queue. Queue will be ran in ~30 seconds");
         }
 
-        //public IRole[] GetRoles(SocketGuild guild, int row)
-        //{
-        //    IRole gmRole = guild.GetRole(472145107056066580);
+        public IRole[] GetRoles(SocketGuild guild, int row)
+        {
+            IGuildUser guildUser = guild.GetUser(GetDiscordID(row));
 
-        //    IGuildUser guildUser = guild.GetUser(GetDiscordID(row));
+            if (guildUser is null)
+            {
+                return null;
+            }
 
-        //    if (guildUser is null)
-        //    {
-        //        return null;
-        //    }
+            Dictionary<string, IRole> faRoles = new Dictionary<string, IRole>()
+            {
+                { "Academy", guild.GetRole(797537384022409256) },
+                { "Prospect", guild.GetRole(670231374896168960) },
+                { "Challenger", guild.GetRole(670230994627854347) },
+                { "Master", guild.GetRole(671808027313045544) }
+            };
 
-        //    if ((guildUser as SocketGuildUser).Roles.Any(x => x.Id == 472145107056066580)) return new IRole[] { };
+            Dictionary<string, IRole> playerRoles = new Dictionary<string, IRole>()
+            {
+                { "Academy", guild.GetRole(797537428696989767) },
+                { "Prospect", guild.GetRole(712599931382136842) },
+                { "Challenger", guild.GetRole(712599930866237531) },
+                { "Master", guild.GetRole(712599928890720284) }
+            };
 
-        //    Dictionary<string, IRole> faRoles = new Dictionary<string, IRole>()
-        //    {
-        //        { "Academy", guild.GetRole(797537384022409256) },
-        //        { "Prospect", guild.GetRole(670231374896168960) },
-        //        { "Challenger", guild.GetRole(670230994627854347) },
-        //        { "Master", guild.GetRole(671808027313045544) }
-        //    };
+            string league = _playerDataLatestValues[row - 1][(int)ColumnIDs.League].ToString();
 
-        //    Dictionary<string, IRole> playerRoles = new Dictionary<string, IRole>()
-        //    {
-        //        { "Academy", guild.GetRole(797537428696989767) },
-        //        { "Prospect", guild.GetRole(712599931382136842) },
-        //        { "Challenger", guild.GetRole(712599930866237531) },
-        //        { "Master", guild.GetRole(712599928890720284) }
-        //    };
+            IRole faRole = faRoles[league];
+            IRole playerRoleToAssigned = playerRoles[league];
+            IRole genericFARole = guild.GetRole(978785891487191061);
 
-        //    string league = _latestValues[row - 1][(int)ColumnIDs.League].ToString();
-
-        //    IRole faRole = faRoles[league];
-        //    IRole playerRoleToAssigned = playerRoles[league];
-
-        //    return new IRole[] { faRole, playerRoleToAssigned };
-        //}
+            return new IRole[] { faRole, playerRoleToAssigned, genericFARole };
+        }
 
         internal ulong GetDiscordID(int row)
         {
-            return ulong.Parse(_latestValues[row - 1][(int)ColumnIDs.Discord].ToString());
+            return ulong.Parse(_playerDataLatestValues[row - 1][(int)ColumnIDs.Discord].ToString());
         }
 
-        //public async Task AssignLeagueFARoles(ISocketMessageChannel channel, IGuild guild)
-        //{
-        //    int remaining = _latestValues.Where(x => x[0].ToString() != "").Count();
-        //    Dictionary<string, int> _assignedCounters = new Dictionary<string, int>();
-        //    var message = await channel.SendMessageAsync("", false, Embeds.AssigningLeagueRoles(remaining, _assignedCounters));
+        public async Task AssignLeagueFARoles(ISocketMessageChannel channel, IGuild guild)
+        {
+            int remaining = _playerDataLatestValues.Where(x => x[0].ToString() != "").Count();
+            Dictionary<string, int> _assignedCounters = new Dictionary<string, int>();
+            var message = await channel.SendMessageAsync("", false, Embeds.AssigningLeagueRoles(remaining, _assignedCounters));
 
-        //    await GetLatestValues().ConfigureAwait(false);
+            await GetLatestValues().ConfigureAwait(false);
 
-        //    string errorLog = "";
+            string errorLog = "";
 
-        //    for (int row = 1; row < _latestValues.Count; row++)
-        //    {
-        //        var signup = _latestValues[row];
-        //        if (signup[(int)ColumnIDs.Discord].ToString() == "") continue;
+            for (int row = 1; row < _playerDataLatestValues.Count; row++)
+            {
+                var signup = _playerDataLatestValues[row];
+                if (signup[(int)ColumnIDs.Discord].ToString() == "") continue;
 
-        //        ulong discordId = ulong.Parse(signup[(int)ColumnIDs.Discord].ToString());
-        //        if (signup[(int)ColumnIDs.ApplicationStatus].ToString() != "Approved and Notified") continue;
-        //        string league = signup[(int)ColumnIDs.League].ToString();
-
-
-
-        //        var user = await guild.GetUserAsync(discordId);
-        //        if (user is null)
-        //        {
-        //            errorLog += $"{signup[(int)ColumnIDs.Name]}: User left Discord\r\n";
-        //            continue;
-        //        }
-        //        if (user.RoleIds.Any(x => x == 472145107056066580))
-        //        {
-        //            league = "GM (Skipped)";
-        //        }
-
-        //        if (_assignedCounters.ContainsKey(league)) _assignedCounters[league]++;
-        //        else _assignedCounters.Add(league, 1);
-
-        //        if (league == "GM (Skipped)")
-        //            continue;
-
-        //        try
-        //        {
-        //        }
-        //        catch (Exception ex)
-        //        {
-        //            if (ex.Message.ToLower().Contains("forbidden"))
-        //                errorLog += $"{signup[(int)ColumnIDs.Name]}: Permission Error\r\n";
-        //            else
-        //                errorLog += $"{signup[(int)ColumnIDs.Name]}: {ex.Message}\r\n";
-        //        }
-
-        //        remaining--;
-
-        //        if (row % 100 == 0)
-        //        {
-        //            await message.ModifyAsync(x =>
-        //                x.Embed = Embeds.AssigningLeagueRoles(remaining, _assignedCounters)
-        //            );
-        //        }
-
-        //        await Task.Delay(1500);
-        //    }
-
-        //    await message.ModifyAsync(
-        //        x => x.Embed = Embeds.AssigningLeagueRoles(remaining, _assignedCounters)
-        //        );
+                ulong discordId = ulong.Parse(signup[(int)ColumnIDs.Discord].ToString());
+                if (signup[(int)ColumnIDs.ApplicationStatus].ToString() != "Application Accepted") continue;
+                string league = signup[(int)ColumnIDs.League].ToString();
 
 
-        //    if (errorLog.Length > 2000)
-        //    {
-        //        File.WriteAllText(@"./DiscordErrorLog.log", errorLog);
-        //        await channel.SendFileAsync(@"./DiscordErrorLog.log", "");
-        //    }
-        //    else
-        //        await channel.SendMessageAsync("", false, Embeds.ErrorLog(errorLog)).ConfigureAwait(false);
-        //}
+
+                var user = await guild.GetUserAsync(discordId);
+                if (user is null)
+                {
+                    errorLog += $"{signup[(int)ColumnIDs.Name]}: User left Discord\r\n";
+                    continue;
+                }
+                if (user.RoleIds.Any(x => x == 472145107056066580) || user.RoleIds.Any(x => x == 753351993061539850))
+                {
+                    league = "GM (Skipped)";
+                }
+
+                if (_assignedCounters.ContainsKey(league)) _assignedCounters[league]++;
+                else _assignedCounters.Add(league, 1);
+
+                if (league == "GM (Skipped)")
+                    continue;
+
+                try
+                {
+                    // Add league role
+                    var roles = GetRoles(guild as SocketGuild, row);
+                    roles.ToList().ForEach(async x => await user.AddRoleAsync(x).ConfigureAwait(false));
+                }
+                catch (Exception ex)
+                {
+                    if (ex.Message.ToLower().Contains("forbidden"))
+                        errorLog += $"{signup[(int)ColumnIDs.Name]}: Permission Error\r\n";
+                    else
+                        errorLog += $"{signup[(int)ColumnIDs.Name]}: {ex.Message}\r\n";
+                }
+
+                remaining--;
+
+                if (row % 100 == 0)
+                {
+                    await message.ModifyAsync(x =>
+                        x.Embed = Embeds.AssigningLeagueRoles(remaining, _assignedCounters)
+                    );
+                }
+
+                await Task.Delay(1500);
+            }
+
+            await message.ModifyAsync(x => x.Embed = Embeds.AssigningLeagueRoles(remaining, _assignedCounters));
+
+            if (errorLog.Length > 2000)
+            {
+                File.WriteAllText(@"./DiscordErrorLog.log", errorLog);
+                await channel.SendFileAsync(@"./DiscordErrorLog.log", "");
+            }
+            else
+                await channel.SendMessageAsync("", false, Embeds.ErrorLog(errorLog)).ConfigureAwait(false);
+        }
 
         private async Task ProcessNewSignupsAsync()
         {
             SpreadsheetsResource.ValuesResource.GetRequest request =
-                service.Spreadsheets.Values.Get(SpreadsheetID, "Player Data Hub!A:AK");
+                service.Spreadsheets.Values.Get(PlayerDataSpreadsheetID, "Player Data Hub!A:AK");
 
             ValueRange response = await request.ExecuteAsync().ConfigureAwait(false);
 
@@ -526,8 +530,8 @@ namespace IELDiscordBot.Classes.Services
 
         private string GetDenyReason(int row)
         {
-            if (_denySentences.ContainsKey(_latestValues[row - 1][30].ToString())) {
-                return _latestValues[row - 1][30].ToString();
+            if (_denySentences.ContainsKey(_playerDataLatestValues[row - 1][30].ToString())) {
+                return _playerDataLatestValues[row - 1][30].ToString();
             }
             return String.Empty;
         }
@@ -593,7 +597,7 @@ namespace IELDiscordBot.Classes.Services
                 MajorDimension = "ROWS",
                 Values = new List<IList<object>> { new List<object>() { dsnCommand } }
             };
-            SpreadsheetsResource.ValuesResource.UpdateRequest u = service.Spreadsheets.Values.Update(v, SpreadsheetID, $"Player Data Hub!AK{row}");//:O{idx+1}");
+            SpreadsheetsResource.ValuesResource.UpdateRequest u = service.Spreadsheets.Values.Update(v, PlayerDataSpreadsheetID, $"Player Data Hub!AK{row}");//:O{idx+1}");
             u.ValueInputOption = SpreadsheetsResource.ValuesResource.UpdateRequest.ValueInputOptionEnum.USERENTERED;
             await u.ExecuteAsync();
         }
@@ -697,7 +701,7 @@ namespace IELDiscordBot.Classes.Services
                 Values = new List<IList<object>> { obj }
             };
 
-            SpreadsheetsResource.ValuesResource.UpdateRequest u = service.Spreadsheets.Values.Update(v, SpreadsheetID, $"Player Data Hub!G{idx + 1}");//:O{idx+1}");
+            SpreadsheetsResource.ValuesResource.UpdateRequest u = service.Spreadsheets.Values.Update(v, PlayerDataSpreadsheetID, $"Player Data Hub!G{idx + 1}");//:O{idx+1}");
             u.ValueInputOption = SpreadsheetsResource.ValuesResource.UpdateRequest.ValueInputOptionEnum.USERENTERED;
             await u.ExecuteAsync();
 
@@ -714,7 +718,7 @@ namespace IELDiscordBot.Classes.Services
                 Values = new List<IList<object>> { obj }
             };
 
-            u = service.Spreadsheets.Values.Update(v, SpreadsheetID, $"Player Data Hub!O{idx + 1}");//:O{idx+1}");
+            u = service.Spreadsheets.Values.Update(v, PlayerDataSpreadsheetID, $"Player Data Hub!O{idx + 1}");//:O{idx+1}");
             u.ValueInputOption = SpreadsheetsResource.ValuesResource.UpdateRequest.ValueInputOptionEnum.USERENTERED;
             await u.ExecuteAsync();
         }
@@ -1045,7 +1049,7 @@ namespace IELDiscordBot.Classes.Services
                 MajorDimension = "ROWS",
                 Values = new List<IList<object>> { listOfValues }
             };
-            SpreadsheetsResource.ValuesResource.UpdateRequest u = service.Spreadsheets.Values.Update(v, SpreadsheetID, sectionToEdit);//:O{idx+1}");
+            SpreadsheetsResource.ValuesResource.UpdateRequest u = service.Spreadsheets.Values.Update(v, PlayerDataSpreadsheetID, sectionToEdit);//:O{idx+1}");
             u.ValueInputOption = SpreadsheetsResource.ValuesResource.UpdateRequest.ValueInputOptionEnum.USERENTERED;
             UpdateValuesResponse res = u.Execute();
         }
@@ -1077,9 +1081,9 @@ namespace IELDiscordBot.Classes.Services
         /// <returns></returns>
         internal int GetRowNumber(ulong discordId)
         {
-            for (int row = 0; row < _latestValues.Count; row++)
+            for (int row = 0; row < _playerDataLatestValues.Count; row++)
             {
-                IList<object> r = _latestValues[row];
+                IList<object> r = _playerDataLatestValues[row];
 
                 if (ulong.Parse(r[3].ToString()) == discordId)
                     return row + 1;
