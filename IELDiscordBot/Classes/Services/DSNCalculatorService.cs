@@ -258,8 +258,8 @@ namespace IELDiscordBot.Classes.Services
             PlayerID = 2,
             ProfileLink = 7,
             DSN = 14,
-            ApplicationStatus = 23,
-            League = 27,
+            ApplicationStatus = 34,
+            League = 38,
         }
 
 
@@ -292,10 +292,10 @@ namespace IELDiscordBot.Classes.Services
 
             _playerDataLatestValues = response.Values;
 
-            request = service.Spreadsheets.Values.Get(GameAdminSpreadsheetID, "");
-            response = await request.ExecuteAsync().ConfigureAwait(false);
+            //request = service.Spreadsheets.Values.Get(GameAdminSpreadsheetID, "");
+            //response = await request.ExecuteAsync().ConfigureAwait(false);
 
-            _gameAdminLatestValues = response.Values;
+            //_gameAdminLatestValues = response.Values;
         }
 
         public async Task<Platform[]> GetAccountsFromWebApp(int playerId)
@@ -350,7 +350,7 @@ namespace IELDiscordBot.Classes.Services
 
         public IRole[] GetRoles(SocketGuild guild, int row)
         {
-            IGuildUser guildUser = guild.GetUser(GetDiscordID(row));
+            IGuildUser guildUser = guild.GetUser(GetDiscordID(row-1));
 
             if (guildUser is null)
             {
@@ -365,21 +365,23 @@ namespace IELDiscordBot.Classes.Services
                 { "Master", guild.GetRole(671808027313045544) }
             };
 
-            Dictionary<string, IRole> playerRoles = new Dictionary<string, IRole>()
-            {
-                { "Academy", guild.GetRole(797537428696989767) },
-                { "Prospect", guild.GetRole(712599931382136842) },
-                { "Challenger", guild.GetRole(712599930866237531) },
-                { "Master", guild.GetRole(712599928890720284) }
-            };
 
-            string league = _playerDataLatestValues[row - 1][(int)ColumnIDs.League].ToString();
+            //Dictionary<string, IRole> playerRoles = new Dictionary<string, IRole>()
+            //{
+            //    { "Academy", guild.GetRole(797537428696989767) },
+            //    { "Prospect", guild.GetRole(712599931382136842) },
+            //    { "Challenger", guild.GetRole(712599930866237531) },
+            //    { "Master", guild.GetRole(712599928890720284) }
+            //};
+
+
+            string league = _playerDataLatestValues[row-1][(int)ColumnIDs.League].ToString();
 
             IRole faRole = faRoles[league];
-            IRole playerRoleToAssigned = playerRoles[league];
+            //IRole playerRoleToAssigned = playerRoles[league];
             IRole genericFARole = guild.GetRole(978785891487191061);
 
-            return new IRole[] { faRole, playerRoleToAssigned, genericFARole };
+            return new IRole[] { genericFARole, faRole };
         }
 
         internal ulong GetDiscordID(int row)
@@ -391,75 +393,49 @@ namespace IELDiscordBot.Classes.Services
         {
             int remaining = _playerDataLatestValues.Where(x => x[0].ToString() != "").Count();
             Dictionary<string, int> _assignedCounters = new Dictionary<string, int>();
-            var message = await channel.SendMessageAsync("", false, Embeds.AssigningLeagueRoles(remaining, _assignedCounters));
 
+            var allUsers = await guild.GetUsersAsync().ConfigureAwait(false);
+            IRole genericFARole = guild.GetRole(978785891487191061);
+
+            Dictionary<string, IRole> faRoles = new Dictionary<string, IRole>()
+            {
+                { "Academy", guild.GetRole(797537384022409256) },
+                { "Prospect", guild.GetRole(670231374896168960) },
+                { "Challenger", guild.GetRole(670230994627854347) },
+                { "Master", guild.GetRole(671808027313045544) }
+            };
             await GetLatestValues().ConfigureAwait(false);
 
-            string errorLog = "";
-
-            for (int row = 1; row < _playerDataLatestValues.Count; row++)
+            foreach (var user in allUsers)
             {
-                var signup = _playerDataLatestValues[row];
-                if (signup[(int)ColumnIDs.Discord].ToString() == "") continue;
-
-                ulong discordId = ulong.Parse(signup[(int)ColumnIDs.Discord].ToString());
-                if (signup[(int)ColumnIDs.ApplicationStatus].ToString() != "Application Accepted") continue;
-                string league = signup[(int)ColumnIDs.League].ToString();
-
-
-
-                var user = await guild.GetUserAsync(discordId);
-                if (user is null)
-                {
-                    errorLog += $"{signup[(int)ColumnIDs.Name]}: User left Discord\r\n";
-                    continue;
-                }
-                if (user.RoleIds.Any(x => x == 472145107056066580) || user.RoleIds.Any(x => x == 753351993061539850))
-                {
-                    league = "GM (Skipped)";
-                }
-
-                if (_assignedCounters.ContainsKey(league)) _assignedCounters[league]++;
-                else _assignedCounters.Add(league, 1);
-
-                if (league == "GM (Skipped)")
-                    continue;
-
                 try
                 {
-                    // Add league role
-                    var roles = GetRoles(guild as SocketGuild, row);
-                    roles.ToList().ForEach(async x => await user.AddRoleAsync(x).ConfigureAwait(false));
+                    if (user.RoleIds.Contains(genericFARole.Id))
+                    {
+                        var userId = user.Id;
+                        var signup = GetSignupByDiscordId(userId);
+                        string league = signup[(int)ColumnIDs.League].ToString();
+                        var role = faRoles[league];
+
+                        foreach (var faRole in faRoles)
+                        {
+                            if (user.RoleIds.Contains(faRole.Value.Id))
+                            {
+                                if (faRole.Value.Id != role.Id)
+                                {
+                                    await channel.SendMessageAsync($"Changed {user.Id} from role {faRole.Value.Name} to {role.Name}");
+                                    await user.RemoveRoleAsync(faRole.Value).ConfigureAwait(false);
+                                }
+                            }
+                        }
+                        await user.AddRoleAsync(role).ConfigureAwait(false);
+                    }
                 }
                 catch (Exception ex)
                 {
-                    if (ex.Message.ToLower().Contains("forbidden"))
-                        errorLog += $"{signup[(int)ColumnIDs.Name]}: Permission Error\r\n";
-                    else
-                        errorLog += $"{signup[(int)ColumnIDs.Name]}: {ex.Message}\r\n";
+                    await channel.SendMessageAsync($"User: {user.Id} - Exception: {ex.Message}");
                 }
-
-                remaining--;
-
-                if (row % 100 == 0)
-                {
-                    await message.ModifyAsync(x =>
-                        x.Embed = Embeds.AssigningLeagueRoles(remaining, _assignedCounters)
-                    );
-                }
-
-                await Task.Delay(1500);
             }
-
-            await message.ModifyAsync(x => x.Embed = Embeds.AssigningLeagueRoles(remaining, _assignedCounters));
-
-            if (errorLog.Length > 2000)
-            {
-                File.WriteAllText(@"./DiscordErrorLog.log", errorLog);
-                await channel.SendFileAsync(@"./DiscordErrorLog.log", "");
-            }
-            else
-                await channel.SendMessageAsync("", false, Embeds.ErrorLog(errorLog)).ConfigureAwait(false);
         }
 
         private async Task ProcessNewSignupsAsync()
