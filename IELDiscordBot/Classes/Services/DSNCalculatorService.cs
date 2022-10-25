@@ -448,7 +448,7 @@ namespace IELDiscordBot.Classes.Services
         private async Task ProcessNewSignupsAsync()
         {
             ulong GuildId = 564159012501717281;
-            ulong StaffLogId = 1034167274711556126;
+            ulong StaffLogId = 564165986584887299;
 
             IGuild guild = _client.GetGuild(GuildId);
             ITextChannel staffLogChannel = await guild.GetTextChannelAsync(StaffLogId);

@@ -259,12 +259,9 @@ namespace IELDiscordBot.Classes.Modules
 
             await message.ModifyAsync(x =>
             {
-                x.Content = "";
-                x.Embed = Embeds.DSNCalculation(orderedData.ToList(), usernameString, platformString, row);
-
+                x.Content = $"Row: {row} ran to completion!";
             }).ConfigureAwait(false);
 
-            await message.DeleteAsync();
             driver.Quit();
 
             if (row == 0) return;
