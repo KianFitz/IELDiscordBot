@@ -169,29 +169,6 @@ namespace IELDiscordBot.Classes.Utilities
                 }
             }
 
-            int secondHighestPeak = 0;
-            int secondHighestSeason = 0;
-
-            // Second Highest Season
-            var tmp = data.Except(data.Where(x => x.Season == highestSeason));
-            for (int i = 0; i < data.Count; i++)
-            {
-                if (data[i].Ratings == null || data[i].Ratings.Count == 0) continue;
-                int maxPeakFromSeason = data[i].Ratings.Max();
-                if (maxPeakFromSeason > secondHighestPeak)
-                {
-                    secondHighestSeason = data[i].Season;
-                    secondHighestPeak = maxPeakFromSeason;
-                }
-            }
-
-            int dsn = 0;
-
-            if (highestPeak - secondHighestPeak > 100)
-            {
-                dsn = (int)Math.Round((highestPeak * 0.9) + (secondHighestPeak * 0.1));
-            }
-
             List<int> peaks = new List<int>();
 
             for (int season = Constants.START_SEASON; season <= Constants.END_SEASON; season++)
@@ -212,39 +189,29 @@ namespace IELDiscordBot.Classes.Utilities
                 peaks.Add(peak);
             }
 
-            int average = 0;
-            if (peaks.Count() != 0)
-            {
-                //peaks.RemoveAll(x => x == 0);
-                average = (int)Math.Round(peaks.Average());
-            }
+            int CMV = (int)Math.Round(peaks.Max() / 5.0) * 5;
 
-            if (dsn == 0)
-            {
-                dsn = (int)Math.Round((highestPeak * 0.7) + (secondHighestPeak * 0.1) + (average * 0.2));
-            }
-
-            int s2games = data.Where(x => x.Season == 16).Sum(x => x.GamesPlayed);
-            int s3games = data.Where(x => x.Season == 17).Select(x => x.GamesPlayed).Distinct().Sum();
-            int s4games = data.Where(x => x.Season == 18).Select(x => x.GamesPlayed).Distinct().Sum();
-            int s5games = data.Where(x => x.Season == 19).Select(x => x.GamesPlayed).Distinct().Sum();
-            int s6games = data.Where(x => x.Season == 20).Select(x => x.GamesPlayed).Distinct().Sum();
+            int s2games = data.Where(x => x.Season == 18).Sum(x => x.GamesPlayed);
+            int s3games = data.Where(x => x.Season == 19).Select(x => x.GamesPlayed).Distinct().Sum();
+            int s4games = data.Where(x => x.Season == 20).Select(x => x.GamesPlayed).Distinct().Sum();
+            int s5games = data.Where(x => x.Season == 21).Select(x => x.GamesPlayed).Distinct().Sum();
+            int s6games = data.Where(x => x.Season == 22).Select(x => x.GamesPlayed).Distinct().Sum();
 
             string finalString = $"ID: `{user}`\nPlatform: `{platform}`\n";
             finalString += "\n**Games Played:**\n";
-            finalString += $"\n**Season 2: `{s2games}`**";
-            finalString += $"\n**Season 3: `{s3games}`**";
-            finalString += $"\n**Season 4: `{s4games}`**";
-            finalString += $"\n**Season 5: `{s5games}`**";
-            finalString += $"\n**Season 6: `{s6games}`**\n";
+            finalString += $"\n**Season 4: `{s2games}`**";
+            finalString += $"\n**Season 5: `{s3games}`**";
+            finalString += $"\n**Season 6: `{s4games}`**";
+            finalString += $"\n**Season 7: `{s5games}`**";
+            finalString += $"\n**Season 8: `{s6games}`**\n";
 
             finalString += $"\n**MMRs:**\n";
-            finalString += $"\n**Season 2: `{peaks[0]}`**";
-            finalString += $"\n**Season 3: `{peaks[1]}`**";
-            finalString += $"\n**Season 4: `{peaks[2]}`**";
-            finalString += $"\n**Season 5: `{peaks[3]}`**";
-            finalString += $"\n**Season 6: `{peaks[4]}`**\n";
-            //finalString += $"\n**DSN:** `{dsn}`";
+            finalString += $"\n**Season 4: `{peaks[0]}`**";
+            finalString += $"\n**Season 5: `{peaks[1]}`**";
+            finalString += $"\n**Season 6: `{peaks[2]}`**";
+            finalString += $"\n**Season 7: `{peaks[3]}`**";
+            finalString += $"\n**Season 8: `{peaks[4]}`**\n";
+            finalString += $"\n**Final Rating:** `{CMV}`";
 #if RELEASE
             if (row != 0)
                 finalString += $"\n\n\n**Sheet has been updated.**";

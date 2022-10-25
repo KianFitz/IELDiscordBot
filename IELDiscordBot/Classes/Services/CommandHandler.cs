@@ -256,7 +256,7 @@ namespace IELDiscordBot.Classes.Services
             if (msg == null)
                 return;
 
-            if (msg.Author == _client.CurrentUser)
+            if (msg.Author == _client.CurrentUser && !msg.Content.StartsWith("!cmv"))
                 return;
 
 

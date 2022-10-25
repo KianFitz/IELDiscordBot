@@ -141,7 +141,8 @@ namespace IELDiscordBot.Classes.Modules
         {
             IUser user = Context.User;
             IGuildUser caller = Context.Guild.GetUser(user.Id);
-            if (caller.RoleIds.Contains(MainServerPlayerDataTeam) == false && caller.RoleIds.Contains(StaffServerPlayerDataTeam) == false)
+
+            if (caller.RoleIds.Contains((ulong)564176963795943446) == false)
             {
                 await Context.Channel.SendMessageAsync($"You do not have permission to run this command.");
                 return;
@@ -155,8 +156,8 @@ namespace IELDiscordBot.Classes.Modules
         {
             IUser user = Context.User;
             IGuildUser caller = Context.Guild.GetUser(user.Id);
-            if (caller.RoleIds.Contains(MainServerPlayerDataTeam) == false && caller.RoleIds.Contains(StaffServerPlayerDataTeam) == false)
-             {
+            if (caller.RoleIds.Contains((ulong)564176963795943446) == false)
+            {
                 await Context.Channel.SendMessageAsync($"You do not have permission to run this command.");
                 return;
             }

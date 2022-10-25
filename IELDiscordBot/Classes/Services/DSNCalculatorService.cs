@@ -1,4 +1,5 @@
 ﻿using Discord;
+using Discord.Commands;
 using Discord.WebSocket;
 using Google.Apis.Auth.OAuth2;
 using Google.Apis.Services;
@@ -31,6 +32,7 @@ namespace IELDiscordBot.Classes.Services
         private readonly DiscordSocketClient _client;
         private readonly HttpClient _webClient;
         private readonly IConfigurationRoot _config;
+        private readonly CommandService _commands;
         private readonly Timer _timer;
         private readonly Timer _queueTimer;
         private readonly List<int> _acceptablePlaylists = new List<int>() { 10, 11, 13 };
@@ -40,7 +42,7 @@ namespace IELDiscordBot.Classes.Services
         private ServiceAccountCredential _sheetsCredential;
         private readonly string[] Scopes = { SheetsService.Scope.Spreadsheets };
         private const string ApplicationName = "IEL Discord Bot .NET Application";
-        private const string PlayerDataSpreadsheetID = "13bG8ZQX4DsgcsIWgnh3uJRpxsrhbtu0UtH94WQ_hixk";
+        private const string PlayerDataSpreadsheetID = "15suvNkf_knCo66J33L3L-SS6mwl6DTfv31TPJxeey7w";
         private const string GameAdminSpreadsheetID = "1TC0Z_n3uaAq1DIsrTunH3xrJwqBE9wZxMVrND18RnOM";
         private const string ServiceAccountEmail = "ieldiscordbot@inspired-rock-284217.iam.gserviceaccount.com";
 
@@ -53,20 +55,20 @@ namespace IELDiscordBot.Classes.Services
 
         public enum Seasons
         {
-            S2 = 0,
-            S3 = 1,
-            S4 = 2,
-            S5 = 3, 
-            S6 = 4
+            S4 = 0,
+            S5 = 1,
+            S6 = 2,
+            S7 = 3, 
+            S8 = 4
         }
 
         private readonly DateTime[] cutOffDates = new DateTime[]
         {
-            new DateTime(2021, 04, 7),
-            new DateTime(2021, 08, 11),
-            new DateTime(2021, 11, 17),
-            new DateTime(2022, 03, 9),
-            new DateTime(2022, 06, 15)
+            new DateTime(2021, 11, 07),
+            new DateTime(2022, 03, 09),
+            new DateTime(2022, 06, 15),
+            new DateTime(2022, 09, 07),
+            new DateTime(2024, 01, 01)
         };
 
         internal class DSNCalculationData
@@ -77,21 +79,22 @@ namespace IELDiscordBot.Classes.Services
             public int GamesPlayed;
             public int MaxMMR;
         }
-        public DSNCalculatorService(DiscordSocketClient client, IConfigurationRoot config)
+        public DSNCalculatorService(DiscordSocketClient client, IConfigurationRoot config, CommandService commands)
         {
             _client = client;
             _config = config;
+            _commands = commands;
             _webClient = new HttpClient();
             _signupStatus = new List<StatusClass>();
             Setup();
             LoadDistributions();
             _timer = new Timer(async _ =>
            {
-                await ProcessNewSignupsAsync().ConfigureAwait(false);
+                // await ProcessNewSignupsAsync().ConfigureAwait(false);
            },
            null,
            TimeSpan.FromSeconds(5),
-           TimeSpan.FromMinutes(5));
+           TimeSpan.FromMinutes(30));
             _queueTimer = new Timer(async _ =>
             {
                 await GetLatestValues().ConfigureAwait(false);
@@ -106,15 +109,15 @@ namespace IELDiscordBot.Classes.Services
         {
             List<StatusClass> toProcess = new List<StatusClass>(_signupStatus);
             _signupStatus.Clear();
-            ulong channelID = 665242755731030045;
-            ulong GuildID = 468918204362653696;
+            ulong channelID = 977977301146955816;
+            ulong GuildID = 564159012501717281;
             if (toProcess.Count == 0)
                 return;
 
 
             IGuild guild = _client.GetGuild(GuildID);
             ITextChannel textChannel = await guild.GetTextChannelAsync(channelID);
-
+            
             foreach (var signup in toProcess)
             {
                 List<object> obj = new List<object>
@@ -124,8 +127,9 @@ namespace IELDiscordBot.Classes.Services
 
                 if (signup.DiscordUser is null)
                 {
+                    MakeRequest($"RSC Player Data Hub!AG{signup.RowNumber}", obj);
                     obj[0] = false;
-                    MakeRequest($"Player Data Hub!Z{signup.RowNumber}", obj);
+                    MakeRequest($"RSC Player Data Hub!AC{signup.RowNumber}", obj);
                     await signup.StaffChannel.SendMessageAsync($"Unable to process signup for row: {signup.RowNumber}, Player not in Discord");
                     continue;
                 }
@@ -134,11 +138,11 @@ namespace IELDiscordBot.Classes.Services
                 {
                     if (GetVerifiedByRow(signup.RowNumber) == false)
                     {
-                        await signup.StaffChannel.SendMessageAsync($"Unable to process signup for row: {signup.RowNumber}, \"Verified App\" box not checked!");
+                        await signup.StaffChannel.SendMessageAsync($"Unable to process signup for row: {signup.RowNumber}, \"All Trackers Reviewed\" box not checked!");
                         continue;
                     }
 
-                    await textChannel.SendMessageAsync($"{signup.DiscordUser.Mention} you have been accepted to the IEL!");
+                    await textChannel.SendMessageAsync($"{signup.DiscordUser.Mention} you have been accepted into the RSC!");
                 }
                 else
                 {
@@ -150,15 +154,18 @@ namespace IELDiscordBot.Classes.Services
 
                     await textChannel.SendMessageAsync($"{signup.DiscordUser.Mention} {_denySentences[signup.DenyReason]}");
                 }
-                MakeRequest($"Player Data Hub!AF{signup.RowNumber}", obj);
+                MakeRequest($"RSC Player Data Hub!AG{signup.RowNumber}", obj);
                 if (signup.Accept == false) continue;
 
-                await signup.DiscordUser.AddRolesAsync(signup.RolesToAdd);
-                await signup.DiscordUser.ModifyAsync(x =>
-                    {
-                        x.Nickname = $"[FA] {(x.Nickname.IsSpecified ? x.Nickname : signup.DiscordUser.Username)}";
-                    });
-                await SendStatusToWebApp(int.Parse(_playerDataLatestValues[signup.RowNumber - 1][2].ToString()), signup.Accept).ConfigureAwait(false);
+                if (signup.DiscordUser.Nickname != null && signup.DiscordUser.Nickname.Contains("|") == false)
+                {
+                    await signup.DiscordUser.AddRolesAsync(signup.RolesToAdd);
+                    await signup.DiscordUser.ModifyAsync(x =>
+                        {
+                            x.Nickname = $"FA | {(x.Nickname.IsSpecified ? x.Nickname : signup.DiscordUser.Username)}";
+                        });
+                }
+                //await SendStatusToWebApp(int.Parse(_playerDataLatestValues[signup.RowNumber - 1][2].ToString()), signup.Accept).ConfigureAwait(false);
                 await Task.Delay(2000);
             }
         }
@@ -248,7 +255,7 @@ namespace IELDiscordBot.Classes.Services
 
         private bool GetVerifiedByRow(int row)
         {
-            return bool.Parse(_playerDataLatestValues[row - 1][29].ToString());
+            return bool.Parse(_playerDataLatestValues[row - 1][36].ToString());
         }
 
         private enum ColumnIDs : int
@@ -256,6 +263,8 @@ namespace IELDiscordBot.Classes.Services
             Name = 0,
             Discord = 1,
             PlayerID = 2,
+            GamesPlayed = 6,
+
             ProfileLink = 7,
             DSN = 14,
             ApplicationStatus = 34,
@@ -286,16 +295,11 @@ namespace IELDiscordBot.Classes.Services
         private async Task GetLatestValues()
         {
             SpreadsheetsResource.ValuesResource.GetRequest request =
-    service.Spreadsheets.Values.Get(PlayerDataSpreadsheetID, "Player Data Hub!A:AQ");
+    service.Spreadsheets.Values.Get(PlayerDataSpreadsheetID, "RSC Player Data Hub!A:BC");
 
             ValueRange response = await request.ExecuteAsync().ConfigureAwait(false);
 
             _playerDataLatestValues = response.Values;
-
-            //request = service.Spreadsheets.Values.Get(GameAdminSpreadsheetID, "");
-            //response = await request.ExecuteAsync().ConfigureAwait(false);
-
-            //_gameAdminLatestValues = response.Values;
         }
 
         public async Task<Platform[]> GetAccountsFromWebApp(int playerId)
@@ -327,7 +331,10 @@ namespace IELDiscordBot.Classes.Services
 
         internal async Task QueueAccept(int row, SocketGuild guild, ISocketMessageChannel channel)
         {
-            var roles = GetRoles(guild, row);
+            //var roles = GetRoles(guild, row);
+
+            var roles = new IRole[] { guild.GetRole(793599335446478931) };
+
 
             if (roles is null)
             {
@@ -440,25 +447,45 @@ namespace IELDiscordBot.Classes.Services
 
         private async Task ProcessNewSignupsAsync()
         {
+            ulong GuildId = 564159012501717281;
+            ulong StaffLogId = 1034167274711556126;
+
+            IGuild guild = _client.GetGuild(GuildId);
+            ITextChannel staffLogChannel = await guild.GetTextChannelAsync(StaffLogId);
+
             SpreadsheetsResource.ValuesResource.GetRequest request =
-                service.Spreadsheets.Values.Get(PlayerDataSpreadsheetID, "Player Data Hub!A:AK");
+                service.Spreadsheets.Values.Get(PlayerDataSpreadsheetID, "RSC Player Data Hub!A:BC");
 
             ValueRange response = await request.ExecuteAsync().ConfigureAwait(false);
 
-            IList<IList<object>> values = response.Values;
+            IList<IList<object>> playerDataHubValues = response.Values;
 
-            for (int row = 0; row < values.Count; row++)
+            request = service.Spreadsheets.Values.Get(PlayerDataSpreadsheetID, "PlayerData!A:AQ");
+            response = await request.ExecuteAsync().ConfigureAwait(false);
+
+            IList<IList<object>> playerDataValues = response.Values;
+
+
+            for (int row = 0; row < playerDataHubValues.Count; row++)
             {
-                IList<object> r = values[row];
+                IList<object> r = playerDataHubValues[row];
                 if (lockedRows.Contains(row)) continue;
                 if (string.IsNullOrEmpty(r[(int)ColumnIDs.Name].ToString())) continue;
-                if (string.IsNullOrEmpty(r[(int)ColumnIDs.DSN].ToString()))
+                if (string.IsNullOrEmpty(r[(int)ColumnIDs.GamesPlayed].ToString()))
                 {
                     _log.Info($"Started DSN Calculation for User: {r[(int)ColumnIDs.Name]}");
+                    var message = await staffLogChannel.SendMessageAsync("Started CMV Calculation for user: " + r[(int)ColumnIDs.Name]);
+
                     lockedRows.Add(row);
-                    await CalculateDSN(r, service, row).ConfigureAwait(false);
+
+                    var msg = await staffLogChannel.SendMessageAsync(playerDataValues[row][8].ToString());
+                    await Task.Delay(2000);
+                    await msg.DeleteAsync();
+                    //await CalculateDSN(r, service, row).ConfigureAwait(false);
+                    await message.ModifyAsync(x => x.Content = "~~Finished CMV Calculation for user: " + r[(int)ColumnIDs.Name] + "~~" + " Done!").ConfigureAwait(false);
+
                     _log.Info($"Completed DSN Calculation for User: {r[(int)ColumnIDs.Name]}");
-                    await Task.Delay(new Random().Next(2500, 4000));
+                    await Task.Delay(new Random().Next(10000, 15000));
                     lockedRows.Remove(row);
                 }
             }
@@ -493,20 +520,35 @@ namespace IELDiscordBot.Classes.Services
             await channel.SendMessageAsync($"Row {row} added to accept/deny queue. Queue will be ran in ~30 seconds");
         }
 
+        //private readonly Dictionary<string, string> _denySentences = new Dictionary<string, string>()
+        //{
+        //    { "Tracker Broken"                      , "You have been denied because the account(s) you have given do not link to a valid tracker. Check your accounts using the !signup command." },
+        //    { "Not All Accounts Accessible"         , "You have been denied because the account(s) you have given do not link to a valid tracker. Check your accounts using the !signup command." },
+        //    { "Tracker Inconsistencies"             , "You have been denied because your account is showing too many irregularities. Please open a modmail for a further explanation."},
+        //    { "Games Required"                      , "You have been denied because you do no meet the minimum games requirement for the current season, you need 150 games played in Season 6. Once you have reached this requirement please head to #bot-commands and run the !rechecksignup command."},
+        //    { "Games Required NOT reachable"        , "You have been denied because there is not enough data available on your tracker to reach the minimum game requirement. Check that all your accounts are on your signup using the !signup command. After updating your accounts run the !rechecksignup command. Or open a modmail for more information."},
+        //    { "Not enough Games total"              , "You have been denied because you have not reached the required amount of total games over the past 5 seasons, we require 500 games played in total in the past 5 seasons."},
+        //    { "Not enough Games in 2s and 3s"       , "You have been denied because not enough of your total games have been played in 2s and 3s, we require 450/500 over the past 5 seasons."},
+        //};
+
         private readonly Dictionary<string, string> _denySentences = new Dictionary<string, string>()
         {
-            { "Tracker Broken"                      , "You have been denied because the account(s) you have given do not link to a valid tracker. Check your accounts using the !signup command." },
-            { "Not All Accounts Accessible"         , "You have been denied because the account(s) you have given do not link to a valid tracker. Check your accounts using the !signup command." },
-            { "Tracker Inconsistencies"             , "You have been denied because your account is showing too many irregularities. Please open a modmail for a further explanation."},
-            { "Games Required"                      , "You have been denied because you do no meet the minimum games requirement for the current season, you need 150 games played in Season 6. Once you have reached this requirement please head to #bot-commands and run the !rechecksignup command."},
-            { "Games Required NOT reachable"        , "You have been denied because there is not enough data available on your tracker to reach the minimum game requirement. Check that all your accounts are on your signup using the !signup command. After updating your accounts run the !rechecksignup command. Or open a modmail for more information."},
-            { "Not enough Games total"              , "You have been denied because you have not reached the required amount of total games over the past 5 seasons, we require 500 games played in total in the past 5 seasons."},
-            { "Not enough Games in 2s and 3s"       , "You have been denied because not enough of your total games have been played in 2s and 3s, we require 450/500 over the past 5 seasons."},
+            { "Bot Issue"                                   , "" },
+            { "Denied - Alt Discord Account"                , "Denied as the discord account is an alt." },
+            { "Denied - Banned / Smurf"                     , "Player banned from the discord or smurfing." },
+            { "Denied - Data Insufficient"                  , "You have been denied because there is not enough data available on your tracker to reach the minimum game requirement. Check that all your accounts and open a modmail for more information." },
+            { "Games Required"                              , "You have been denied because you do no meet the minimum games requirement for the current season, you need to play 250 games (200 as returning player) in the last two seasons in 2s and 3s combined." },
+            { "Pending Data"                                , "Bot is fetching data." },
+            { "Pending Review"                              , "The tracker team is reviewing your accounts." },
+            { "Player is not in the RSC Discord"            , "Player is not in the RSC Discord." },
+            { "Tracker Broken"                              , "You have been denied because the account(s) you have given do not link to a valid tracker." },
+            { "Tracker Inconsistencies"                     , "There have been inconsistencies in your tracker graph. Please open a modmail for more information." },
+            { "Trackers Inaccessible"                       , "You have been denied because the account(s) you have given do not link to a valid tracker. Open a modmail for more information." },
         };
 
         private string GetDenyReason(int row)
         {
-            if (_denySentences.ContainsKey(_playerDataLatestValues[row - 1][30].ToString())) {
+            if (_denySentences.ContainsKey(_playerDataLatestValues[row - 1][37].ToString())) {
                 return _playerDataLatestValues[row - 1][30].ToString();
             }
             return String.Empty;
@@ -597,29 +639,6 @@ namespace IELDiscordBot.Classes.Services
                 }
             }
 
-            int secondHighestPeak = 0;
-            int secondHighestSeason = 0;
-
-            // Second Highest Season
-            var tmp = CalcData.Except(CalcData.Where(x => x.Season == highestSeason));
-            for (int i = 0; i < CalcData.Count; i++)
-            {
-                if (CalcData[i].Ratings == null || CalcData[i].Ratings.Count == 0) continue;
-                int maxPeakFromSeason = CalcData[i].Ratings.Max();
-                if (maxPeakFromSeason > secondHighestPeak)
-                {
-                    secondHighestSeason = CalcData[i].Season;
-                    secondHighestPeak = maxPeakFromSeason;
-                }
-            }
-
-            int dsn = 0;
-
-            if (highestPeak - secondHighestPeak > 100)
-            {
-                dsn = (int)Math.Round((highestPeak * 0.9) + (secondHighestPeak * 0.1));
-            }
-
             List<int> peaks = new List<int>();
 
             for (int season = Constants.START_SEASON; season <= Constants.END_SEASON; season++)
@@ -640,23 +659,11 @@ namespace IELDiscordBot.Classes.Services
                 peaks.Add(peak);
             }
 
-            int average = 0;
-            if (peaks.Count() != 0)
-            {
-                //peaks.RemoveAll(x => x == 0);
-                average = (int)Math.Round(peaks.Average());
-            }
-
-            if (dsn == 0)
-            {
-                dsn = (int)Math.Round((highestPeak * 0.7) + (secondHighestPeak * 0.1) + (average * 0.2));
-            }
-
-            int s2games = CalcData.Where(x => x.Season == 16).Select(x => x.GamesPlayed).Distinct().Sum();
-            int s3games = CalcData.Where(x => x.Season == 17).Select(x => x.GamesPlayed).Distinct().Sum();
-            int s4games = CalcData.Where(x => x.Season == 18).Select(x => x.GamesPlayed).Distinct().Sum();
-            int s5games = CalcData.Where(x => x.Season == 19).Select(x => x.GamesPlayed).Distinct().Sum();
-            int s6games = CalcData.Where(x => x.Season == 20).Select(x => x.GamesPlayed).Distinct().Sum();
+            int s2games = CalcData.Where(x => x.Season == 18).Select(x => x.GamesPlayed).Distinct().Sum();
+            int s3games = CalcData.Where(x => x.Season == 19).Select(x => x.GamesPlayed).Distinct().Sum();
+            int s4games = CalcData.Where(x => x.Season == 20).Select(x => x.GamesPlayed).Distinct().Sum();
+            int s5games = CalcData.Where(x => x.Season == 21).Select(x => x.GamesPlayed).Distinct().Sum();
+            int s6games = CalcData.Where(x => x.Season == 22).Select(x => x.GamesPlayed).Distinct().Sum();
 
             int totalGames = s2games + s3games + s4games + s5games + s6games;
             int totalOnes = CalcData.Where(x => x.Playlist == Playlist.ONES).Select(x => x.GamesPlayed).Sum();
@@ -668,6 +675,10 @@ namespace IELDiscordBot.Classes.Services
             obj.Add(s4games);
             obj.Add(s5games);
             obj.Add(s6games);
+            obj.Add(0);
+            obj.Add(0);
+            obj.Add(CalcData.Where(x => (x.Season == 22 || x.Season == 21) && x.Playlist != Playlist.ONES).Select(x => x.GamesPlayed).Distinct().Sum());
+            obj.Add(CalcData.Where(x => x.Season == 22 || x.Season == 21).Select(x => x.GamesPlayed).Distinct().Sum());
             obj.Add(totalGamesNoOnes);
             obj.Add(totalGames);
 
@@ -677,7 +688,7 @@ namespace IELDiscordBot.Classes.Services
                 Values = new List<IList<object>> { obj }
             };
 
-            SpreadsheetsResource.ValuesResource.UpdateRequest u = service.Spreadsheets.Values.Update(v, PlayerDataSpreadsheetID, $"Player Data Hub!G{idx + 1}");//:O{idx+1}");
+            SpreadsheetsResource.ValuesResource.UpdateRequest u = service.Spreadsheets.Values.Update(v, PlayerDataSpreadsheetID, $"RSC Player Data Hub!G{idx + 1}");//:O{idx+1}");
             u.ValueInputOption = SpreadsheetsResource.ValuesResource.UpdateRequest.ValueInputOptionEnum.USERENTERED;
             await u.ExecuteAsync();
 
@@ -687,6 +698,8 @@ namespace IELDiscordBot.Classes.Services
             obj.Add(peaks[2]);
             obj.Add(peaks[3]);
             obj.Add(peaks[4]);
+            obj.Add(0);
+            obj.Add(0);
 
             v = new ValueRange
             {
@@ -694,7 +707,7 @@ namespace IELDiscordBot.Classes.Services
                 Values = new List<IList<object>> { obj }
             };
 
-            u = service.Spreadsheets.Values.Update(v, PlayerDataSpreadsheetID, $"Player Data Hub!O{idx + 1}");//:O{idx+1}");
+            u = service.Spreadsheets.Values.Update(v, PlayerDataSpreadsheetID, $"RSC Player Data Hub!S{idx + 1}");//:O{idx+1}");
             u.ValueInputOption = SpreadsheetsResource.ValuesResource.UpdateRequest.ValueInputOptionEnum.USERENTERED;
             await u.ExecuteAsync();
         }
@@ -804,21 +817,9 @@ namespace IELDiscordBot.Classes.Services
 
             switch (season)
             {
-                case 16:
-                    {
-                        cutOff = cutOffDates[(int)Seasons.S2];
-                        break;
-                    }
-                case 17:
-                    {
-                        cutOff = cutOffDates[(int)Seasons.S3];
-                        seasonStartDate = cutOffDates[(int)Seasons.S2].AddDays(1);
-                        break;
-                    }
                 case 18:
                     {
                         cutOff = cutOffDates[(int)Seasons.S4];
-                        seasonStartDate = cutOffDates[(int)Seasons.S3].AddDays(1);
                         break;
                     }
                 case 19:
@@ -831,6 +832,18 @@ namespace IELDiscordBot.Classes.Services
                     {
                         cutOff = cutOffDates[(int)Seasons.S6];
                         seasonStartDate = cutOffDates[(int)Seasons.S5].AddDays(1);
+                        break;
+                    }
+                case 21:
+                    {
+                        cutOff = cutOffDates[(int)Seasons.S7];
+                        seasonStartDate = cutOffDates[(int)Seasons.S6].AddDays(1);
+                        break;
+                    }
+                case 22:
+                    {
+                        cutOff = cutOffDates[(int)Seasons.S8];
+                        seasonStartDate = cutOffDates[(int)Seasons.S7].AddDays(1);
                         break;
                     }
             }
@@ -858,7 +871,7 @@ namespace IELDiscordBot.Classes.Services
 
                         HandleOnesRatings(ref retVal);
                     }
-                    if (season == 16)
+                    if (season == 18)
                     {
                         var ones = Datam.Find(x => x.attributes.playlistId == (int)Playlist.ONES);
                         if (ones != null)
@@ -877,7 +890,7 @@ namespace IELDiscordBot.Classes.Services
                         retVal.Ratings = data.Select(x => x.rating).ToList();
                     }
 
-                    if (season == 16)
+                    if (season == 18)
                     {
                         var twos = Datam.Find(x => x.attributes.playlistId == (int)Playlist.TWOS);
                         if (twos != null)
@@ -895,7 +908,7 @@ namespace IELDiscordBot.Classes.Services
                         retVal.Ratings = data.Select(x => x.rating).ToList();
                     }
 
-                    if (season == 16)
+                    if (season == 18)
                     {
                         var threes = Datam.Find(x => x.attributes.playlistId == (int)Playlist.THREES);
                         if (threes != null)

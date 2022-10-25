@@ -137,7 +137,7 @@ namespace IELDiscordBot.Classes.Modules
                 var trnResponse = await _dsn.TRNRequest(account.type, username, driver);
                 if (trnResponse is null)
                 {
-                    _dsn.MakeRequest($"Player Data Hub!AB{row}", new List<object>() { false });
+                    _dsn.MakeRequest($"RSC Player Data Hub!AD{row}", new List<object>() { false });
                     continue;
                 }
                 CalcData.AddRange(trnResponse);
@@ -188,7 +188,7 @@ namespace IELDiscordBot.Classes.Modules
             }
         }
 
-        [Command("dsn")]
+        [Command("cmv")]
         [Name("dsn")]
         [Summary("Checks the provided accounts on the TRN API, calculates the users DSN, and inputs all information onto the Application & Data Spreadsheet")]
         public async Task HandleDSNCommandAsync(
@@ -244,7 +244,7 @@ namespace IELDiscordBot.Classes.Modules
                 var data = await _dsn.TRNRequest(platform, username, driver);
                 if (data is null)
                 {
-                    _dsn.MakeRequest($"Player Data Hub!AB{row}", new List<object>() { false });
+                    _dsn.MakeRequest($"RSC Player Data Hub!AD{row}", new List<object>() { false });
                     continue;
                 }
                 calcData.AddRange(data);
@@ -257,18 +257,17 @@ namespace IELDiscordBot.Classes.Modules
             string platformString = string.Join(',', accounts.Select(x => x.Platform));
 
 
-            await message.ModifyAsync(x =>
-            {
-                x.Content = "";
-                x.Embed = Embeds.DSNCalculation(orderedData.ToList(), usernameString, platformString, row);
+            //await message.ModifyAsync(x =>
+            //{
+            //    x.Content = "";
+            //    x.Embed = Embeds.DSNCalculation(orderedData.ToList(), usernameString, platformString, row);
 
-            }).ConfigureAwait(false);
+            //}).ConfigureAwait(false);
 
+            await message.DeleteAsync();
 
-#if RELEASE
             if (row == 0) return;
             await _dsn.CalcAndSendResponse(row, calcData, true).ConfigureAwait(false);
-#endif
         }
     }
 }
