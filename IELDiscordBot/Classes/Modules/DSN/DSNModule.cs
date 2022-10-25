@@ -257,14 +257,15 @@ namespace IELDiscordBot.Classes.Modules
             string platformString = string.Join(',', accounts.Select(x => x.Platform));
 
 
-            //await message.ModifyAsync(x =>
-            //{
-            //    x.Content = "";
-            //    x.Embed = Embeds.DSNCalculation(orderedData.ToList(), usernameString, platformString, row);
+            await message.ModifyAsync(x =>
+            {
+                x.Content = "";
+                x.Embed = Embeds.DSNCalculation(orderedData.ToList(), usernameString, platformString, row);
 
-            //}).ConfigureAwait(false);
+            }).ConfigureAwait(false);
 
             await message.DeleteAsync();
+            driver.Quit();
 
             if (row == 0) return;
             await _dsn.CalcAndSendResponse(row, calcData, true).ConfigureAwait(false);
