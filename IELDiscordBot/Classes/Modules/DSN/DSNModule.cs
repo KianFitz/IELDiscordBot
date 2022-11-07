@@ -20,7 +20,7 @@ namespace IELDiscordBot.Classes.Modules
         private readonly Logger _log = LogManager.GetCurrentClassLogger();
 
         private readonly List<int> _acceptableSeasons = new List<int>() { 14, 15, 16 };
-        private readonly List<int> _acceptablePlaylists = new List<int>() { 10, 11, 13 };
+        private readonly List<int> _acceptablePlaylists = new List<int>() { 11, 13 };
         public DSNModule(IELContext db, DSNCalculatorService dsn)
         {
             _db = db;
@@ -255,12 +255,6 @@ namespace IELDiscordBot.Classes.Modules
 
             string usernameString = string.Join(',', accounts.Select(x => x.User));
             string platformString = string.Join(',', accounts.Select(x => x.Platform));
-
-
-            await message.ModifyAsync(x =>
-            {
-                x.Content = $"Row: {row} ran to completion!";
-            }).ConfigureAwait(false);
 
             driver.Quit();
 
